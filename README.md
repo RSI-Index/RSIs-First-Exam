@@ -20,7 +20,7 @@ Install [Harbor](https://harborframework.com/docs) and run the oracle solutions 
 ```bash
 uv tool install 'harbor[modal]'
 uv run harbor run -d terminal-bench/terminal-bench@latest \
-   -n 5  \
+   -k 5  \
    --agent oracle \
    --n-concurrent 500 \
    --env modal
