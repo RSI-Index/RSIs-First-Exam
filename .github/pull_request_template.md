@@ -9,7 +9,7 @@ _If your PR is adding a new task to this benchmark_
 
 - Did I run this task with a strong model? Why does the strong model fail this task?
 
-_If your PR is fixing a task to this benchmark, otherwise delete_
+_If your PR is fixing a task to this benchmark_
 
 - What changes did I make? 
 
