@@ -7,7 +7,9 @@
 
 Terminal-Bench is a [continuous benchmark](https://x.com/ryan_marten/status/2080321791361527843), with [tagged releases](https://github.com/harbor-framework/terminal-bench/releases) published [on the Harbor Hub](https://hub.harborframework.com/datasets/terminal-bench/terminal-bench). Open an issue to report any task bugs and open a PR for task improvements or new tasks. Our [roadmap](https://github.com/orgs/harbor-framework/projects/1/views/1) is publicly visible. 
 
-## Task Distribution
+## Tasks
+
+The latest published version of the dataset is [available on the Harbor Hub](https://hub.harborframework.com/datasets/terminal-bench/terminal-bench/latest).
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/harbor-framework/terminal-bench/chart/docs/diagrams/tb3-by-domain.svg" alt="Tasks merged into main, grouped by domain"/>
