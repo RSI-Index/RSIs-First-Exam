@@ -154,6 +154,26 @@ _This section is a placeholder for future additions — additional agent harness
 
 Reviewers will be acknowledged with authorship points based on high-quality reviews. Reviewers will be ordered by the number of points in authorship, including any task contributor points they have.
 
+## Senior Reviewers by Category
+
+Senior reviewers own review for a category, with subcategory-level owners where noted.
+
+| Category | Subcategory | Senior Reviewer | GitHub |
+| --- | --- | --- | --- |
+| Science | Physics, Math | Allen Graham Hart | @AllenGrahamHart |
+| Science | Chemistry | Aaron Feller | @AaronFeller |
+| Science | Biology | Karl Krauth | @k-rl |
+| Science | Earth, other | Steven Dillmann | @StevenDillmann |
+| Software | Systems | Ruiyang Wang | @rynewang |
+| ML | Kernels | Irakli Salia | @Isalia20 |
+| ML | Training, Inference, Evaluation | Tommaso Cerruti | @tommasocerruti |
+| Operations | all | Benedikt Droste | @bd317 |
+| Security | all | Dariush Wahdany | @dwahdany |
+| Hardware | CAD | Karl Krauth | @k-rl |
+| Hardware | RTL | Stephen Benjamin | @stbenjam |
+| Media | Music | Christine Sutcliffe | @christicode |
+| Media | Design | Ryan Marten | @RyanMarten |
+
 ## Helpful Resources
 
 - [What Makes a Good Terminal Bench Task](https://github.com/harbor-framework/terminal-bench-3/discussions/224)
