@@ -1,4 +1,4 @@
-# Run the Task Proposal Rubric Review Locally
+# Run the Task Proposal Rubric Review
 
 The task proposal rubric review evaluates a task idea against
 [`rubrics/task-proposal.md`](../rubrics/task-proposal.md). It reviews proposal
