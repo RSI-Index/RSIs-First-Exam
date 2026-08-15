@@ -77,6 +77,10 @@ material uncertainty requires human judgement, stop after Layer 1 and return
 - It must define metrics and a fixed evaluation protocol for comparing iterative trials with the baseline.
 - The proposal must give a reasonable basis for believing that useful improvement
   or discovery space exists beyond the baseline.
+- Based on repository evidence or relevant experience, a meaningful agent
+  improvement should plausibly be distinguishable from the reward metric's
+  normal run-to-run variance. This is a preliminary judgement only; repeated
+  runs or formal statistical evidence are not required at proposal review.
 
 ### 5. Research Action Space
 
