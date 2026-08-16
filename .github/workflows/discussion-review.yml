@@ -6,7 +6,6 @@ name: Discussion Rubric Review
 on:
   discussion:
     types: [created, edited]
-  workflow_dispatch:
 
 jobs:
   review:
@@ -45,21 +44,41 @@ jobs:
       - name: Run rubric review
         id: review
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          MODEL="${{ vars.RUBRIC_MODEL || 'claude-opus-4-8' }}"
-          if ! uv run checks/rubric_review.py --model "$MODEL" proposal.md > result.json 2> review.log; then
+          if ! uv run checks/rubric_review.py proposal.md > result.json 2> review.log; then
             cat review.log
             exit 1
           fi
 
-          DECISION=$(python3 -c "import json; print(json.load(open('result.json'))['decision'] or 'Unknown')")
-          REVIEW=$(python3 -c "import json; print(json.load(open('result.json'))['review'] or 'No review generated')")
+          python3 - <<'PY'
+          import json
+          import os
+          from pathlib import Path
 
-          echo "decision=$DECISION" >> $GITHUB_OUTPUT
+          result = json.loads(Path("result.json").read_text(encoding="utf-8"))
+          decision = result.get("decision")
+          allowed_decisions = {
+              "Strong Reject",
+              "Reject",
+              "require human review",
+              "Accept",
+              "Strong Accept",
+          }
+          if decision not in allowed_decisions:
+              raise SystemExit(
+                  f"Judge returned a missing or non-canonical decision: {decision!r}"
+              )
 
-          # Write review to file to avoid shell escaping issues
-          echo "$REVIEW" > review_text.md
+          review = result.get("review")
+          if not isinstance(review, str) or not review.strip():
+              raise SystemExit("Judge returned an empty review")
+
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as output:
+              output.write(f"decision={decision}\n")
+          Path("review_text.md").write_text(review, encoding="utf-8")
+          PY
 
       - name: Format and post or update comment
         env:
@@ -74,10 +93,13 @@ jobs:
           case "$DECISION" in
             "Strong Accept") BADGE="🟢 **Strong Accept**" ;;
             "Accept")        BADGE="🟢 **Accept**" ;;
-            "Uncertain")     BADGE="🟡 **Uncertain**" ;;
+            "require human review") BADGE="🟡 **require human review**" ;;
             "Reject")        BADGE="🔴 **Reject**" ;;
             "Strong Reject") BADGE="🔴 **Strong Reject**" ;;
-            *)               BADGE="⚪ **$DECISION**" ;;
+            *)
+              echo "Unexpected non-canonical decision: $DECISION" >&2
+              exit 1
+              ;;
           esac
 
           REVIEW=$(cat review_text.md)
