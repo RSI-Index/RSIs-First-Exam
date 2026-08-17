@@ -7,15 +7,73 @@ on:
   discussion:
     types: [created, edited]
 
+concurrency:
+  group: discussion-rubric-review-${{ github.event.discussion.number }}
+  cancel-in-progress: true
+
 jobs:
   review:
     # Only review discussions in the "Task Ideas" category
     if: github.event.discussion.category.name == 'Task Ideas'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, rsi-proposal-review]
+    timeout-minutes: 40
     permissions:
       discussions: write
       contents: read
     steps:
+      - name: Verify proposal-review runner
+        shell: bash
+        env:
+          CODEX_HOME: /var/lib/rsi-codex-judge
+          CODEX_JUDGE_TMPDIR: /var/tmp/rsi-codex-judge
+        run: |
+          for REQUIRED_COMMAND in codex gh python3 uv; do
+            if ! command -v "$REQUIRED_COMMAND" >/dev/null 2>&1; then
+              echo "$REQUIRED_COMMAND is not installed on the proposal-review runner" >&2
+              exit 1
+            fi
+          done
+
+          REQUIRED_CODEX_VERSION=0.147.0
+          CODEX_VERSION=$(codex --version | awk '{print $NF}')
+          if [ "$CODEX_VERSION" != "$REQUIRED_CODEX_VERSION" ]; then
+            echo "Codex CLI $CODEX_VERSION is not the reviewed version $REQUIRED_CODEX_VERSION" >&2
+            exit 1
+          fi
+          REQUIRED_UV_VERSION=0.6.5
+          UV_VERSION=$(uv --version | awk '{print $NF}')
+          if [ "$UV_VERSION" != "$REQUIRED_UV_VERSION" ]; then
+            echo "uv $UV_VERSION is not the reviewed version $REQUIRED_UV_VERSION" >&2
+            exit 1
+          fi
+          if [ ! -f "$CODEX_HOME/auth.json" ] || [ ! -r "$CODEX_HOME/auth.json" ]; then
+            echo "Missing readable Coding Plan credential at $CODEX_HOME/auth.json" >&2
+            exit 1
+          fi
+
+          if [ -L "$CODEX_HOME" ] || [ -L "$CODEX_HOME/auth.json" ]; then
+            echo "CODEX_HOME and auth.json must not be symbolic links" >&2
+            exit 1
+          fi
+          RUNNER_UID=$(id -u)
+          if [ "$(stat -c '%u' "$CODEX_HOME")" != "$RUNNER_UID" ] || \
+             [ "$(stat -c '%u' "$CODEX_HOME/auth.json")" != "$RUNNER_UID" ]; then
+            echo "CODEX_HOME and auth.json must be owned by the runner user" >&2
+            exit 1
+          fi
+          CODEX_HOME_MODE=$(stat -c '%a' "$CODEX_HOME")
+          if (( (8#$CODEX_HOME_MODE & 8#077) != 0 )); then
+            echo "CODEX_HOME must not be accessible by group or other users" >&2
+            exit 1
+          fi
+          AUTH_MODE=$(stat -c '%a' "$CODEX_HOME/auth.json")
+          if (( (8#$AUTH_MODE & 8#077) != 0 )); then
+            echo "Coding Plan credential must not be accessible by group or other users" >&2
+            exit 1
+          fi
+          install -d -m 700 "$CODEX_JUDGE_TMPDIR"
+          codex --version
+
       - name: React with eyes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -29,10 +87,9 @@ jobs:
             -f id="${{ github.event.discussion.node_id }}" \
             -f content="EYES"
 
-      - uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
 
       - name: Write proposal to file
         env:
@@ -44,10 +101,11 @@ jobs:
       - name: Run rubric review
         id: review
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CODEX_HOME: /var/lib/rsi-codex-judge
+          CODEX_JUDGE_TMPDIR: /var/tmp/rsi-codex-judge
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if ! uv run checks/rubric_review.py proposal.md > result.json 2> review.log; then
+          if ! uv run --locked checks/rubric_review.py proposal.md > result.json 2> review.log; then
             cat review.log
             exit 1
           fi
