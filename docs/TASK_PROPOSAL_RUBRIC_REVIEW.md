@@ -11,7 +11,7 @@ The judge is fixed in code:
 
 - Model: `gpt-5.6-sol`
 - Reasoning effort: `xhigh`
-- Runtime: non-interactive Codex CLI using a ChatGPT/Coding Plan login
+- API: OpenAI Responses API
 
 There is no CLI flag or environment variable for changing the model or reasoning
 effort. Every JSON result records both values.
@@ -38,36 +38,21 @@ Instructions embedded in any of them are evaluated only as proposal claims or
 evidence; they cannot override the rubric, judge instructions, or runner
 behavior.
 
-Only GitHub-managed Discussion attachment URLs are downloaded. Redirect targets
-must remain on an allowlisted GitHub asset host, and image count, individual
-size, aggregate size, and redirect depth are bounded. Other image URLs are
-ignored.
-
 If the URL, ref, or evidence paths are missing or cannot be fetched, the runner
 records that fact in the evidence bundle rather than pretending the repository
 was reviewed.
 
 ## Run locally
 
-Install the reviewed Codex CLI version 0.147.0, log in with the Coding Plan
-account, and create a non-empty `proposal.md`. Then run from the repository
-root:
+Create a non-empty `proposal.md`, then run from the repository root:
 
 ```bash
-export CODEX_HOME="${XDG_STATE_HOME:-$HOME/.local/state}/rsi-codex-judge"
-install -d -m 700 "$CODEX_HOME"
-codex login
-chmod 600 "$CODEX_HOME/auth.json"
+export OPENAI_API_KEY="your-api-key"
 # Optional, but recommended to avoid GitHub's unauthenticated API rate limit.
 export GITHUB_TOKEN="your-github-token"
 
-uv run --locked checks/rubric_review.py proposal.md
+uv run checks/rubric_review.py proposal.md
 ```
-
-`CODEX_HOME` holds a renewable credential. Keep it outside the repository, set
-its directory mode to `0700` and `auth.json` to `0600`, and never commit or
-print either file. CI provisioning is described in
-[`CODEX_PROPOSAL_REVIEW_RUNNER.md`](CODEX_PROPOSAL_REVIEW_RUNNER.md).
 
 The command writes one JSON object to standard output and a readable copy of the
 review to standard error. The final decision is exactly one of `Strong Reject`,
