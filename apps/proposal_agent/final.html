@@ -1,0 +1,455 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ResearchAI — Final Delivery</title>
+<!-- Material Symbols -->
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Google Fonts -->
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- Tailwind Config injected from system prompt -->
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary": "#20304f",
+                      "on-primary-container": "#00285b",
+                      "tertiary": "#b6c6ed",
+                      "secondary-container": "#3c4962",
+                      "on-background": "#e0e3e5",
+                      "inverse-primary": "#005bc0",
+                      "on-primary-fixed-variant": "#004493",
+                      "on-error-container": "#ffdad6",
+                      "on-tertiary-fixed-variant": "#374767",
+                      "surface-container": "#1d2022",
+                      "on-secondary-fixed-variant": "#39475f",
+                      "surface-container-high": "#272a2c",
+                      "primary-fixed": "#d8e2ff",
+                      "on-tertiary-container": "#192948",
+                      "primary-container": "#4a8eff",
+                      "on-surface": "#e0e3e5",
+                      "outline": "#8b90a0",
+                      "tertiary-fixed": "#d8e2ff",
+                      "secondary-fixed": "#d6e3ff",
+                      "surface-variant": "#323537",
+                      "secondary": "#b9c7e4",
+                      "surface-container-highest": "#323537",
+                      "tertiary-fixed-dim": "#b6c6ed",
+                      "primary-fixed-dim": "#adc7ff",
+                      "on-secondary-container": "#abb9d6",
+                      "on-primary": "#002e68",
+                      "inverse-on-surface": "#2d3133",
+                      "on-secondary-fixed": "#0d1c32",
+                      "outline-variant": "#414754",
+                      "on-surface-variant": "#c1c6d7",
+                      "on-tertiary-fixed": "#091b39",
+                      "surface": "#101415",
+                      "tertiary-container": "#8191b5",
+                      "surface-container-lowest": "#0b0f10",
+                      "surface-container-low": "#191c1e",
+                      "on-error": "#690005",
+                      "background": "#101415",
+                      "secondary-fixed-dim": "#b9c7e4",
+                      "inverse-surface": "#e0e3e5",
+                      "surface-bright": "#363a3b",
+                      "error-container": "#93000a",
+                      "surface-dim": "#101415",
+                      "on-secondary": "#233148",
+                      "primary": "#adc7ff",
+                      "error": "#ffb4ab",
+                      "surface-tint": "#adc7ff",
+                      "on-primary-fixed": "#001a41"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "unit": "8px",
+                      "margin-desktop": "40px",
+                      "container-max": "1440px",
+                      "stack-md": "16px",
+                      "stack-lg": "32px",
+                      "stack-sm": "8px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "label-md": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(16, 20, 21, 0.5); 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(139, 144, 160, 0.3); 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(139, 144, 160, 0.5); 
+        }
+        
+        /* Glassmorphism utilities */
+        .glass-panel {
+            background: rgba(44, 49, 51, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .glass-panel-top-highlight {
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+<link href="assets/app.css" rel="stylesheet"/>
+<link href="assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+</head>
+<body class="bg-background text-on-surface font-body-md min-h-screen flex flex-col md:flex-row antialiased selection:bg-primary-container selection:text-on-primary-container" data-page="final">
+<!-- TopNavBar (Mobile Only) -->
+<header class="md:hidden bg-background/80 backdrop-blur-xl fixed top-0 w-full z-50 shadow-sm border-b border-white/10 flex justify-between items-center px-margin-mobile h-20">
+<div class="font-display-lg text-headline-lg-mobile font-bold text-primary tracking-tight">ResearchAI</div>
+<div class="flex items-center gap-stack-md">
+<button aria-label="Notifications" class="text-on-surface-variant hover:text-primary transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button aria-label="Settings" class="text-on-surface-variant hover:text-primary transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<img alt="User profile" class="w-8 h-8 rounded-full border border-white/10 object-cover" data-alt="A small, circular avatar portrait of an artificial intelligence entity. Minimalist glowing blue circuits on a dark background, evoking a modern enterprise AI assistant. High contrast, clean design." src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='20' fill='%231d2022'/%3E%3Ccircle cx='20' cy='16' r='6' fill='%23adc7ff'/%3E%3Cpath d='M8 36c0-6.6 5.4-12 12-12s12 5.4 12 12' fill='%234a8eff'/%3E%3C/svg%3E">
+</div>
+</header>
+<!-- SideNavBar (Desktop Only) -->
+<nav class="hidden md:flex flex-col py-gutter gap-stack-lg bg-surface-container dark:bg-surface-container fixed left-0 top-0 h-full w-[280px] border-r border-white/10 shadow-lg z-40 px-gutter">
+<!-- Header -->
+<div class="flex items-center gap-stack-sm mb-stack-lg">
+<div class="w-10 h-10 rounded-xl bg-primary-container/20 flex items-center justify-center border border-primary/20">
+<span class="material-symbols-outlined text-primary" data-weight="fill" style="font-variation-settings: 'FILL' 1;">robot_2</span>
+</div>
+<div>
+<h1 class="font-headline-md text-headline-md font-bold text-primary">ResearchAI</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">Expert Assistant</p>
+</div>
+</div>
+<!-- Main Navigation -->
+<div class="flex-1 flex flex-col gap-unit">
+<a class="flex items-center gap-stack-sm px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all duration-200 active:scale-[0.98] font-label-md text-label-md group" href="index.html">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">person</span>
+<span class="">Start</span>
+</a>
+<a class="flex items-center gap-stack-sm px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all duration-200 active:scale-[0.98] font-label-md text-label-md group" href="mission.html">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">rocket_launch</span>
+<span class="">Mission Control</span>
+</a>
+
+<a class="flex items-center gap-stack-sm px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all duration-200 active:scale-[0.98] font-label-md text-label-md group" href="drafting.html">
+<span class="material-symbols-outlined group-hover:text-primary transition-colors">edit_note</span>
+<span class="">Drafting</span>
+</a>
+<!-- Active State -->
+<a class="flex items-center gap-stack-sm px-4 py-3 rounded-lg bg-primary-container text-on-primary-container font-bold transition-all duration-200 active:scale-[0.98] font-label-md text-label-md shadow-[0_10px_30px_rgba(74,142,255,0.15)]" href="final.html" aria-current="page">
+<span class="material-symbols-outlined" data-weight="fill" style="font-variation-settings: 'FILL' 1;">description</span>
+<span class="">Final Delivery</span>
+</a>
+</div>
+<!-- CTA -->
+<button class="w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-lg hover:shadow-[0_0_15px_rgba(173,199,255,0.4)] transition-all duration-200 active:scale-95 flex items-center justify-center gap-2 mb-stack-lg" data-ra="new-research">
+<span class="material-symbols-outlined text-sm">add</span>
+            New Research
+        </button>
+<!-- Footer Navigation -->
+<div class="flex flex-col gap-unit border-t border-white/10 pt-stack-md">
+<a class="flex items-center gap-stack-sm px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all duration-200 active:scale-[0.98] font-label-md text-label-md" href="#" data-ra="unimplemented">
+<span class="material-symbols-outlined text-sm">chat</span>
+<span class="">AI Assistant</span>
+</a>
+<a class="flex items-center gap-stack-sm px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all duration-200 active:scale-[0.98] font-label-md text-label-md" href="#" data-ra="unimplemented">
+<span class="material-symbols-outlined text-sm">history</span>
+<span class="">History</span>
+</a>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 mt-20 md:mt-0 md:ml-[280px] p-margin-mobile md:p-margin-desktop min-h-screen relative overflow-x-hidden">
+<!-- Background Ambient Glow -->
+<div class="absolute top-[-10%] right-[-5%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] pointer-events-none"></div>
+<div class="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-tertiary/5 rounded-full blur-[100px] pointer-events-none"></div>
+<div class="max-w-[960px] mx-auto flex flex-col gap-stack-lg relative z-10">
+<!-- Success Banner -->
+<div class="glass-panel glass-panel-top-highlight rounded-xl p-6 flex flex-col md:flex-row items-center justify-between border-l-4 border-l-[#34d399] shadow-[0_10px_40px_rgba(0,0,0,0.2)]">
+<div class="flex items-center gap-stack-md">
+<div class="w-12 h-12 rounded-full bg-[#064e3b]/50 border border-[#34d399]/30 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#34d399] text-2xl" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<div>
+<h2 class="font-headline-md text-headline-md text-on-surface">Mission Accomplished</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-1">Your comprehensive research proposal is compiled and ready for deployment.</p>
+</div>
+</div>
+<div class="mt-4 md:mt-0 flex gap-stack-sm">
+<!-- Export Actions moved here for better flow, matching prompt request -->
+</div>
+</div>
+<!-- Export Actions Toolbar -->
+<div class="flex flex-wrap gap-stack-sm">
+<button id="export-pdf" class="flex items-center gap-2 bg-primary text-on-primary px-6 py-3 rounded-lg font-label-md text-label-md hover:bg-primary-fixed-dim transition-all shadow-[0_4px_20px_rgba(173,199,255,0.2)] hover:shadow-[0_4px_25px_rgba(173,199,255,0.4)] active:scale-95">
+<span class="material-symbols-outlined">picture_as_pdf</span>
+                    Export as PDF
+                </button>
+<button id="export-docx" class="flex items-center gap-2 bg-transparent border border-outline px-6 py-3 rounded-lg text-on-surface font-label-md text-label-md hover:border-primary hover:text-primary transition-all active:scale-95">
+<span class="material-symbols-outlined">description</span>
+                    Export as DOCX
+                </button>
+<button id="export-email" class="flex items-center gap-2 bg-transparent border border-outline px-6 py-3 rounded-lg text-on-surface font-label-md text-label-md hover:border-primary hover:text-primary transition-all active:scale-95">
+<span class="material-symbols-outlined">mail</span>
+                    Send to Email
+                </button>
+<button id="export-md" class="flex items-center gap-2 bg-transparent border border-outline px-6 py-3 rounded-lg text-on-surface font-label-md text-label-md hover:border-primary hover:text-primary transition-all active:scale-95" type="button"><span class="material-symbols-outlined">markdown</span>Export as Markdown</button>
+</div>
+<!-- Document Preview Container -->
+<div class="glass-panel glass-panel-top-highlight rounded-2xl overflow-hidden flex flex-col shadow-2xl mt-stack-md">
+<!-- Preview Header (Toolbar style) -->
+<div class="bg-surface-container-high px-6 py-4 border-b border-white/10 flex justify-between items-center">
+<div class="flex items-center gap-stack-sm">
+<span class="material-symbols-outlined text-primary text-xl">find_in_page</span>
+<span class="font-label-md text-label-md text-on-surface uppercase tracking-wider">Final Preview</span>
+</div>
+<div class="flex items-center gap-stack-sm text-on-surface-variant">
+<button id="zoom-out" class="hover:text-primary transition-colors"><span class="material-symbols-outlined">zoom_out</span></button>
+<span id="zoom-label" class="font-label-sm text-label-sm mx-2">100%</span>
+<button id="zoom-in" class="hover:text-primary transition-colors"><span class="material-symbols-outlined">zoom_in</span></button>
+</div>
+</div>
+<!-- Document Scroll Area -->
+<div id="doc-scroll" class="bg-[#1a1d21] p-margin-mobile md:p-margin-desktop h-[600px] overflow-y-auto flex flex-col items-center">
+<!-- Page 1: The Document Canvas (simulating an A4 or Letter page) -->
+<div class="ra-page bg-surface-container w-full max-w-[800px] rounded-sm shadow-xl border border-white/5 p-8 md:p-16 mb-stack-lg relative overflow-hidden">
+<!-- Watermark / Header accent -->
+<div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-tertiary"></div>
+<div class="absolute top-8 right-8 text-on-surface-variant/30 font-display-lg text-6xl font-bold italic pointer-events-none select-none">FINAL</div>
+<!-- Document Header -->
+<div class="mb-12 pb-8 border-b border-white/10">
+<div id="final-id" class="font-label-md text-label-md text-primary mb-2 font-mono">ID: RES-8924-B</div>
+<h1 id="final-title" class="font-headline-lg text-headline-lg font-bold text-on-surface leading-tight mb-4 text-3xl">Strategic Analysis of Decentralized Finance Markets in Q4</h1>
+<div class="flex flex-wrap gap-x-8 gap-y-2 font-label-sm text-label-sm text-on-surface-variant">
+<div class=""><span class="text-outline mr-2">AUTHOR:</span><span id="final-author">ResearchAI System</span></div>
+<div class=""><span class="text-outline mr-2">DATE:</span><span id="final-date">Oct 24, 2023</span></div>
+<div class=""><span class="text-outline mr-2">STATUS:</span><span id="final-status">Approved</span></div>
+</div>
+</div>
+<!-- Executive Summary Highlight -->
+<div class="bg-primary/5 border border-primary/20 rounded-lg p-6 mb-10 relative">
+<div class="absolute -left-[1px] top-4 w-1 h-12 bg-primary rounded-r"></div>
+<h2 class="font-label-md text-label-md text-primary uppercase tracking-wider mb-3 flex items-center gap-2">
+<span class="material-symbols-outlined text-sm">lightbulb</span>
+                                Executive Summary
+                            </h2>
+<div id="final-summary" class="font-body-md text-body-md text-on-surface/90 leading-relaxed">
+                                This proposal outlines a comprehensive strategy for navigating the volatile decentralized finance (DeFi) sector during the upcoming quarter. Analysis indicates a 34% shift towards Layer-2 solutions, necessitating a realignment of current asset allocations. We recommend a phased entry strategy prioritizing established protocols with robust security audits over experimental yield farms.
+                            </div>
+</div>
+<!-- Main Content (Simulated) -->
+<div id="final-body" class="space-y-6 font-body-md text-body-md text-on-surface-variant leading-relaxed">
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4">1. Market Dynamics &amp; Key Indicators</h3>
+<p class="">
+                                The macroeconomic environment has heavily influenced digital asset valuations, with traditional institutional capital beginning to cautiously explore decentralized yield opportunities. Our proprietary scraping algorithms have detected a sustained increase in smart contract deployments on Ethereum-compatible networks.
+                            </p>
+<!-- Embedded Data Vis Placeholder -->
+<div class="w-full h-48 bg-surface-container-high rounded border border-white/5 my-6 flex items-center justify-center text-outline font-label-sm text-label-sm">
+                                [ Chart: Asset Flow Distribution Q1-Q3 ]
+                            </div>
+<p class="">
+                                Volatility metrics suggest a period of consolidation is imminent. Consequently, the proposed strategy focuses on risk mitigation through delta-neutral positions and rigorous smart contract insurance protocols.
+                            </p>
+<h3 class="font-headline-md text-headline-md text-on-surface mb-4 mt-8">2. Strategic Recommendations</h3>
+<ul class="list-disc pl-6 space-y-2">
+<li class="">Increase allocation to stablecoin yield farming by 15%.</li>
+<li class="">Initiate rigorous audits of all integrated cross-chain bridges.</li>
+<li class="">Develop internal tracking tools for rapid response to governance proposals.</li>
+</ul>
+</div>
+</div>
+<!-- Page 2: Bibliography -->
+<div class="ra-page bg-surface-container w-full max-w-[800px] rounded-sm shadow-xl border border-white/5 p-8 md:p-16 mb-stack-lg">
+<div class="mb-8 border-b border-white/10 pb-4">
+<h2 class="font-headline-md text-headline-md text-on-surface font-bold">Source List &amp; Bibliography</h2>
+</div>
+<div id="final-sources" class="space-y-4">
+<!-- Source Item -->
+<div class="flex gap-4 p-4 rounded-lg hover:bg-surface-container-high transition-colors border border-transparent hover:border-white/5 group">
+<div class="mt-1">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-xl">article</span>
+</div>
+<div class="flex-1">
+<h4 class="font-body-md text-body-md text-on-surface font-medium group-hover:text-primary transition-colors">Global DeFi Adoption Index 2023</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-2">Chainalysis Report, September 2023</p>
+<div class="flex items-center gap-2 mt-2">
+<span class="px-2 py-1 bg-surface-variant rounded text-[10px] font-mono text-outline uppercase">Primary Source</span>
+<a class="text-primary font-label-sm text-label-sm hover:underline flex items-center gap-1" href="#" data-ra="unimplemented">
+                                            View Source <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Source Item -->
+<div class="flex gap-4 p-4 rounded-lg hover:bg-surface-container-high transition-colors border border-transparent hover:border-white/5 group">
+<div class="mt-1">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-xl">public</span>
+</div>
+<div class="flex-1">
+<h4 class="font-body-md text-body-md text-on-surface font-medium group-hover:text-primary transition-colors">Layer-2 Scaling Solutions: A Comparative Analysis</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-2">Ethereum Foundation Research Blog</p>
+<div class="flex items-center gap-2 mt-2">
+<span class="px-2 py-1 bg-surface-variant rounded text-[10px] font-mono text-outline uppercase">Technical</span>
+<a class="text-primary font-label-sm text-label-sm hover:underline flex items-center gap-1" href="#" data-ra="unimplemented">
+                                            View Source <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</a>
+</div>
+</div>
+</div>
+<!-- Source Item -->
+<div class="flex gap-4 p-4 rounded-lg hover:bg-surface-container-high transition-colors border border-transparent hover:border-white/5 group">
+<div class="mt-1">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-xl">database</span>
+</div>
+<div class="flex-1">
+<h4 class="font-body-md text-body-md text-on-surface font-medium group-hover:text-primary transition-colors">On-Chain Metrics Dataset (Q1-Q3)</h4>
+<p class="font-label-sm text-label-sm text-on-surface-variant mb-2">Dune Analytics Custom Dashboard</p>
+<div class="flex items-center gap-2 mt-2">
+<span class="px-2 py-1 bg-surface-variant rounded text-[10px] font-mono text-outline uppercase">Data Extract</span>
+<a class="text-primary font-label-sm text-label-sm hover:underline flex items-center gap-1" href="#" data-ra="unimplemented">
+                                            View Source <span class="material-symbols-outlined text-[14px]">open_in_new</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile Only) -->
+<nav class="md:hidden bg-surface-container-highest/90 backdrop-blur-lg fixed bottom-0 w-full rounded-t-xl z-50 shadow-[0_-10px_30px_rgba(0,123,255,0.1)] border-t border-white/10 flex justify-around items-center h-16 px-margin-mobile">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 transition-all font-label-sm text-label-sm" href="mission.html">
+<span class="material-symbols-outlined mb-1">rocket</span>
+<span class="">Mission</span>
+</a>
+
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 transition-all font-label-sm text-label-sm" href="drafting.html">
+<span class="material-symbols-outlined mb-1">history_edu</span>
+<span class="">Draft</span>
+</a>
+<!-- Active State Mobile -->
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-1 active:scale-90 transition-all font-label-sm text-label-sm font-bold" href="final.html" aria-current="page">
+<span class="material-symbols-outlined mb-0.5" data-weight="fill" style="font-variation-settings: 'FILL' 1;">task_alt</span>
+<span class="">Final</span>
+</a>
+</nav>
+
+
+<script src="assets/config.js"></script>
+<script src="assets/store.js"></script>
+<script src="assets/engine.js"></script>
+<script src="assets/app.js"></script>
+</body></html>

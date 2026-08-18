@@ -1,0 +1,400 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ResearchAI — Mission Control</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#20304f",
+                        "on-primary-container": "#00285b",
+                        "tertiary": "#b6c6ed",
+                        "secondary-container": "#3c4962",
+                        "on-background": "#e0e3e5",
+                        "inverse-primary": "#005bc0",
+                        "on-primary-fixed-variant": "#004493",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#374767",
+                        "surface-container": "#1d2022",
+                        "on-secondary-fixed-variant": "#39475f",
+                        "surface-container-high": "#272a2c",
+                        "primary-fixed": "#d8e2ff",
+                        "on-tertiary-container": "#192948",
+                        "primary-container": "#4a8eff",
+                        "on-surface": "#e0e3e5",
+                        "outline": "#8b90a0",
+                        "tertiary-fixed": "#d8e2ff",
+                        "secondary-fixed": "#d6e3ff",
+                        "surface-variant": "#323537",
+                        "secondary": "#b9c7e4",
+                        "surface-container-highest": "#323537",
+                        "tertiary-fixed-dim": "#b6c6ed",
+                        "primary-fixed-dim": "#adc7ff",
+                        "on-secondary-container": "#abb9d6",
+                        "on-primary": "#002e68",
+                        "inverse-on-surface": "#2d3133",
+                        "on-secondary-fixed": "#0d1c32",
+                        "outline-variant": "#414754",
+                        "on-surface-variant": "#c1c6d7",
+                        "on-tertiary-fixed": "#091b39",
+                        "surface": "#101415",
+                        "tertiary-container": "#8191b5",
+                        "surface-container-lowest": "#0b0f10",
+                        "surface-container-low": "#191c1e",
+                        "on-error": "#690005",
+                        "background": "#101415",
+                        "secondary-fixed-dim": "#b9c7e4",
+                        "inverse-surface": "#e0e3e5",
+                        "surface-bright": "#363a3b",
+                        "error-container": "#93000a",
+                        "surface-dim": "#101415",
+                        "on-secondary": "#233148",
+                        "primary": "#adc7ff",
+                        "error": "#ffb4ab",
+                        "surface-tint": "#adc7ff",
+                        "on-primary-fixed": "#001a41"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "unit": "8px",
+                        "margin-desktop": "40px",
+                        "container-max": "1440px",
+                        "stack-md": "16px",
+                        "stack-lg": "32px",
+                        "stack-sm": "8px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(44, 49, 51, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(139, 144, 160, 0.3);
+            border-radius: 4px;
+        }
+    </style>
+<link href="assets/app.css" rel="stylesheet"/>
+<link href="assets/favicon.svg" rel="icon" type="image/svg+xml"/>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen custom-scrollbar" data-page="mission">
+<!-- TopNavBar (Web) -->
+<nav class="hidden md:flex bg-background/80 backdrop-blur-xl fixed top-0 w-full z-50 shadow-sm flex justify-between items-center px-margin-desktop h-20">
+<div class="font-display-lg text-display-lg font-bold text-primary tracking-tight">ResearchAI</div>
+<div class="flex items-center gap-gutter">
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95 hover:text-primary transition-colors duration-200" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95 hover:text-primary transition-colors duration-200" data-icon="settings">settings</span>
+<img alt="User profile" class="w-10 h-10 rounded-full object-cover border border-white/10" data-alt="A professional user profile picture avatar. The image should be a stylized, high-tech abstract portrait or a clean minimal icon representing a user in a deep oceanic and electric blue color palette, matching the modern enterprise design system." src="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Crect width='40' height='40' rx='20' fill='%231d2022'/%3E%3Ccircle cx='20' cy='16' r='6' fill='%23adc7ff'/%3E%3Cpath d='M8 36c0-6.6 5.4-12 12-12s12 5.4 12 12' fill='%234a8eff'/%3E%3C/svg%3E">
+</div>
+</nav>
+<!-- SideNavBar (Web) -->
+<aside class="hidden md:flex bg-surface-container dark:bg-surface-container fixed left-0 top-0 h-full w-[280px] shadow-lg flex flex-col py-gutter gap-stack-lg border-r border-white/10 pt-28">
+<div class="px-gutter flex flex-col gap-stack-sm">
+<h2 class="font-headline-md text-headline-md font-bold text-primary">ResearchAI</h2>
+<p class="font-label-md text-label-md text-on-surface-variant">Expert Assistant</p>
+</div>
+<button class="mx-gutter bg-primary text-on-primary font-label-md text-label-md rounded-lg py-2 px-4 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity" data-ra="new-research">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+            New Research
+        </button>
+<div class="flex-1 px-unit flex flex-col gap-unit">
+<!-- Active Tab -->
+<a class="text-on-surface-variant hover:bg-surface-variant/50 hover:bg-surface-variant transition-all duration-200 active:scale-[0.98] rounded-lg font-label-md text-label-md flex items-center gap-3 px-4 py-3 mx-2" href="index.html">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+                Start
+            </a>
+<a class="bg-primary-container text-on-primary-container rounded-lg font-bold font-label-md text-label-md flex items-center gap-3 px-4 py-3 mx-2" href="mission.html" aria-current="page">
+<span class="material-symbols-outlined" data-icon="rocket_launch">rocket_launch</span>
+                Mission Control
+            </a>
+<!-- Inactive Tabs -->
+
+<a class="text-on-surface-variant hover:bg-surface-variant/50 hover:bg-surface-variant transition-all duration-200 active:scale-[0.98] rounded-lg font-label-md text-label-md flex items-center gap-3 px-4 py-3 mx-2" href="drafting.html">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+                Drafting
+            </a>
+<a class="text-on-surface-variant hover:bg-surface-variant/50 hover:bg-surface-variant transition-all duration-200 active:scale-[0.98] rounded-lg font-label-md text-label-md flex items-center gap-3 px-4 py-3 mx-2" href="final.html">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+                Final Delivery
+            </a>
+</div>
+<div class="px-unit flex flex-col gap-unit mt-auto">
+<a class="text-on-surface-variant hover:bg-surface-variant/50 hover:bg-surface-variant transition-all duration-200 active:scale-[0.98] rounded-lg font-label-md text-label-md flex items-center gap-3 px-4 py-3 mx-2" href="#" data-ra="unimplemented">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+                AI Assistant
+            </a>
+<a class="text-on-surface-variant hover:bg-surface-variant/50 hover:bg-surface-variant transition-all duration-200 active:scale-[0.98] rounded-lg font-label-md text-label-md flex items-center gap-3 px-4 py-3 mx-2" href="#" data-ra="unimplemented">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+                History
+            </a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="md:pl-[280px] pt-16 md:pt-28 pb-24 md:pb-12 min-h-screen flex flex-col items-center justify-start">
+<div class="w-full max-w-4xl px-margin-mobile md:px-margin-desktop flex flex-col gap-stack-lg">
+<!-- Header Section -->
+<div class="text-center flex flex-col gap-stack-sm">
+<h1 class="font-display-lg text-display-lg md:text-[48px] text-[32px] font-bold text-on-surface tracking-tight">RSI-Index</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Define your objectives and let the agent navigate the complexity.</p>
+</div>
+<!-- Step Indicator -->
+<div class="hidden md:flex justify-between items-center relative py-4 px-8 mb-4">
+<div class="absolute left-[10%] right-[10%] top-1/2 h-0.5 bg-outline/20 -z-10"></div>
+<div class="flex flex-col items-center gap-2">
+<div data-ra-step="0" class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center font-bold text-sm">0</div>
+<span class="text-xs text-primary font-label-sm uppercase tracking-wide">Foundation</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div data-ra-step="1" class="w-8 h-8 rounded-full bg-surface-container-high border border-outline/30 text-on-surface flex items-center justify-center font-bold text-sm">1</div>
+<span class="text-xs text-on-surface-variant font-label-sm uppercase tracking-wide">Inquiry</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div data-ra-step="2" class="w-8 h-8 rounded-full bg-surface-container-high border border-outline/30 text-on-surface flex items-center justify-center font-bold text-sm">2</div>
+<span class="text-xs text-on-surface-variant font-label-sm uppercase tracking-wide">Baseline</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div data-ra-step="3" class="w-8 h-8 rounded-full bg-surface-container-high border border-outline/30 text-on-surface flex items-center justify-center font-bold text-sm">3</div>
+<span class="text-xs text-on-surface-variant font-label-sm uppercase tracking-wide">Metrics</span>
+</div>
+<div class="flex flex-col items-center gap-2">
+<div data-ra-step="4" class="w-8 h-8 rounded-full bg-surface-container-high border border-outline/30 text-on-surface flex items-center justify-center font-bold text-sm">4</div>
+<span class="text-xs text-on-surface-variant font-label-sm uppercase tracking-wide">Governance</span>
+</div>
+</div>
+<div class="flex flex-col gap-stack-lg">
+<!-- Round 0: Foundation -->
+<div id="round-0" data-ra-round="0" class="glass-card rounded-xl p-gutter flex flex-col gap-stack-md shadow-lg border-l-4 border-l-primary">
+<h2 class="font-headline-md text-headline-md text-primary flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="foundation">foundation</span>
+            Round 0: Foundation
+        </h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter"><div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="github-url">GitHub Repository URL</label>
+<input class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="github-url" placeholder="https://github.com/..." type="url">
+</div>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="commit-hash">Commit Hash</label>
+<input class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="commit-hash" placeholder="e.g., a1b2c3d..." type="text">
+</div><div class="flex flex-col gap-stack-sm md:col-span-2">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="paper-link">Paper Link (arXiv/DOI)</label>
+<input class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="paper-link" placeholder="https://arxiv.org/abs/..." type="url">
+</div></div>
+</div>
+<!-- Round 1: Core Inquiry -->
+<div id="round-1" data-ra-round="1" class="glass-card rounded-xl p-gutter flex flex-col gap-stack-md shadow-lg border-l-4 border-l-surface-variant">
+<h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="psychology_alt">psychology_alt</span>
+            Round 1: Core Inquiry
+        </h2>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="research-question">Research Question</label>
+<textarea class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-4 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-none" id="research-question" placeholder="Detail the specific research questions or core hypotheses..." rows="6"></textarea>
+</div>
+</div>
+<!-- Round 2: Baseline Setup -->
+<div id="round-2" data-ra-round="2" class="glass-card rounded-xl p-gutter flex flex-col gap-stack-md shadow-lg border-l-4 border-l-surface-variant">
+<h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="tune">tune</span>
+            Round 2: Baseline Setup
+        </h2>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="baseline-name">Baseline Name</label>
+<input class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="baseline-name" placeholder="e.g., LLaMA-7B Base" type="text">
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="train-script">Training Script Entry </label>
+<input class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="train-script" placeholder="e.g., train.py" type="text">
+</div>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="train-data">Training Data Link </label>
+<input class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="train-data" placeholder="Dataset URL" type="url">
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="eval-script">Evaluation Script Entry </label>
+<input class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="eval-script" placeholder="e.g., eval.py" type="text">
+</div>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="eval-data">Evaluation Data Link </label>
+<input class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="eval-data" placeholder="Dataset URL" type="url">
+</div>
+</div>
+<div class="border-t border-white/5 pt-stack-sm mt-2">
+<h3 class="font-label-md text-label-md text-on-surface mb-4">Baseline Running Config<span class="relative inline-block align-middle ml-1.5"><button type="button" class="ra-help w-4 h-4 rounded-full border border-outline/50 text-on-surface-variant hover:text-primary hover:border-primary text-[10px] leading-none transition-colors" aria-label="What is this?">?</button><span class="ra-help-body hidden absolute left-0 top-6 z-30 w-80 normal-case tracking-normal bg-surface-container-high border border-outline/30 rounded-lg p-3 shadow-lg font-body-md text-body-md text-on-surface-variant">One run = one fixed candidate, from launch to a scoreable result. Reference budget: 8 H100-equivalent GPUs and 12 hours; over either, flag for resource review.</span></span></h3>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-gutter">
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="est-time">Estimated Time</label>
+<input class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="est-time" placeholder="e.g., 24h" type="text">
+</div>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="gpu-count">GPU Count</label>
+<input class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="gpu-count" placeholder="e.g., 8" type="number">
+</div>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="gpu-model">GPU Model</label>
+<div class="relative group">
+  <input class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="gpu-model" list="gpu-options" placeholder="Select or type model..." type="text">
+  <datalist id="gpu-options">
+    <option value="A100"></option>
+    <option value="H100"></option>
+    <option value="H200"></option>
+    <option value="RTX 4090"></option>
+    <option value="V100"></option>
+  </datalist>
+  <span class="material-symbols-outlined absolute right-3 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-sm" data-icon="expand_more">expand_more</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Round 3: Evaluation Metrics -->
+<div id="round-3" data-ra-round="3" class="glass-card rounded-xl p-gutter flex flex-col gap-stack-md shadow-lg border-l-4 border-l-surface-variant">
+<h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="insert_chart">insert_chart</span>
+            Round 3: Evaluation Metrics
+        </h2>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="benchmarks">Benchmarks to Use</label>
+<textarea class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-4 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-y" id="benchmarks" placeholder="e.g., MMLU, HumanEval" rows="3"></textarea>
+</div>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="eval-metrics">Evaluation Metrics</label>
+<textarea class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-4 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-y" id="eval-metrics" placeholder="e.g., Accuracy, Pass@1" rows="3"></textarea>
+</div>
+</div>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="baseline-result">Baseline Result</label>
+<textarea class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-4 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-y" id="baseline-result" placeholder="Score the repository reports for the baseline, with its source; not yet reproduced" rows="2"></textarea>
+</div>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="reward-def">Final Reward Definition</label>
+<textarea class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-4 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-y" id="reward-def" placeholder="Define the success criteria or reward function..." rows="4"></textarea>
+</div>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="hidden-eval">Hidden Final Evaluation (Optional)<span class="relative inline-block align-middle ml-1.5"><button type="button" class="ra-help w-4 h-4 rounded-full border border-outline/50 text-on-surface-variant hover:text-primary hover:border-primary text-[10px] leading-none transition-colors" aria-label="What is this?">?</button><span class="ra-help-body hidden absolute left-0 top-6 z-30 w-80 normal-case tracking-normal bg-surface-container-high border border-outline/30 rounded-lg p-3 shadow-lg font-body-md text-body-md text-on-surface-variant">Scored once after submission, never shown to the agent — no scores, no outputs, no logs. The reward above is the only signal it may iterate against.</span></span></label>
+<textarea class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-4 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-y" id="hidden-eval" placeholder="Held-out benchmark/split and metric the agent never sees during the task" rows="3"></textarea>
+</div>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="total-time">Total AutoResearch Time</label>
+<input class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="total-time" placeholder="e.g., 72h — this is also the agent timeout" type="text">
+</div>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="early-stop">Early-Stopping Signals (Optional)</label>
+<input class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all" id="early-stop" placeholder="e.g., dev-loss plateau, 1k-step proxy run" type="text">
+</div>
+</div>
+<!-- Round 4: Capabilities & Governance -->
+<div id="round-4" data-ra-round="4" class="glass-card rounded-xl p-gutter flex flex-col gap-stack-md shadow-lg border-l-4 border-l-surface-variant">
+<h2 class="font-headline-md text-headline-md text-on-surface flex items-center gap-2">
+<span class="material-symbols-outlined" data-icon="admin_panel_settings">admin_panel_settings</span>
+            Round 4: Capabilities &amp; Governance
+        </h2>
+<div class="flex flex-col gap-stack-md">
+<div>
+<h3 class="font-label-md text-label-md text-on-surface mb-3">Agent Permissions</h3>
+<div class="flex flex-col gap-3">
+<label class="flex items-center gap-3 cursor-pointer group">
+<input id="perm-web" class="w-5 h-5 rounded border-outline/30 text-primary focus:ring-primary bg-surface-container-high" type="checkbox">
+<span class="text-on-surface-variant group-hover:text-on-surface transition-colors">Web Access</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input id="perm-services" class="w-5 h-5 rounded border-outline/30 text-primary focus:ring-primary bg-surface-container-high" type="checkbox">
+<span class="text-on-surface-variant group-hover:text-on-surface transition-colors">External Services</span>
+</label>
+<label class="flex items-center gap-3 cursor-pointer group">
+<input id="perm-newdata" class="w-5 h-5 rounded border-outline/30 text-primary focus:ring-primary bg-surface-container-high" type="checkbox">
+<span class="text-on-surface-variant group-hover:text-on-surface transition-colors">New Data Collection/Generation</span>
+</label>
+</div>
+</div>
+<div class="flex flex-col gap-stack-sm">
+<label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="safeguards">Leakage &amp; Reward-Hacking Safeguards (Optional)</label>
+<textarea class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-4 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all resize-y" id="safeguards" placeholder="Concrete safeguards for the access granted above" rows="3"></textarea>
+</div>
+<div class="bg-surface-container p-4 rounded-lg border border-outline/20 mt-2">
+<p class="font-body-md text-body-md text-on-surface-variant italic">
+                    "The proposal must state whether the agent can use the web, external services, or newly collected/generated data."
+                </p>
+</div>
+</div>
+<!-- Action Button -->
+<div class="pt-stack-md flex justify-end mt-4 border-t border-white/5">
+<button id="example-btn" class="mr-3 border border-outline/40 text-on-surface-variant hover:text-primary hover:border-primary font-label-md text-label-md py-3 px-6 rounded-lg flex items-center gap-2 transition-all duration-200 active:scale-95" type="button"><span class="material-symbols-outlined">bolt</span>Load Example</button>
+<button id="launch-btn" class="bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary font-label-md text-label-md font-bold py-3 px-8 rounded-lg flex items-center gap-2 transition-all duration-200 shadow-[0_10px_30px_rgba(0,123,255,0.15)] transform active:scale-95">
+<span class="material-symbols-outlined" data-icon="rocket_launch">rocket_launch</span>
+                Launch Agent
+            </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden bg-surface-container-highest/90 backdrop-blur-lg fixed bottom-0 w-full rounded-t-xl z-50 flex justify-around items-center h-16 px-margin-mobile shadow-[0_-10px_30px_rgba(0,123,255,0.1)]">
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-2 font-label-sm text-label-sm active:scale-90 transition-transform" href="mission.html" aria-current="page">
+<span class="material-symbols-outlined" data-icon="rocket">rocket</span>
+            Mission
+        </a>
+
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary font-label-sm text-label-sm active:scale-90 transition-transform" href="drafting.html">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+            Draft
+        </a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary font-label-sm text-label-sm active:scale-90 transition-transform" href="final.html">
+<span class="material-symbols-outlined" data-icon="task_alt">task_alt</span>
+            Final
+        </a>
+</nav>
+
+
+<script src="assets/config.js"></script>
+<script src="assets/store.js"></script>
+<script src="assets/engine.js"></script>
+<script src="assets/app.js"></script>
+</body></html>

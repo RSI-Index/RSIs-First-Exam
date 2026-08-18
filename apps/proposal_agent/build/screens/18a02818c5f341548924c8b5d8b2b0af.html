@@ -1,0 +1,245 @@
+<!DOCTYPE html><html class="dark" lang="en" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ResearchAI - Mission Control</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary": "#20304f",
+                        "on-primary-container": "#00285b",
+                        "tertiary": "#b6c6ed",
+                        "secondary-container": "#3c4962",
+                        "on-background": "#e0e3e5",
+                        "inverse-primary": "#005bc0",
+                        "on-primary-fixed-variant": "#004493",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary-fixed-variant": "#374767",
+                        "surface-container": "#1d2022",
+                        "on-secondary-fixed-variant": "#39475f",
+                        "surface-container-high": "#272a2c",
+                        "primary-fixed": "#d8e2ff",
+                        "on-tertiary-container": "#192948",
+                        "primary-container": "#4a8eff",
+                        "on-surface": "#e0e3e5",
+                        "outline": "#8b90a0",
+                        "tertiary-fixed": "#d8e2ff",
+                        "secondary-fixed": "#d6e3ff",
+                        "surface-variant": "#323537",
+                        "secondary": "#b9c7e4",
+                        "surface-container-highest": "#323537",
+                        "tertiary-fixed-dim": "#b6c6ed",
+                        "primary-fixed-dim": "#adc7ff",
+                        "on-secondary-container": "#abb9d6",
+                        "on-primary": "#002e68",
+                        "inverse-on-surface": "#2d3133",
+                        "on-secondary-fixed": "#0d1c32",
+                        "outline-variant": "#414754",
+                        "on-surface-variant": "#c1c6d7",
+                        "on-tertiary-fixed": "#091b39",
+                        "surface": "#101415",
+                        "tertiary-container": "#8191b5",
+                        "surface-container-lowest": "#0b0f10",
+                        "surface-container-low": "#191c1e",
+                        "on-error": "#690005",
+                        "background": "#101415",
+                        "secondary-fixed-dim": "#b9c7e4",
+                        "inverse-surface": "#e0e3e5",
+                        "surface-bright": "#363a3b",
+                        "error-container": "#93000a",
+                        "surface-dim": "#101415",
+                        "on-secondary": "#233148",
+                        "primary": "#adc7ff",
+                        "error": "#ffb4ab",
+                        "surface-tint": "#adc7ff",
+                        "on-primary-fixed": "#001a41"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "gutter": "24px",
+                        "unit": "8px",
+                        "margin-desktop": "40px",
+                        "container-max": "1440px",
+                        "stack-md": "16px",
+                        "stack-lg": "32px",
+                        "stack-sm": "8px",
+                        "margin-mobile": "16px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["JetBrains Mono"],
+                        "headline-lg-mobile": ["Inter"],
+                        "body-lg": ["Inter"],
+                        "label-sm": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "display-lg": ["Inter"],
+                        "headline-lg": ["Inter"],
+                        "body-md": ["Inter"]
+                    },
+                    "fontSize": {
+                        "label-md": ["14px", { "lineHeight": "20px", "letterSpacing": "0.02em", "fontWeight": "500" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "28px", "fontWeight": "400" }],
+                        "label-sm": ["12px", { "lineHeight": "16px", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-card {
+            background: rgba(44, 49, 51, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(139, 144, 160, 0.3);
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen custom-scrollbar">
+<!-- TopNavBar (Web) -->
+<nav class="hidden md:flex bg-background/80 backdrop-blur-xl fixed top-0 w-full z-50 shadow-sm flex justify-between items-center px-margin-desktop h-20">
+<div class="font-display-lg text-display-lg font-bold text-primary tracking-tight">ResearchAI</div>
+<div class="flex items-center gap-gutter">
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95 hover:text-primary transition-colors duration-200" data-icon="notifications">notifications</span>
+<span class="material-symbols-outlined text-primary cursor-pointer active:scale-95 hover:text-primary transition-colors duration-200" data-icon="settings">settings</span>
+<img alt="User profile" class="w-10 h-10 rounded-full object-cover border border-white/10" data-alt="A professional user profile picture avatar. The image should be a stylized, high-tech abstract portrait or a clean minimal icon representing a user in a deep oceanic and electric blue color palette, matching the modern enterprise design system." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBvl9XlrPtZgj_EW6L6Q9nx4BZYgu4xSClRfYiPy1XaMquqqp-zZAaDLmboRKZYRYNqmMphGTw-Aydcozowg8Pz9s5NfgqMOS04KZtFwyUnlSOcohqB3Oeb4BgG1HIGimrID0_KIiSNGRLTp8OOYOY1Nd2mY28iCKjpbiAJ5aTkAaYa8S1m59iWJaiaFVPZshKRSCvyVyfX9rYv3E_3Rzaf6bGet_LVXnWR22gSpKAdrtMQZOtk6Nd-">
+</div>
+</nav>
+<!-- SideNavBar (Web) -->
+<aside class="hidden md:flex bg-surface-container dark:bg-surface-container fixed left-0 top-0 h-full w-[280px] shadow-lg flex flex-col py-gutter gap-stack-lg border-r border-white/10 pt-28">
+<div class="px-gutter flex flex-col gap-stack-sm">
+<h2 class="font-headline-md text-headline-md font-bold text-primary">ResearchAI</h2>
+<p class="font-label-md text-label-md text-on-surface-variant">Expert Assistant</p>
+</div>
+<button class="mx-gutter bg-primary text-on-primary font-label-md text-label-md rounded-lg py-2 px-4 flex items-center justify-center gap-2 hover:opacity-90 transition-opacity">
+<span class="material-symbols-outlined" data-icon="add">add</span>
+            New Research
+        </button>
+<div class="flex-1 px-unit flex flex-col gap-unit">
+<!-- Active Tab -->
+<a class="bg-primary-container text-on-primary-container rounded-lg font-bold font-label-md text-label-md flex items-center gap-3 px-4 py-3 mx-2" href="#">
+<span class="material-symbols-outlined" data-icon="rocket_launch">rocket_launch</span>
+                Mission Control
+            </a>
+<!-- Inactive Tabs -->
+
+<a class="text-on-surface-variant hover:bg-surface-variant/50 hover:bg-surface-variant transition-all duration-200 active:scale-[0.98] rounded-lg font-label-md text-label-md flex items-center gap-3 px-4 py-3 mx-2" href="#">
+<span class="material-symbols-outlined" data-icon="edit_note">edit_note</span>
+                Drafting
+            </a>
+<a class="text-on-surface-variant hover:bg-surface-variant/50 hover:bg-surface-variant transition-all duration-200 active:scale-[0.98] rounded-lg font-label-md text-label-md flex items-center gap-3 px-4 py-3 mx-2" href="#">
+<span class="material-symbols-outlined" data-icon="description">description</span>
+                Final Delivery
+            </a>
+</div>
+<div class="px-unit flex flex-col gap-unit mt-auto">
+<a class="text-on-surface-variant hover:bg-surface-variant/50 hover:bg-surface-variant transition-all duration-200 active:scale-[0.98] rounded-lg font-label-md text-label-md flex items-center gap-3 px-4 py-3 mx-2" href="#">
+<span class="material-symbols-outlined" data-icon="chat">chat</span>
+                AI Assistant
+            </a>
+<a class="text-on-surface-variant hover:bg-surface-variant/50 hover:bg-surface-variant transition-all duration-200 active:scale-[0.98] rounded-lg font-label-md text-label-md flex items-center gap-3 px-4 py-3 mx-2" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+                History
+            </a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="md:pl-[280px] pt-16 md:pt-28 pb-24 md:pb-12 min-h-screen flex flex-col items-center justify-center">
+<div class="w-full max-w-4xl px-margin-mobile md:px-margin-desktop flex flex-col gap-stack-lg">
+<!-- Header Section -->
+<div class="text-center flex flex-col gap-stack-sm">
+<h1 class="font-display-lg text-display-lg md:text-[48px] text-[32px] font-bold text-on-surface tracking-tight">Initialize New Research Mission</h1>
+<p class="font-body-lg text-body-lg text-on-surface-variant">Define your objectives and let the agent navigate the complexity.</p>
+</div>
+<!-- Main Input Card -->
+<div class="glass-card rounded-xl p-gutter flex flex-col gap-stack-md shadow-lg">
+<div class="flex flex-col gap-stack-md mb-stack-md">
+    <h3 class="font-headline-md text-headline-md font-bold text-primary">Basic Information</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-gutter">
+        <div class="flex flex-col gap-stack-sm">
+            <label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="full-name">Full Name</label>
+            <input type="text" id="full-name" placeholder="e.g. Dr. Jane Smith" class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+        </div>
+        <div class="flex flex-col gap-stack-sm">
+            <label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="institution">Institution / University</label>
+            <input type="text" id="institution" placeholder="e.g. Stanford University" class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+        </div>
+    <div class="flex flex-col gap-stack-sm">
+            <label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="contact">Contact</label>
+            <input type="text" id="contact" placeholder="e.g. jane.smith@university.edu" class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+        </div>
+        <div class="flex flex-col gap-stack-sm">
+            <label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="education">Education</label>
+            <input type="text" id="education" placeholder="e.g. PhD in Computer Science" class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+        </div></div>
+    <div class="flex flex-col gap-stack-sm">
+        <label class="font-label-sm text-label-sm text-on-surface-variant uppercase tracking-wider" for="research-field">Research Field</label>
+        <input type="text" id="research-field" placeholder="e.g. Quantum Computing / Molecular Biology" class="w-full bg-surface-container-high border border-outline/30 rounded-lg p-3 text-on-surface font-body-md focus:border-primary focus:ring-1 focus:ring-primary transition-all">
+    </div>
+    <div class="border-t border-white/5 mt-stack-sm"></div>
+</div>
+
+<!-- Configuration Section -->
+
+<!-- Action Button -->
+<div class="pt-stack-md flex justify-end">
+<button class="bg-primary-container text-on-primary-container hover:bg-primary hover:text-on-primary font-label-md text-label-md font-bold py-3 px-8 rounded-lg flex items-center gap-2 transition-all duration-200 shadow-[0_10px_30px_rgba(0,123,255,0.15)] transform active:scale-95">
+<span class="material-symbols-outlined" data-icon="rocket_launch">rocket_launch</span>
+                        Launch Agent
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="md:hidden bg-surface-container-highest/90 backdrop-blur-lg fixed bottom-0 w-full rounded-t-xl z-50 flex justify-around items-center h-16 px-margin-mobile shadow-[0_-10px_30px_rgba(0,123,255,0.1)]">
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-2 font-label-sm text-label-sm active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="rocket">rocket</span>
+            Mission
+        </a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary font-label-sm text-label-sm active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+            Analysis
+        </a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary font-label-sm text-label-sm active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="history_edu">history_edu</span>
+            Draft
+        </a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary font-label-sm text-label-sm active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined" data-icon="task_alt">task_alt</span>
+            Final
+        </a>
+</nav>
+
+
+
+
+
+
+
+
+</body></html>
