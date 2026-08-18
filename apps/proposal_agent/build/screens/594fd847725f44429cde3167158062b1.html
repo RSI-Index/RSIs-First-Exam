@@ -1,0 +1,473 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>ResearchAI - Drafting</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-tertiary": "#20304f",
+                      "on-primary-container": "#00285b",
+                      "tertiary": "#b6c6ed",
+                      "secondary-container": "#3c4962",
+                      "on-background": "#e0e3e5",
+                      "inverse-primary": "#005bc0",
+                      "on-primary-fixed-variant": "#004493",
+                      "on-error-container": "#ffdad6",
+                      "on-tertiary-fixed-variant": "#374767",
+                      "surface-container": "#1d2022",
+                      "on-secondary-fixed-variant": "#39475f",
+                      "surface-container-high": "#272a2c",
+                      "primary-fixed": "#d8e2ff",
+                      "on-tertiary-container": "#192948",
+                      "primary-container": "#4a8eff",
+                      "on-surface": "#e0e3e5",
+                      "outline": "#8b90a0",
+                      "tertiary-fixed": "#d8e2ff",
+                      "secondary-fixed": "#d6e3ff",
+                      "surface-variant": "#323537",
+                      "secondary": "#b9c7e4",
+                      "surface-container-highest": "#323537",
+                      "tertiary-fixed-dim": "#b6c6ed",
+                      "primary-fixed-dim": "#adc7ff",
+                      "on-secondary-container": "#abb9d6",
+                      "on-primary": "#002e68",
+                      "inverse-on-surface": "#2d3133",
+                      "on-secondary-fixed": "#0d1c32",
+                      "outline-variant": "#414754",
+                      "on-surface-variant": "#c1c6d7",
+                      "on-tertiary-fixed": "#091b39",
+                      "surface": "#101415",
+                      "tertiary-container": "#8191b5",
+                      "surface-container-lowest": "#0b0f10",
+                      "surface-container-low": "#191c1e",
+                      "on-error": "#690005",
+                      "background": "#101415",
+                      "secondary-fixed-dim": "#b9c7e4",
+                      "inverse-surface": "#e0e3e5",
+                      "surface-bright": "#363a3b",
+                      "error-container": "#93000a",
+                      "surface-dim": "#101415",
+                      "on-secondary": "#233148",
+                      "primary": "#adc7ff",
+                      "error": "#ffb4ab",
+                      "surface-tint": "#adc7ff",
+                      "on-primary-fixed": "#001a41"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "24px",
+                      "unit": "8px",
+                      "margin-desktop": "40px",
+                      "container-max": "1440px",
+                      "stack-md": "16px",
+                      "stack-lg": "32px",
+                      "stack-sm": "8px",
+                      "margin-mobile": "16px"
+              },
+              "fontFamily": {
+                      "label-md": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-lg-mobile": [
+                              "Inter"
+                      ],
+                      "body-lg": [
+                              "Inter"
+                      ],
+                      "label-sm": [
+                              "JetBrains Mono"
+                      ],
+                      "headline-md": [
+                              "Inter"
+                      ],
+                      "display-lg": [
+                              "Inter"
+                      ],
+                      "headline-lg": [
+                              "Inter"
+                      ],
+                      "body-md": [
+                              "Inter"
+                      ]
+              },
+              "fontSize": {
+                      "label-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "letterSpacing": "0.02em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "display-lg": [
+                              "48px",
+                              {
+                                      "lineHeight": "56px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "700"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.01em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+<style>
+        body {
+            background-color: #0A192F; /* Fallback deep navy */
+        }
+        .glass-panel {
+            background-color: rgba(50, 53, 55, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-top: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        .highlighted-text {
+            background-color: rgba(173, 199, 255, 0.2);
+            border-bottom: 2px dashed #adc7ff;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .highlighted-text:hover {
+            background-color: rgba(173, 199, 255, 0.3);
+        }
+        .ai-glow {
+            box-shadow: 0 0 15px rgba(74, 142, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- TopNavBar (Web) -->
+<header class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-white/10 shadow-sm hidden md:flex">
+<div class="flex justify-between items-center px-margin-desktop h-20 w-full max-w-container-max mx-auto">
+<div class="flex items-center gap-4">
+<span class="font-display-lg text-display-lg font-bold text-primary tracking-tight">ResearchAI</span>
+<span class="material-symbols-outlined text-primary text-3xl">insights</span>
+</div>
+<nav class="hidden lg:flex items-center gap-8">
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 cursor-pointer active:scale-95" href="#">Mission Control</a>
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 cursor-pointer active:scale-95" href="#">Live Analysis</a>
+<a class="text-primary font-bold border-b-2 border-primary pb-1 cursor-pointer active:scale-95" href="#">Drafting</a>
+<a class="text-on-surface-variant font-medium hover:text-primary transition-colors duration-200 cursor-pointer active:scale-95" href="#">Final Delivery</a>
+</nav>
+<div class="flex items-center gap-6">
+<button aria-label="Notifications" class="text-on-surface-variant hover:text-primary transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined text-2xl">notifications</span>
+</button>
+<button aria-label="Settings" class="text-on-surface-variant hover:text-primary transition-colors duration-200 cursor-pointer active:scale-95">
+<span class="material-symbols-outlined text-2xl">settings</span>
+</button>
+<div class="w-10 h-10 rounded-full border border-white/20 overflow-hidden bg-surface-variant">
+<img alt="User profile" class="w-full h-full object-cover" data-alt="A macro photography portrait of an abstract artificial intelligence persona, represented by glowing fiber optic threads and soft blue bioluminescence against a deep navy background. High-tech, corporate, mysterious." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAkv1eVXExwUOSStCSD-qdmIGa1102y3m6uJKWLwUUPHlE8sgJ9SaTiBdDG2w78XcEbMrACiMuK23czDxqQCSQuB0rwWCvHqPbyMf7IOx6iLXAurXuz1A1RxH-LEyYAKmSLRwm-8r9khhybvMiw_AtHPO5IDM-5JLAeZjARwlTLKnYs2kOWBJuxciSUGFPQRLY3Mk8MlYUC0Ke38bHuMavTxuLIIipG1pYcsw5BiI2mwo8VH1ruiR1V">
+</div>
+</div>
+</div>
+</header>
+<!-- SideNavBar (Web) -->
+<aside class="fixed left-0 top-0 h-full w-[280px] bg-surface-container dark:bg-surface-container border-r border-white/10 shadow-lg hidden md:flex flex-col py-gutter gap-stack-lg z-40 pt-28">
+<div class="px-gutter mb-4">
+<button class="w-full bg-primary-container text-on-primary-container py-3 px-4 rounded-lg font-label-md text-label-md font-bold flex items-center justify-center gap-2 hover:brightness-110 transition-all duration-200 active:scale-[0.98] shadow-[0_4px_14px_rgba(74,142,255,0.2)]">
+<span class="material-symbols-outlined">add</span>
+                New Research
+            </button>
+</div>
+<nav class="flex-1 px-4 flex flex-col gap-2">
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-xl">rocket_launch</span>
+<span class="font-label-md text-label-md">Mission Control</span>
+</a>
+
+<a class="flex items-center gap-3 px-4 py-3 bg-primary-container text-on-primary-container rounded-lg font-bold transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-xl" style="font-variation-settings: 'FILL' 1;">edit_note</span>
+<span class="font-label-md text-label-md">Drafting</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-xl">description</span>
+<span class="font-label-md text-label-md">Final Delivery</span>
+</a>
+</nav>
+<div class="mt-auto px-4 flex flex-col gap-2 border-t border-white/10 pt-4">
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-lg">chat</span>
+<span class="font-label-md text-label-md text-sm">AI Assistant</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-2 rounded-lg text-on-surface-variant hover:bg-surface-variant/50 transition-all duration-200 active:scale-[0.98]" href="#">
+<span class="material-symbols-outlined text-lg">history</span>
+<span class="font-label-md text-label-md text-sm">History</span>
+</a>
+</div>
+</aside>
+<!-- Main Content Area -->
+<main class="md:ml-[280px] pt-4 md:pt-28 pb-24 md:pb-8 px-margin-mobile md:px-margin-desktop min-h-screen flex flex-col max-w-container-max mx-auto">
+<!-- Header Section -->
+<div class="mb-stack-lg flex flex-col md:flex-row md:items-end justify-between gap-4">
+<div>
+<div class="flex items-center gap-2 mb-2 text-primary">
+<span class="material-symbols-outlined text-sm">cycle</span>
+<span class="font-label-sm text-label-sm uppercase tracking-wider">Step 3 of 4: Drafting &amp; Refinement</span>
+</div>
+<h1 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-background">Quantum Computing Integration Proposal</h1>
+</div>
+<div class="flex gap-3">
+<button class="px-4 py-2 rounded-lg border border-outline-variant text-on-surface hover:bg-surface-variant transition-colors flex items-center gap-2 font-label-md text-label-md">
+<span class="material-symbols-outlined text-sm">download</span>
+                    Export Draft
+                </button>
+<button class="px-4 py-2 rounded-lg bg-primary-container text-on-primary-container hover:brightness-110 transition-colors flex items-center gap-2 font-label-md text-label-md font-bold shadow-sm">
+<span class="material-symbols-outlined text-sm">check_circle</span>
+                    Approve &amp; Finalize
+                </button>
+</div>
+</div>
+<!-- Split View Layout -->
+<div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-gutter h-[calc(100vh-220px)] min-h-[600px]">
+<!-- Left Panel: Document Draft -->
+<div class="lg:col-span-8 glass-panel rounded-xl flex flex-col overflow-hidden relative">
+<!-- Toolbar -->
+<div class="h-12 border-b border-white/10 bg-surface-container/50 flex items-center justify-between px-4">
+<div class="flex items-center gap-2">
+<span class="font-label-md text-label-md text-on-surface-variant">v1.2 (Auto-Generated)</span>
+<div class="w-1 h-1 rounded-full bg-outline-variant"></div>
+<span class="font-label-md text-label-md text-primary flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            Live Sync
+                        </span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-1.5 rounded hover:bg-surface-variant text-on-surface-variant transition-colors" title="Undo">
+<span class="material-symbols-outlined text-sm">undo</span>
+</button>
+<button class="p-1.5 rounded hover:bg-surface-variant text-on-surface-variant transition-colors" title="Redo">
+<span class="material-symbols-outlined text-sm">redo</span>
+</button>
+<div class="w-px h-4 bg-white/10 mx-1"></div>
+<button class="p-1.5 rounded hover:bg-surface-variant text-on-surface-variant transition-colors" title="Format">
+<span class="material-symbols-outlined text-sm">format_align_left</span>
+</button>
+</div>
+</div>
+<!-- Document Content (Scrollable) -->
+<div class="flex-1 overflow-y-auto p-8 md:p-12 document-scroll">
+<div class="max-w-3xl mx-auto font-body-md text-body-md text-on-surface leading-relaxed space-y-6">
+<h2 class="font-headline-md text-headline-md text-on-background border-b border-white/10 pb-2 mb-4">Executive Summary</h2>
+<p class="">
+                            The integration of quantum computing frameworks into existing enterprise infrastructure represents a paradigm shift in processing capabilities. This proposal outlines a phased approach to adopting quantum-resistant cryptographic protocols and leveraging quantum annealing for complex supply chain optimization.
+                        </p>
+<h3 class="font-body-lg text-body-lg font-semibold text-primary mt-8 mb-3">1.0 Current Limitations</h3>
+<p class="">
+                            Classical computing architectures currently deployed within the core transaction processing network face <span class="highlighted-text" id="target-text-1">significant latency bottlenecks when handling concurrent cryptographic validations at scale</span>. As data volume increases by a projected 400% over the next 36 months, linear scaling of classical nodes becomes economically unviable.
+                        </p>
+<div class="bg-surface-variant/30 border border-outline-variant/50 rounded-lg p-4 my-6 flex gap-4 items-start">
+<span class="material-symbols-outlined text-primary mt-1">format_quote</span>
+<div class="text-sm italic text-on-surface-variant">
+                                "The imminent threat of 'Harvest Now, Decrypt Later' attacks necessitates immediate transition to post-quantum cryptographic standards, prioritizing operational continuity." - Internal Security Audit (Q2 2023)
+                            </div>
+</div>
+<h3 class="font-body-lg text-body-lg font-semibold text-primary mt-8 mb-3">2.0 Proposed Architecture Integration</h3>
+<p class="">
+                            We propose a hybrid classical-quantum architecture (HCQA). This model retains the existing robust transactional database while offloading computationally intensive heuristic modeling to a cloud-based quantum processing unit (QPU).
+                        </p>
+<ul class="list-disc list-inside space-y-2 ml-4 text-on-surface-variant mt-4">
+<li class=""><strong class="text-on-surface">Phase I:</strong> Implementation of NIST-approved Post-Quantum Cryptography (PQC) algorithms across all external-facing APIs.</li>
+<li class=""><strong class="text-on-surface">Phase II:</strong> Pilot deployment of QAOA (Quantum Approximate Optimization Algorithm) for logistics routing in the EMEA region.</li>
+<li class=""><strong class="text-on-surface">Phase III:</strong> Full integration of entanglement-based secure key distribution.</li>
+</ul>
+<p class="mt-6">
+                            Initial simulations indicate that Phase II could yield a <span class="highlighted-text" id="target-text-2">15-22% reduction in logistical overhead</span>, amortizing the initial QPU leasing costs within the first 18 months of deployment.
+                        </p>
+</div>
+</div>
+</div>
+<!-- Right Panel: Refinement Panel -->
+<div class="lg:col-span-4 flex flex-col gap-4 h-full">
+<!-- Action Card (Contextual to Highlight) -->
+<div class="glass-panel rounded-xl p-5 ai-glow relative overflow-hidden">
+<div class="absolute top-0 right-0 p-3 opacity-20">
+<span class="material-symbols-outlined text-4xl text-primary">auto_awesome</span>
+</div>
+<div class="flex items-center gap-2 mb-4">
+<span class="px-2 py-1 bg-primary/20 text-primary rounded text-[10px] font-label-sm uppercase tracking-wider font-bold">Context Active</span>
+<span class="text-xs text-on-surface-variant font-label-sm">Selection Analysis</span>
+</div>
+<div class="text-sm text-on-surface italic mb-4 border-l-2 border-primary pl-3">
+                        "...significant latency bottlenecks when handling concurrent cryptographic validations at scale..."
+                    </div>
+<div class="grid grid-cols-2 gap-2 mb-4">
+<button class="bg-surface-variant hover:bg-surface-variant/80 text-on-surface text-sm py-2 px-3 rounded border border-white/5 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">edit</span> Rewrite
+                        </button>
+<button class="bg-surface-variant hover:bg-surface-variant/80 text-on-surface text-sm py-2 px-3 rounded border border-white/5 transition-colors flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-sm">search</span> Deep Dive
+                        </button>
+<button class="bg-surface-variant hover:bg-surface-variant/80 text-on-surface text-sm py-2 px-3 rounded border border-white/5 transition-colors flex items-center justify-center gap-2 col-span-2">
+<span class="material-symbols-outlined text-sm">tune</span> Change Tone...
+                        </button>
+</div>
+</div>
+<!-- AI Suggestions List -->
+<div class="glass-panel rounded-xl flex-1 flex flex-col overflow-hidden">
+<div class="p-4 border-b border-white/10 flex justify-between items-center bg-surface-container/30">
+<h3 class="font-label-md text-label-md text-on-surface font-bold flex items-center gap-2">
+<span class="material-symbols-outlined text-sm text-primary">lightbulb</span>
+                            AI Suggestions
+                        </h3>
+<span class="text-xs bg-surface-variant px-2 py-1 rounded text-on-surface-variant">3 New</span>
+</div>
+<div class="flex-1 overflow-y-auto p-4 space-y-3">
+<!-- Suggestion Card 1 -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-colors p-4 rounded-lg border border-white/5 cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2 text-emerald-400">
+<span class="material-symbols-outlined text-sm">add_chart</span>
+<span class="text-xs font-label-sm uppercase">Data Missing</span>
+</div>
+<span class="bg-primary/10 text-primary text-[10px] px-1.5 py-0.5 rounded font-label-sm">High Impact</span>
+</div>
+<p class="text-sm text-on-surface mb-3">Add more specific statistical data regarding the projected 400% data volume increase to strengthen the argument.</p>
+<div class="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-xs text-primary hover:text-primary-fixed-dim font-medium flex items-center gap-1">
+                                    Apply Suggestion <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Suggestion Card 2 -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-colors p-4 rounded-lg border border-white/5 cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2 text-amber-400">
+<span class="material-symbols-outlined text-sm">gavel</span>
+<span class="text-xs font-label-sm uppercase">Counter-Argument</span>
+</div>
+<span class="bg-surface-variant text-on-surface-variant text-[10px] px-1.5 py-0.5 rounded font-label-sm">Medium Impact</span>
+</div>
+<p class="text-sm text-on-surface mb-3">Consider addressing the potential hardware acquisition delays and supply chain issues related to QPU integration.</p>
+<div class="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-xs text-primary hover:text-primary-fixed-dim font-medium flex items-center gap-1">
+                                    Draft Rebuttal <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- Suggestion Card 3 -->
+<div class="bg-surface-container hover:bg-surface-container-high transition-colors p-4 rounded-lg border border-white/5 cursor-pointer group">
+<div class="flex justify-between items-start mb-2">
+<div class="flex items-center gap-2 text-tertiary">
+<span class="material-symbols-outlined text-sm">format_paint</span>
+<span class="text-xs font-label-sm uppercase">Style</span>
+</div>
+</div>
+<p class="text-sm text-on-surface mb-3">The phrasing in Section 2.0 is slightly passive. Active voice would make the proposal more authoritative.</p>
+<div class="flex justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="text-xs text-primary hover:text-primary-fixed-dim font-medium flex items-center gap-1">
+                                    Auto-Revise <span class="material-symbols-outlined text-[12px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<div class="p-3 border-t border-white/10 bg-surface-container/50">
+<div class="relative">
+<input class="w-full bg-surface-variant border border-outline-variant/50 rounded-lg pl-3 pr-10 py-2 text-sm text-on-surface focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all font-body-md placeholder:text-on-surface-variant/50" placeholder="Ask AI to refine specific sections..." type="text">
+<button class="absolute right-2 top-1/2 -translate-y-1/2 text-primary hover:text-primary-fixed-dim transition-colors">
+<span class="material-symbols-outlined text-lg">send</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- BottomNavBar (Mobile) -->
+<nav class="fixed bottom-0 w-full rounded-t-xl z-50 bg-surface-container-highest/90 backdrop-blur-lg border-t border-white/10 shadow-[0_-10px_30px_rgba(0,123,255,0.1)] flex justify-around items-center h-16 px-margin-mobile md:hidden">
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-2xl">rocket</span>
+<span class="font-label-sm text-label-sm mt-1">Mission</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-2xl">query_stats</span>
+<span class="font-label-sm text-label-sm mt-1">Analysis</span>
+</a>
+<a class="flex flex-col items-center justify-center bg-primary-container text-on-primary-container rounded-xl px-4 py-2 active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-2xl" style="font-variation-settings: 'FILL' 1;">history_edu</span>
+<span class="font-label-sm text-label-sm mt-1 font-bold">Draft</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant hover:text-primary active:scale-90 transition-transform" href="#">
+<span class="material-symbols-outlined text-2xl">task_alt</span>
+<span class="font-label-sm text-label-sm mt-1">Final</span>
+</a>
+</nav>
+<style>
+        /* Custom scrollbar for document area to maintain aesthetic */
+        .document-scroll::-webkit-scrollbar {
+            width: 8px;
+        }
+        .document-scroll::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 4px;
+        }
+        .document-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+        }
+        .document-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+
+
+</body></html>
