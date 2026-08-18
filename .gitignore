@@ -30,6 +30,12 @@ jobs/
 # Harbor datasets
 datasets/
 
+# Local clones of the private rubric repo (RSI-Index-Rubrics). Never let a
+# rubric back into this public tree.
+private-rubrics/
+RSI-Index-Rubrics/
+task-proposal.md
+
 # /review-task skill artifacts (downloaded in worktrees)
 .review/
 
