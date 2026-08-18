@@ -34,7 +34,6 @@ datasets/
 # rubric back into this public tree.
 private-rubrics/
 RSI-Index-Rubrics/
-task-proposal.md
 
 # /review-task skill artifacts (downloaded in worktrees)
 .review/
