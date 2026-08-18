@@ -1,6 +1,6 @@
 # Discord Review Bot
 
-A Discord bot that automatically reviews task proposals posted in a forum channel. It uses the same rubric and review automation as the CI checks, so customizing `rubrics/task-proposal.md` at the repo root updates both CI and Discord reviews.
+A Discord bot that automatically reviews task proposals posted in a forum channel. It uses the same rubric and review automation as the CI checks, so editing `task-proposal.md` in the private rubric repository ([`Zhuofeng-Li/RSI-Index-Rubrics`](https://github.com/Zhuofeng-Li/RSI-Index-Rubrics)) updates both CI and Discord reviews.
 
 ## How It Works
 
@@ -16,7 +16,7 @@ The bot reuses shared abstractions from `checks/rubric_review.py`:
 
 | Import | Purpose |
 |--------|---------|
-| `load_rubric()` | Loads `rubrics/task-proposal.md` from the repo root |
+| `load_rubric()` | Loads `task-proposal.md` from `RUBRIC_FILE`, or a sibling `RSI-Index-Rubrics/` clone |
 | `async_call_anthropic()` | Async wrapper around the Anthropic Messages API |
 | `extract_decision()` | Parses the decision line from the review output |
 | `DEFAULT_MODEL` | Default Claude model (consistent with CI) |
@@ -50,7 +50,7 @@ cp .env.example .env
 | `CHANNEL_ID` | Yes | — | Forum channel ID to watch |
 | `MODEL` | No | Value from `rubric_review.py` | Claude model to use |
 | `MIN_PROPOSAL_LENGTH` | No | `50` | Minimum character length to trigger a review |
-| `RUBRIC_FILE` | No | `rubrics/task-proposal.md` (repo root) | Path to rubric file |
+| `RUBRIC_FILE` | No | `../RSI-Index-Rubrics/task-proposal.md` | Path to the private rubric file |
 
 ## Running
 
@@ -63,7 +63,7 @@ The bot logs to stdout. You should see:
 Logged in as YourBot#1234 (id=...)
 Watching forum channel: 123456789
 Model: claude-opus-4-8
-Rubric: /path/to/rubrics/task-proposal.md
+Rubric: /path/to/RSI-Index-Rubrics/task-proposal.md
 ```
 
 ## Testing
@@ -140,7 +140,7 @@ bash tools/discord-review-bot/setup-railway.sh
 cd tools/discord-review-bot && railway up --no-gitignore
 ```
 
-The setup script copies shared files (`checks/rubric_review.py`, `rubrics/task-proposal.md`) into the bot directory so it's self-contained, and auto-sets `REPO_URL` in Railway.
+The setup script copies `checks/rubric_review.py` and the rubric from `$RUBRIC_FILE` into the bot directory so it's self-contained, and auto-sets `REPO_URL` in Railway. It fails with a clear message if the private rubric is not cloned.
 
 **Important:** Use `railway up` from the `tools/discord-review-bot/` directory — this uploads only the bot files. If Railway builds from the repo root instead, use `--path-as-root` from the repo root:
 
@@ -151,4 +151,4 @@ railway up --no-gitignore --path-as-root tools/discord-review-bot
 
 ## Customization
 
-To change how proposals are reviewed, edit `rubrics/task-proposal.md` at the repo root. Both the CI rubric review workflow and this Discord bot read from the same file.
+To change how proposals are reviewed, edit `task-proposal.md` in the private rubric repository. Both the CI rubric review workflow and this Discord bot read from that same file; redeploy the bot to pick up a change.

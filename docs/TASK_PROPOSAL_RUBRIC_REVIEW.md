@@ -1,9 +1,16 @@
 # Run the Task Proposal Rubric Review
 
-The proposal review applies
-[`rubrics/task-proposal.md`](../rubrics/task-proposal.md) before baseline
-reproduction. It evaluates the proposal and repository evidence; it does not run
-training, reproduce the baseline, or require measured variance yet.
+The proposal review applies `task-proposal.md` before baseline reproduction. It
+evaluates the proposal and repository evidence; it does not run training,
+reproduce the baseline, or require measured variance yet.
+
+The rubric is private. It lives in
+[`Zhuofeng-Li/RSI-Index-Rubrics`](https://github.com/Zhuofeng-Li/RSI-Index-Rubrics),
+not in this repository, so that proposals are written to the research bar rather
+than to a published checklist. The discussion workflow checks that repository
+out per run using the `RUBRIC_REPO_TOKEN` secret and passes the path to the
+runner as `RUBRIC_FILE`. The workflow also uses a `DISCUSSION_TOKEN` secret
+with write access to post or update its review comment.
 
 ## Judge configuration
 
@@ -42,7 +49,7 @@ If the URL, ref, or evidence paths are missing or cannot be fetched, the runner
 records that fact in the evidence bundle rather than pretending the repository
 was reviewed.
 
-## Run locally
+## Run locally (maintainers)
 
 Create a non-empty `proposal.md`, then run from the repository root:
 
@@ -68,10 +75,40 @@ compute flag alone still receives `Accept` or `Strong Accept` at proposal stage.
 Strict resource approval and empirical variance gating happen after baseline
 reproduction.
 
+## Run locally (contributors)
+
+The rubric stays private, but contributors can request a review through the
+hosted service. Ask the service owner for a `JUDGE_API_KEY`, then supply that
+key together with **your own** OpenAI API key. The OpenAI key is used only for
+your request, and you pay for that model usage.
+
+From this repository's root:
+
+```bash
+export JUDGE_URL='https://rsi-index-judge.zhuofengli12345.workers.dev'
+export JUDGE_API_KEY='sMdBJubpUHc14Cu1joF8RgNmMAbu79RW0rgvIEfX3Hw'
+export OPENAI_API_KEY='your own OpenAI API key'
+
+python3 tools/rubric-review-service/scripts/evaluate.py proposal.md
+```
+
+The command prints one JSON object containing `decision`, `review`, `model`,
+and `reasoning_effort`. A successful decision is exactly one of `Strong Reject`,
+`Reject`, `require human review`, `Accept`, or `Strong Accept`. Keep the review
+with the proposal while revising it; the rubric itself is never returned.
+
+For a quick connectivity check that does not need either key or call OpenAI:
+
+```bash
+curl https://rsi-index-judge.zhuofengli12345.workers.dev/health
+```
+
 ## Submit the proposal
 
-After the local review returns `Accept` or `Strong Accept`, create a new
+Create a new
 [`Task Ideas` discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/new?category=task-ideas)
-and paste the proposal into it. Publishing or editing the discussion triggers the
-same fixed review configuration. Revise substantive proposal issues before task
-implementation begins.
+and paste the proposal into it. Publishing or editing the discussion runs the
+review under the fixed configuration above and posts the recommendation as a
+comment. You may run a local review first, but the Discussion result is the
+record used for the proposal process. Revise substantive proposal issues before
+task implementation begins.

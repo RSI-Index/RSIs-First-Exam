@@ -17,13 +17,34 @@ mkdir -p "$BOT_DIR/checks"
 cp "$REPO_ROOT/checks/rubric_review.py" "$BOT_DIR/checks/rubric_review.py"
 touch "$BOT_DIR/checks/__init__.py"
 
-# Copy the rubric (DEFAULT_RUBRIC_FILE resolves to ../../rubrics/task-proposal.md
-# relative to rubric_review.py, which lands at the bot dir root)
+# Copy the rubric out of the private rubric repository. It is deliberately not
+# in this public tree, so point RUBRIC_FILE at a clone of
+# https://github.com/Zhuofeng-Li/RSI-Index-Rubrics before running this script.
+# The copy lands where rubric_review.py's RUBRIC_FILE default expects it inside
+# the deployed bot.
+RUBRIC_FILE="${RUBRIC_FILE:-$REPO_ROOT/../RSI-Index-Rubrics/task-proposal.md}"
+if [ ! -f "$RUBRIC_FILE" ]; then
+  echo "ERROR: proposal rubric not found at $RUBRIC_FILE" >&2
+  echo "Clone https://github.com/Zhuofeng-Li/RSI-Index-Rubrics and set RUBRIC_FILE." >&2
+  exit 1
+fi
 mkdir -p "$BOT_DIR/rubrics"
-cp "$REPO_ROOT/rubrics/task-proposal.md" "$BOT_DIR/rubrics/task-proposal.md"
+cp "$RUBRIC_FILE" "$BOT_DIR/rubrics/task-proposal.md"
 
-# Derive REPO_URL from git remote and set it in Railway so the bot can
-# link back to the rubric.  Works for both SSH and HTTPS remotes.
+# rubric_review.py's DEFAULT_RUBRIC_FILE points at a sibling clone of the private
+# rubric repo, which does not exist in the deployed bot, so the deployment is
+# told where its own copy landed.
+DEPLOYED_RUBRIC_FILE="rubrics/task-proposal.md"
+if command -v railway &>/dev/null; then
+  echo "Setting RUBRIC_FILE=$DEPLOYED_RUBRIC_FILE in Railway..."
+  railway variables set RUBRIC_FILE="$DEPLOYED_RUBRIC_FILE"
+else
+  echo "railway CLI not found — set RUBRIC_FILE manually in Railway dashboard:"
+  echo "  RUBRIC_FILE=$DEPLOYED_RUBRIC_FILE"
+fi
+
+# Derive REPO_URL from git remote and set it in Railway so the bot can link
+# back to the repository.  Works for both SSH and HTTPS remotes.
 REMOTE_URL=$(git -C "$REPO_ROOT" remote get-url origin 2>/dev/null || true)
 if [ -n "$REMOTE_URL" ]; then
   # Normalise SSH (git@github.com:org/repo.git) → HTTPS

@@ -25,7 +25,13 @@ from urllib.parse import quote, unquote
 import httpx
 from openai import AsyncOpenAI, OpenAI
 
-DEFAULT_RUBRIC_FILE = Path(__file__).parent.parent / "rubrics/task-proposal.md"
+# The proposal rubric lives in the private rubric repository rather than this
+# public tree, so its location is supplied instead of assumed. Workflows check
+# that repository out and set RUBRIC_FILE; locally, clone it beside this one.
+PRIVATE_RUBRIC_REPO = "https://github.com/Zhuofeng-Li/RSI-Index-Rubrics"
+DEFAULT_RUBRIC_FILE = (
+    Path(__file__).parent.parent.parent / "RSI-Index-Rubrics" / "task-proposal.md"
+)
 JUDGE_MODEL = "gpt-5.6-sol"
 JUDGE_REASONING_EFFORT = "xhigh"
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
@@ -395,7 +401,12 @@ def build_judge_input(
 
 def load_rubric(rubric_path: Path) -> str:
     if not rubric_path.exists():
-        print(f"Error: Rubric file not found at {rubric_path}", file=sys.stderr)
+        print(
+            f"Error: rubric file not found at {rubric_path}.\n"
+            f"The proposal rubric is private ({PRIVATE_RUBRIC_REPO}). Clone it and\n"
+            "point --rubric or RUBRIC_FILE at task-proposal.md.",
+            file=sys.stderr,
+        )
         raise SystemExit(1)
     return rubric_path.read_text()
 

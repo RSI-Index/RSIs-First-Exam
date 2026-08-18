@@ -265,11 +265,11 @@ async def review_and_reply(
 
     # Post disclaimer clarifying this is a recommendation, not a final decision
     if REPO_URL:
-        rubric_url = f"{REPO_URL}/blob/main/rubrics/task-proposal.md"
+        # The rubric is private, so the disclaimer names it without linking it.
         disclaimer = (
             f"-# \U0001f916 This is an automated recommendation for a human "
             f"maintainer \u2014 not a final decision. "
-            f"Based on [rubrics/task-proposal.md]({rubric_url})."
+            f"Judged against the private task proposal rubric."
         )
     else:
         disclaimer = (
