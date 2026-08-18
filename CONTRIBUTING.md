@@ -119,13 +119,13 @@ Before creating your task, you'll need to set up your development environment.
 
 ### 1. Fork the repository
 
-Navigate to the [Terminal-Bench 3.0](https://github.com/harbor-framework/terminal-bench-3) repository and click "Fork" in the top right.
+Navigate to the [RSI-Index-Public](https://github.com/RSI-Index/RSI-Index-Public) repository and click "Fork" in the top right.
 
 ### 2. Clone your fork
 
 ```bash
-git clone https://github.com/<YOUR_GITHUB_USERNAME>/terminal-bench-3.git
-cd terminal-bench-3
+git clone https://github.com/<YOUR_GITHUB_USERNAME>/RSI-Index-Public.git
+cd RSI-Index-Public
 ```
 
 ### 3. Install Harbor
