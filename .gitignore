@@ -36,3 +36,8 @@ datasets/
 # Local dry-run output from generate_chart.py (CI publishes to the `chart` branch)
 docs/diagrams/tb3-by-domain.svg
 docs/diagrams/cache.json
+
+tmp.sh
+todo
+bakeart_v2.0_schema_cpu_simplified
+concurrent-agent-serving-optimizer-qwen36-27b
