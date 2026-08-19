@@ -40,7 +40,7 @@ Present the fixed orientation from [references/onboarding.md](references/onboard
 
 ## Round 1 — Scientific question
 
-Inspect the repository before drafting. Produce one focused, falsifiable model-development question; if the idea is broad, offer at most three directions and let the contributor choose. Confirm the manipulated component, outcome, rough candidate-owned deliverable, and repeated change-run-observe-update loop. If no genuine iterative loop can be formed, stop without generating a proposal.
+Inspect the repository before drafting. Produce one focused, falsifiable model-development question; if the idea is broad, offer at most three directions and let the contributor choose. Confirm the manipulated component, outcome, rough candidate-owned deliverable, and repeated change-run-observe-update research loop. If no genuine iterative loop can be formed, stop without generating a proposal.
 
 ## Round 2 — Reference baseline
 
