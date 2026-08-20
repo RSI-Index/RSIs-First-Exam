@@ -4,11 +4,13 @@ Verifier implements the fixed scientific comparison inside each disposable Judge
 
 ## Actual isolation model
 
-On `rsi-submit`, RSI-Harness pauses Work, snapshots Work state, creates Judge from the shared Base/Work environment, injects exactly `tests/` into a private `/tests` tmpfs, mounts `/logs/verifier`, and runs `/bin/bash /tests/test.sh`. In split-WORKDIR mode Judge sees the current `/workspace` snapshot read-only. Judge writes never flow back to Work.
+On `rsi-submit`, RSI-Harness pauses Work, snapshots Work state, creates Judge from the shared Base/Work environment, injects exactly `tests/` into a private `/tests` tmpfs, mounts `/logs/verifier`, and runs `/bin/bash /tests/test.sh`. In split-WORKDIR mode Judge sees the current effective WORKDIR snapshot read-only. Judge writes never flow back to Work.
 
 Work never receives the task's `tests/` source. Do not add `tests/Dockerfile` or `environment_mode = "separate"`; RSI-Harness rejects them.
 
 This is not an independent trusted verifier image. The Agent is root in Work and can modify system packages, shells, binaries, and libraries that Judge later inherits. Private `/tests` and a read-only candidate WORKDIR materially help, but they do not make every shared runtime dependency trustworthy. State this limitation and use task-specific defenses.
+
+Docker commit transfers filesystem state only. Judge cannot inherit Work's live model server, GPU memory, open files, or background processes. The scoreable candidate must be completely materialized and flushed before submission; Verifier starts clean and reloads it from disk. In split-WORKDIR mode, candidate loading must succeed while that directory is read-only. Put unavoidable disposable runtime/cache scratch outside it and never use scratch as a result, feedback, or cross-round state channel.
 
 ## Fixed evaluation contract
 
@@ -24,6 +26,8 @@ Translate the confirmed proposal into exact constants:
 - scalar `reward` direction.
 
 If any value changes the scientific comparison and is absent from the proposal/repository, ask the contributor before authoring. Do not invent a hidden split just because hidden evaluation is preferred. Do not hide a requirement the contributor must satisfy; instructions describe the outcome while tests may reserve concrete cases.
+
+RSI-Harness has no hidden final-Judge mode. Every `rsi-submit` exposes the complete captured Judge stdout/stderr through `/run/rsi-harness/feedback/agent-N.log` and reports a footer with round, status, reward, optional score, exit code, timeout flag, duration, remaining submission budget, and any error. `rsi-submit --list` exposes the submission history. The 1,000,000-byte `output_limit_bytes` default bounds the in-memory/report copy, not the separately streamed durable `agent-N.log`; do not use it to claim that the Agent cannot access the complete log. If the scientific protocol requires a truly hidden final evaluation, define that as an external post-run evaluation or change the proposal; do not mislabel the in-Harness Judge as hidden.
 
 ## AutoResearch scoring
 
@@ -53,7 +57,7 @@ For stochastic quality tasks, fix seeds/workload and use enough repetitions or m
 
 ## Reward and output lifecycle
 
-`tests/test.sh` and helpers must use stdout/stderr for all contributor-visible feedback. They must not create task-authored temporary reports, pytest capture files, JSON intermediates, or side-channel reason files.
+`tests/test.sh` and helpers must use stdout/stderr for all contributor-visible feedback. They must not create task-authored temporary reports, pytest capture files, JSON intermediates, or side-channel reason files. A plain reference to `/tmp` is not itself a write; inspect actual control flow. Unavoidable disposable scratch created internally by a library is acceptable only outside a read-only WORKDIR, with no protected contents and no role in scoring persistence.
 
 The sole result file is the final Harbor reward:
 
@@ -88,7 +92,7 @@ through its actual control flow:
 - If using pytest, bake `pytest==9.1.1`. Add `pytest-json-ctrf==0.5.2` only when the task truly uses that plugin; RSI-Harness does not require CTRF.
 - Do not redirect evaluator output to files. Let it stream.
 - Do not use bare `nproc`; choose a deterministic task-bounded worker count.
-- Use absolute paths such as `/tests/...`, `/workspace/...`, and `/logs/verifier/reward.json`.
+- Use absolute paths such as `/tests/...`, `<effective-workdir>/...`, and `/logs/verifier/reward.json`.
 - Keep `tests/` below the 100,000-entry/1-GiB injection limit.
 
 ## Defenses against an untrusted candidate
@@ -111,6 +115,6 @@ No static pattern proves anti-cheat safety. Review the actual candidate executio
 
 ## Optional baseline solution
 
-Generate `solution/solve.sh` only when the repository baseline can be expressed as a traceable, legitimate runner or reset. It demonstrates that the starting candidate can reach a scoreable baseline; it is not an optimal answer and must not be copied or referenced by Environment or Verifier.
+Generate `solution/solve.sh` only when the repository baseline can be expressed as a traceable external/manual smoke helper. RSI-Harness never executes it. It demonstrates how the starting candidate can reach a scoreable baseline; it is not an optimal answer and must not be copied or referenced by Environment or Verifier.
 
 For inherently long runs, a precomputed baseline artifact is acceptable only when the proposal confirms it, its generation script and provenance are included, its checksum is fixed, and it contains no hidden final answer. Otherwise omit Solution and leave baseline execution as a pending check.

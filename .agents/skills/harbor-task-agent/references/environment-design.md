@@ -7,18 +7,22 @@ Environment defines the clean Base image and the persistent Work state. Judge sh
 Freeze these values before Verifier design:
 
 ```text
-WORKDIR: normally /workspace
+WORKDIR: existing absolute POSIX path; /workspace is the default convention
 starting source: official URL + exact 40-character SHA
 starting assets: exact paths, revisions, hashes, and visibility
 candidate-owned paths: absolute paths
 prohibited paths/state: absolute paths or named components
 Verifier entry interface: command/module/artifact to evaluate
 Work resources: GPUs, CPUs, memory, storage estimate, shm_size
+build budget: build_timeout_sec
+common/Judge env: [environment.env] plus [verifier.env] overrides
 Agent network: public, no-network, or exact allowlist
 runtime provider route: explicit API base/proxy requirement when non-public
 ```
 
-Use a non-root `/workspace` WORKDIR by default. RSI-Harness places it in an Engine-owned volume, keeps it across rounds, and mounts its Judge snapshot read-only. The clean image must already contain `/workspace` and the starting files.
+Use a non-root `/workspace` WORKDIR by default, but follow repository or image evidence when the real code directory is `/testbed`, `/repo`, `/app`, or another absolute path. RSI-Harness gives no special meaning to `/workspace`. A non-root directory must already exist in the clean image; RSI-Harness places it in an Engine-owned volume, keeps it across rounds, and mounts its Judge snapshot read-only. The WORKDIR must not overlap `/tests`, `/logs/verifier`, or `/run/rsi-harness/staging`.
+
+Use `/` only when full-filesystem visibility is necessary. It selects full-rootfs snapshots, so large changes anywhere in the container increase submission snapshot time and Docker storage. Record that operational cost in README and the contributor review.
 
 ## Source state
 
@@ -46,6 +50,8 @@ Everything under `environment/` enters the Work build context and may be visible
 
 If a public asset is too large for `tests/`, it may be baked into Environment only when it is intentionally visible to Work and contains no hidden evaluation information. Hidden `tests/` injection is limited to 100,000 entries and 1 GiB of regular-file bytes.
 
+A Dockerfile is optional when `[environment].docker_image` or Compose `image` names a reviewed prebuilt image. Pin that image by digest and confirm its effective WORKDIR, source/assets, dependencies, user, license, provenance, and empty Docker `Config.Volumes`. RSI-Harness rejects an image that declares any volume because its contents fall outside snapshot ownership. Checking image metadata is an image-preflight execution check, not something the static validator can prove. Do not add an empty Dockerfile merely to satisfy a file-tree example.
+
 ## RSI-Harness shape
 
 Use Harbor schema 1.4, Linux, one continuous task, one `main` service, and one shared Environment. Do not author:
@@ -66,6 +72,14 @@ Declare Work GPU count in `[environment].gpus`. Omit GPU model restrictions. Dec
 
 Default Docker shared memory is only 1 GiB. Add supported Compose `shm_size` when NCCL, multiprocessing DataLoaders, or the repository workload needs more.
 
+CPU, memory, storage, shared memory, build timeout, Compose user, and common service environment describe the shared `main` service used by both Work and Judge. Work and Judge GPU counts, phase users, network policies, and timeouts are separate. Put shared variables in `[environment.env]`; put only Judge-specific overrides in `[verifier.env]`. `[agent].env` and `[verifier.environment]` are not supported interfaces.
+
+## Snapshot and reload boundary
+
+Docker commit and managed WORKDIR snapshots capture filesystem state, not running processes, open buffers, GPU memory, Unix sockets, or in-memory model servers. The Agent must fully write and close candidate-owned code, prompts, configs, indexes, and checkpoints before submission. Judge starts clean from the captured filesystem and must reload the candidate and, when needed, launch local serving inside its single `main` container.
+
+For a non-root WORKDIR, Judge sees that directory read-only. Confirm before Verifier design that candidate loading and evaluation do not attempt to compile extensions, populate caches, update checkpoints, create databases, or write scratch there. Redirect unavoidable disposable library/runtime scratch outside the WORKDIR; never use it as a feedback, result, cross-round state, or hidden-data channel. If evaluation genuinely needs to mutate the candidate tree, choose `/` deliberately or redesign the interface and confirm the trade-off.
+
 ## Network boundary
 
 Never use deprecated `allow_internet`.
@@ -83,10 +97,14 @@ Do not place provider credentials in `task.toml`, Compose, Dockerfile, README, o
 Confirm:
 
 - image creation produces the exact approved starting state;
-- `/workspace` exists and contains only public starting artifacts;
+- the effective WORKDIR exists and contains only public starting artifacts;
 - the Agent can run the public proxy/development commands without changing task definition;
 - candidate-owned paths are inside the Judge-visible WORKDIR;
+- the candidate is fully materialized on disk before submission and Judge reloads it without Work process state;
+- non-root Judge evaluation works with the WORKDIR mounted read-only;
 - Verifier dependencies are present before runtime;
+- a prebuilt image declares no Docker volumes;
+- common resources/env and Judge-only overrides match the confirmed execution plan;
 - network and provider routing are operationally possible;
 - no hidden or solution material enters the build context or image history.
 

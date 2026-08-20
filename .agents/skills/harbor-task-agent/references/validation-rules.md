@@ -11,6 +11,8 @@ Review manually before and after generation:
 - public/hidden feedback boundary and leakage controls are implemented as confirmed;
 - starting artifacts, editable scope, prohibited actions, and deliverable align;
 - Work/Judge resources, network/data policy, proxy needs, timeouts, and submissions match the final assumption review;
+- the effective WORKDIR and snapshot mode match the image, candidate is fully materialized on disk, and split-WORKDIR evaluation succeeds read-only;
+- complete Judge stdout/stderr and Harness footer visibility match the contributor-confirmed feedback contract;
 - no measured result, variance, runtime, or successful verification was invented.
 - evaluator control flow, not merely its documentation, implements every
   declared terminal outcome: valid baseline score, candidate correctness-fail
@@ -31,7 +33,7 @@ Run:
 python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task
 ```
 
-It is read-only and uses the Python standard library. It checks required files and metadata, task identity/taxonomy, content-detected text canaries, major RSI-Harness unsupported fields, Dockerfile/Compose safety, dependency pins, absolute instruction paths, Verifier network/install rules, common direct Python/shell intermediate writes, direct exclusive reward creation, README run options and a necessary timeout lower bound, and selected solution/test reference alignment.
+It is read-only and uses the Python standard library. It checks required files and metadata, task identity/taxonomy, language-appropriate text canaries, absolute/effective WORKDIR declarations, major RSI-Harness unsupported fields, the supported Compose subset, Dockerfile/prebuilt-image safety, dependency pins, absolute instruction paths, Verifier network/install rules, common direct Python/shell intermediate writes, direct exclusive reward creation, README run options and a necessary timeout lower bound, and selected solution/test reference alignment.
 
 `ERROR` must be fixed. A `WARNING` needs evidence-backed review; warnings do not automatically make a task invalid. Static pattern and AST checks are conservative and cannot prove Docker buildability, full reward control flow, evaluator correctness, anti-cheat security, statistical validity, or successful GPU execution.
 
@@ -60,7 +62,7 @@ These are separate, stateful, and potentially expensive. Run only when authorize
 
 1. Docker/Compose image build and image preflight.
 2. Baseline/no-op submission: valid continuous baseline score, safe feedback, no leaked cases.
-3. Optional baseline Solution submission: traceable smoke/baseline behavior, never presumed full score.
+3. Optional external/manual baseline Solution helper: traceable smoke/baseline behavior, never presumed full score or Harness-executed.
 4. Negative controls: prohibited edits, evaluator tampering, hard-coded cases, fabricated outputs, dependency/path changes, missing/incomplete evaluation.
 5. Repeated deterministic/reliability runs and variance characterization.
 6. Real GPU full evaluation within Verifier timeout and resource limits.
@@ -74,7 +76,7 @@ RSI-Harness is authoritative. Apply the referenced Terminal-Bench checks as foll
 
 | Reference rule | RSI AutoResearch disposition |
 |---|---|
-| Canary in comments | Keep; exact canary in every task text file. |
+| Canary in comments | Keep; exact canary in every task text file using that format's actual comment syntax. |
 | Dockerfile must not copy solution/tests | Keep and strengthen: Environment contains no private/answer material. |
 | apt sanity | Keep warnings for missing update/cleanup; forbid apt version pins. |
 | `FROM --platform` | Keep prohibition. |
@@ -94,7 +96,7 @@ RSI-Harness is authoritative. Apply the referenced Terminal-Bench checks as foll
 | pip pinning | Keep exact pins with requirements/local/revisioned-VCS exceptions. |
 | pytest pins | Use `pytest==9.1.1` when pytest is used; `pytest-json-ctrf==0.5.2` only if actually used. |
 | bare `nproc` | Keep prohibition. |
-| Compose host binds | Keep and strengthen: no task-authored volumes at all. |
+| Compose host binds | Keep and strengthen: no task-authored volumes at all; allow only Harness's exact NVIDIA reservation structure under `deploy`. |
 
 ## Harness-specific rejection list
 
@@ -108,6 +110,8 @@ Also reject:
 - multiple or explicit GPU types for this task program;
 - wildcard runtime allowlists when exact provider/data hosts can be named;
 - Verifier reward written early, legacy `reward.txt`, runtime fetch/install, or task-authored intermediates.
+
+Do not reject a read-only path reference merely because it contains `/tmp`. Reject actual task-authored result, feedback, or control-flow writes. Unavoidable library/runtime scratch outside a read-only WORKDIR still requires manual review and must not persist task results, protected data, or cross-round state.
 
 ## Timeout review
 

@@ -75,13 +75,16 @@ Read [references/environment-design.md](references/environment-design.md). Desig
 
 Fix and record this interface:
 
-- effective WORKDIR, normally `/workspace`;
+- effective WORKDIR: `/workspace` is the default convention, but any evidenced existing absolute POSIX path is valid; `/` deliberately selects full-rootfs snapshots;
 - exact source state and starting assets visible to Work;
 - candidate-owned paths and prohibited paths;
-- commands/interfaces Verifier may invoke;
+- the fully materialized on-disk candidate and commands/interfaces Verifier may invoke after starting clean from the snapshot;
 - pinned runtime dependencies and immutable asset provenance;
 - Work GPU count, CPU, memory, storage estimate, shared memory, and build budget;
+- common `[environment.env]` values and any Judge-only `[verifier.env]` overrides;
 - Agent network policy and any exact provider/proxy reachability requirement.
+
+For a non-root WORKDIR, Judge mounts that directory read-only. Confirm that candidate loading and evaluation need no cache, compilation output, checkpoint update, or scratch write there. Docker commit captures files, not live processes or GPU memory: before `rsi-submit`, candidate code/config/checkpoints must be closed, flushed, and complete on disk. Judge must start any local serving process afresh and reload the candidate from the snapshot.
 
 The Environment build context is exactly `environment/`. It must not contain or copy `tests/`, `solution/solve.sh`, hidden inputs, expected answers, or private baseline artifacts. Do not author task volumes or Docker `VOLUME` instructions.
 
@@ -102,6 +105,8 @@ The Verifier must:
 - give a valid continuously scored baseline/no-op result when the baseline itself is valid;
 - enforce correctness and task-specific anti-cheat controls before performance/quality scoring.
 
+Every submission exposes the complete Judge stdout/stderr at `/run/rsi-harness/feedback/agent-N.log` plus a footer containing round, status, reward, optional score, exit code, timeout flag, duration, remaining submission budget, and any error. `rsi-submit --list` exposes submission history. Do not confuse the bounded in-memory/report `output_limit_bytes` field with this separately captured durable file: the feedback log is the complete stream. There is no feedback-hidden final Judge phase inside RSI-Harness, so never promise one; if a proposal requires hidden final evaluation, distinguish an external final evaluation from the in-Harness development Judge and obtain contributor confirmation.
+
 Treat candidate code and all Work-modified system state as untrusted. State the shared-environment isolation limitation honestly; do not claim the protection of an independent verifier image.
 
 ### Stage 5 — Operational configuration
@@ -112,6 +117,7 @@ Derive but do not hide run-time choices:
 - `agent.timeout_sec` covers all Work research/training, every synchronous `rsi-submit` Judge wait, and operational headroom;
 - the Terminal-Bench 18,000-second timeout cap does not apply;
 - `max_submissions`, `primary_reward`, `score_direction`, GPU pool, model, and reasoning effort are RSI-Harness run options documented in `README.md`, not invented task fields.
+- `cpus`, `memory_mb`, `storage_mb`, `shm_size`, and `build_timeout_sec` describe the shared main service used by both Work and Judge; Compose/base user is common, while supported phase user overrides, GPU allocation, network, phase timeout, and Judge-only env overrides remain phase-specific.
 
 Use this conservative budget relation:
 
@@ -137,8 +143,11 @@ Read [references/task-template.md](references/task-template.md) and [references/
 - Work and Judge GPU counts and whether they can reuse the same caller pool;
 - Agent and Verifier network/data policy, including provider/proxy prerequisites;
 - Agent timeout, per-submission Verifier timeout, their wall-clock calculation, and maximum submissions;
-- Base/Work `/workspace` layout, shared Base/Judge limitation, and Verifier trust boundary;
-- whether an optional baseline `solution/solve.sh` will exist;
+- effective WORKDIR, split/read-only versus full-rootfs snapshot mode, materialized deliverable/reload path, and any snapshot storage cost;
+- common CPU, memory, storage, shared-memory, build-timeout and environment assumptions, plus Judge-only overrides;
+- shared Base/Judge limitation, actual full submission feedback/footer, and Verifier trust boundary;
+- whether an optional baseline `solution/solve.sh` will exist as an external/manual helper (RSI-Harness never executes it);
+- Dockerfile build versus immutable prebuilt-image choice, including a no-declared-volumes image preflight;
 - validation that will be run now versus Docker/GPU/execution checks left pending.
 
 Call out conservative assumptions as assumptions, not facts. Ask the contributor to confirm or correct the entire review. Do not write in the same response that asks for confirmation.
@@ -155,18 +164,18 @@ Generate the contract in [references/task-template.md](references/task-template.
 ├── instruction.md
 ├── README.md
 ├── environment/
-│   ├── Dockerfile
+│   ├── Dockerfile                  # omit for a confirmed immutable prebuilt image
 │   └── docker-compose.yaml        # only when a supported Compose field is needed
 ├── tests/
 │   ├── test.sh
 │   └── task-specific private evaluator/assets
 └── solution/
-    └── solve.sh                   # optional traceable baseline runner only
+    └── solve.sh                   # optional external/manual baseline helper only
 ```
 
 Every task text file must contain the exact Harbor canary string in a comment. Keep all paths in `instruction.md` absolute. Use ML taxonomy `Training`, `Inference`, `Evaluation`, or `Kernels`. Do not add Terminal-Bench's standard timeout suffix, separate-verifier files, CTRF artifacts, or a full “optimal” solution.
 
-`solution/solve.sh`, when justified, runs the traceable baseline/smoke candidate. It is not an oracle, is never copied into Environment or Verifier, and need not achieve the best possible reward.
+`solution/solve.sh`, when justified, is a traceable baseline/smoke helper for external or manual execution. RSI-Harness does not execute it. It is not an oracle, is never copied into Environment or Verifier, and need not achieve the best possible reward.
 
 ### Stage 8 — Validate and report
 
@@ -176,7 +185,7 @@ Run the included standard-library validator first:
 python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task
 ```
 
-If an RSI-Harness checkout is available, also run the read-only authoritative compiler through the same command:
+If the contributor or workspace provides a known RSI-Harness checkout, also run the read-only authoritative compiler through the same command. Do not guess a checkout path from a stale editable installation:
 
 ```bash
 python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task \

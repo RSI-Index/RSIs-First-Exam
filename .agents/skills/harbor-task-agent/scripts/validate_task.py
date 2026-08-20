@@ -26,6 +26,8 @@ TEXT_SUFFIXES = {
     ".conf",
     ".cpp",
     ".css",
+    ".cu",
+    ".cuh",
     ".go",
     ".h",
     ".hpp",
@@ -36,6 +38,8 @@ TEXT_SUFFIXES = {
     ".json",
     ".md",
     ".mjs",
+    ".mm",
+    ".proto",
     ".py",
     ".rb",
     ".rs",
@@ -94,6 +98,31 @@ PLACEHOLDER_RE = re.compile(
     re.IGNORECASE,
 )
 COMMENTLESS_TEXT_SUFFIXES = {".json"}
+ENGINE_MOUNT_TARGETS = {
+    PurePosixPath("/tests"),
+    PurePosixPath("/logs/verifier"),
+    PurePosixPath("/run/rsi-harness/staging"),
+}
+COMPOSE_MAIN_KEYS = {
+    "build",
+    "deploy",
+    "environment",
+    "image",
+    "shm_size",
+    "user",
+    "working_dir",
+}
+COMPOSE_REJECTED_MAIN_KEYS = {
+    "cap_add",
+    "devices",
+    "extra_hosts",
+    "ipc",
+    "links",
+    "network_mode",
+    "pid",
+    "privileged",
+    "volumes",
+}
 
 
 @dataclass(frozen=True)
@@ -273,6 +302,12 @@ class Validator:
                 path,
                 "verifier collect hooks are unsupported",
             )
+        if "env" in agent:
+            self.error(
+                "AGENT_ENV_FORBIDDEN",
+                path,
+                "[agent].env is unsupported; put common values in [environment.env] and Judge overrides in [verifier.env]",
+            )
         solution = config.get("solution")
         if isinstance(solution, dict) and solution.get("env") not in (None, {}):
             self.error(
@@ -291,11 +326,19 @@ class Validator:
                 "[environment].gpus must be a positive integer",
             )
         workdir = environment.get("workdir")
-        if workdir != "/workspace":
+        if not self._valid_absolute_posix_path(
+            workdir
+        ) or self._workdir_overlaps_engine_mount(workdir):
             self.error(
                 "WORKDIR_INVALID",
                 path,
-                '[environment].workdir must be exactly "/workspace" for RSI-Harness tasks',
+                "[environment].workdir must be an absolute POSIX path without '..' and must not overlap Engine-owned mount targets",
+            )
+        elif workdir == "/":
+            self.warning(
+                "ROOT_WORKDIR_COST",
+                path,
+                "root WORKDIR uses full-rootfs snapshots; budget additional snapshot time and Docker storage",
             )
         for table_name, table in (
             ("environment", environment),
@@ -406,20 +449,52 @@ class Validator:
                     path,
                     "generated task text contains an unresolved placeholder",
                 )
-            lines = [line.strip() for line in text.splitlines() if CANARY in line]
-            if not lines:
+            if CANARY not in text:
                 self.error("CANARY_MISSING", path, "required Harbor canary is missing")
                 continue
-            if not any(self._commented_canary(path, line) for line in lines):
+            if not self._commented_canary(path, text):
                 self.error(
                     "CANARY_NOT_COMMENT", path, "Harbor canary must be inside a comment"
                 )
 
     @staticmethod
-    def _commented_canary(path: Path, line: str) -> bool:
-        if path.suffix.lower() == ".md":
-            return line.startswith("<!--") and line.endswith("-->")
-        return line.startswith(("#", "//", "<!--"))
+    def _commented_canary(path: Path, text: str) -> bool:
+        escaped = re.escape(CANARY)
+        suffix = path.suffix.lower()
+        if suffix in {".md", ".html", ".xml"}:
+            return re.search(rf"<!--.*?{escaped}.*?-->", text, re.DOTALL) is not None
+        if suffix in {
+            ".c",
+            ".cc",
+            ".cpp",
+            ".css",
+            ".cu",
+            ".cuh",
+            ".go",
+            ".h",
+            ".hpp",
+            ".java",
+            ".js",
+            ".mjs",
+            ".mm",
+            ".proto",
+            ".rs",
+            ".ts",
+        }:
+            return (
+                re.search(rf"^\s*//[^\n]*{escaped}", text, re.MULTILINE) is not None
+                or re.search(rf"/\*.*?{escaped}.*?\*/", text, re.DOTALL) is not None
+            )
+        if suffix == ".sql":
+            return (
+                re.search(rf"^\s*--[^\n]*{escaped}", text, re.MULTILINE) is not None
+                or re.search(rf"/\*.*?{escaped}.*?\*/", text, re.DOTALL) is not None
+            )
+        if suffix in {".cfg", ".conf", ".ini"}:
+            return (
+                re.search(rf"^\s*[#;][^\n]*{escaped}", text, re.MULTILINE) is not None
+            )
+        return re.search(rf"^\s*#[^\n]*{escaped}", text, re.MULTILINE) is not None
 
     def _instruction(self) -> None:
         path = self.task_dir / "instruction.md"
@@ -467,6 +542,14 @@ class Validator:
                 "ENVIRONMENT_DEFINITION_MISSING",
                 directory,
                 "provide Dockerfile, Compose, or an immutable docker_image",
+            )
+        if isinstance(docker_image, str) and not self._digest_pinned_image(
+            docker_image
+        ):
+            self.error(
+                "IMAGE_NOT_IMMUTABLE",
+                self.task_dir / "task.toml",
+                f"prebuilt environment image is not digest-pinned: {docker_image}",
             )
         if compose_alt.exists():
             self.error(
@@ -610,52 +693,104 @@ class Validator:
         text = self._read(path)
         if text is None:
             return
-        if re.search(
-            r"^\s{4,}(?:volumes|privileged|cap_add|devices|extra_hosts|ipc|links|pid)\s*:",
-            text,
-            re.MULTILINE,
-        ):
+        if "\t" in text:
             self.error(
-                "COMPOSE_VOLUME"
-                if re.search(r"^\s{4,}volumes\s*:", text, re.MULTILINE)
-                else "COMPOSE_UNSUPPORTED",
+                "COMPOSE_UNSUPPORTED", path, "Compose indentation must use spaces"
+            )
+        root = self._yaml_entries(text, 0)
+        if len(root) != 1 or root[0][0] != "services" or root[0][1]:
+            self.error(
+                "COMPOSE_UNSUPPORTED",
                 path,
-                "Compose mounts and authority-expanding fields are unsupported",
+                "Compose root must contain only a services mapping",
             )
-        if re.search(r"^\s{4,}network_mode\s*:\s*host\b", text, re.MULTILINE):
+        services = self._yaml_entries(text, 2)
+        if len(services) != 1 or services[0][0] != "main" or services[0][1]:
             self.error(
-                "COMPOSE_HOST_NETWORK", path, "Compose host networking is unsupported"
+                "COMPOSE_SIDECAR",
+                path,
+                "Compose must contain exactly one service named main",
             )
-        services_match = re.search(r"^services:\s*$", text, re.MULTILINE)
-        if services_match:
-            service_names = re.findall(
-                r"^  ([A-Za-z0-9_.-]+):\s*$", text[services_match.end() :], re.MULTILINE
+
+        main_entries = self._yaml_entries(text, 4)
+        main = {key: value for key, value in main_entries}
+        for key in sorted(set(main) & COMPOSE_REJECTED_MAIN_KEYS):
+            code = "COMPOSE_VOLUME" if key == "volumes" else "COMPOSE_UNSUPPORTED"
+            self.error(code, path, f"Compose main setting {key!r} is unsupported")
+        for key in sorted(set(main) - COMPOSE_MAIN_KEYS - COMPOSE_REJECTED_MAIN_KEYS):
+            self.error(
+                "COMPOSE_UNSUPPORTED",
+                path,
+                f"Compose main setting {key!r} is unsupported",
             )
-            if set(service_names) != {"main"}:
-                self.error(
-                    "COMPOSE_SIDECAR",
-                    path,
-                    "Compose must contain exactly one service named main",
+        if "build" in main and "image" in main:
+            self.error(
+                "COMPOSE_UNSUPPORTED",
+                path,
+                "Compose main cannot declare both build and image",
+            )
+        if "network_mode" in main:
+            self.error(
+                "COMPOSE_HOST_NETWORK", path, "Compose network_mode is unsupported"
+            )
+
+        if "build" in main:
+            build_value = self._yaml_scalar(main["build"])
+            if build_value:
+                if build_value != ".":
+                    self.error(
+                        "COMPOSE_BUILD_CONTEXT",
+                        path,
+                        "Compose build context must be exactly environment/",
+                    )
+            else:
+                build_entries = self._yaml_entries(
+                    self._yaml_block(text, 4, "build"), 6
                 )
-        if re.search(
-            r"^\s+(?:build|context):\s*(?:\.\.|/|https?://|git@)", text, re.MULTILINE
-        ):
+                if (
+                    len(build_entries) != 1
+                    or build_entries[0][0] != "context"
+                    or self._yaml_scalar(build_entries[0][1]) != "."
+                ):
+                    self.error(
+                        "COMPOSE_BUILD_CONTEXT",
+                        path,
+                        "Compose build mapping may contain only context: .",
+                    )
+
+        image = self._yaml_scalar(main.get("image", ""))
+        if image and not self._digest_pinned_image(image):
             self.error(
-                "COMPOSE_BUILD_CONTEXT",
+                "IMAGE_NOT_IMMUTABLE",
                 path,
-                "Compose build context must be exactly environment/",
+                f"prebuilt Compose image is not digest-pinned: {image}",
             )
-        working_dir = re.search(
-            r"^\s{4,}working_dir\s*:\s*['\"]?([^'\"\s#]+)",
-            text,
-            re.MULTILINE,
+        environment = self.config.get("environment", {})
+        harbor_image = (
+            environment.get("docker_image") if isinstance(environment, dict) else None
         )
+        if harbor_image and "build" in main:
+            self.error(
+                "IMAGE_SOURCE_CONFLICT",
+                path,
+                "Compose build conflicts with [environment].docker_image",
+            )
+        if image and harbor_image and image != harbor_image:
+            self.error(
+                "IMAGE_SOURCE_CONFLICT",
+                path,
+                "Compose image must equal [environment].docker_image when both are declared",
+            )
+
+        if "deploy" in main:
+            self._compose_gpu_reservation(path, text)
+        working_dir = self._yaml_scalar(main.get("working_dir", ""))
         configured = (
             self.config.get("environment", {}).get("workdir")
             if isinstance(self.config.get("environment"), dict)
             else None
         )
-        if working_dir and working_dir.group(1) != configured:
+        if working_dir and working_dir != configured:
             self.error(
                 "COMPOSE_WORKDIR_MISMATCH",
                 path,
@@ -666,6 +801,105 @@ class Validator:
                 "NPROC_BARE",
                 path,
                 "do not use bare nproc; choose task-bounded parallelism",
+            )
+
+    def _compose_gpu_reservation(self, path: Path, text: str) -> None:
+        deploy = self._yaml_block(text, 4, "deploy")
+        expected = ((6, "resources"), (8, "reservations"), (10, "devices"))
+        for indent, key in expected:
+            entries = self._yaml_entries(deploy, indent)
+            if len(entries) != 1 or entries[0][0] != key or entries[0][1]:
+                self.error(
+                    "COMPOSE_UNSUPPORTED",
+                    path,
+                    "Compose deploy must use the exact resources.reservations.devices structure",
+                )
+                return
+
+        device_lines = []
+        for raw in deploy.splitlines():
+            if not raw.strip() or raw.lstrip().startswith("#"):
+                continue
+            indent = len(raw) - len(raw.lstrip(" "))
+            if indent == 12 and raw.strip().startswith("-"):
+                device_lines.append(raw.strip()[1:].strip())
+        if len(device_lines) != 1:
+            self.error(
+                "COMPOSE_UNSUPPORTED",
+                path,
+                "Compose requires exactly one NVIDIA GPU reservation",
+            )
+            return
+
+        device: dict[str, str] = {}
+        first = re.fullmatch(r"([A-Za-z_][A-Za-z0-9_-]*):\s*(.*)", device_lines[0])
+        if first:
+            device[first.group(1)] = self._yaml_strip_comment(first.group(2))
+        for key, value in self._yaml_entries(deploy, 14):
+            device[key] = value
+        unknown = set(device) - {"driver", "count", "capabilities", "device_ids"}
+        if unknown or "device_ids" in device:
+            self.error(
+                "COMPOSE_UNSUPPORTED",
+                path,
+                "Compose GPU reservation contains an unsupported setting",
+            )
+            return
+        capabilities = device.get("capabilities")
+        if self._yaml_quoted(capabilities):
+            self.error(
+                "COMPOSE_UNSUPPORTED",
+                path,
+                "Compose GPU capabilities must be a YAML list, not a quoted scalar",
+            )
+            return
+        capabilities = self._yaml_scalar(capabilities or "")
+        if capabilities == "":
+            capability_items = [
+                self._yaml_scalar(raw.strip()[1:].strip())
+                for raw in deploy.splitlines()
+                if len(raw) - len(raw.lstrip(" ")) == 16 and raw.strip().startswith("-")
+            ]
+            capabilities = "[gpu]" if capability_items == ["gpu"] else ""
+        if self._yaml_scalar(
+            device.get("driver", "")
+        ) != "nvidia" or capabilities not in {
+            "[gpu]",
+            '["gpu"]',
+            "['gpu']",
+        }:
+            self.error(
+                "COMPOSE_UNSUPPORTED",
+                path,
+                "Compose GPU reservation must use driver nvidia and capabilities [gpu]",
+            )
+            return
+        raw_count_token = device.get("count", "")
+        raw_count = self._yaml_scalar(raw_count_token)
+        count: int | str
+        if raw_count == "all":
+            count = "all"
+        elif not self._yaml_quoted(raw_count_token) and re.fullmatch(
+            r"[1-9][0-9]*", raw_count
+        ):
+            count = int(raw_count)
+        else:
+            self.error(
+                "COMPOSE_UNSUPPORTED",
+                path,
+                "Compose GPU count must be positive or 'all'",
+            )
+            return
+        configured = (
+            self.config.get("environment", {}).get("gpus")
+            if isinstance(self.config.get("environment"), dict)
+            else None
+        )
+        if configured is not None and count != configured:
+            self.error(
+                "COMPOSE_GPU_MISMATCH",
+                path,
+                "Compose GPU count must match [environment].gpus",
             )
 
     def _requirements(self, path: Path) -> None:
@@ -704,61 +938,63 @@ class Validator:
                 script,
                 "mark test.sh executable for Harbor portability",
             )
-        combined_parts: list[str] = []
-        reward_write_attempts = 0
-        exclusive_reward_writes = 0
+        verifier_files: dict[Path, str] = {}
         for path in self._text_files(directory):
             text = self._read(path)
             if text is not None:
-                combined_parts.append(text)
-                if FETCH_RE.search(text):
-                    self.error(
-                        "VERIFIER_NETWORK_FETCH",
-                        path,
-                        "Verifier must not fetch tests, data, packages, or tools at runtime",
-                    )
-                if INSTALL_RE.search(text):
-                    self.error(
-                        "VERIFIER_RUNTIME_INSTALL",
-                        path,
-                        "bake verifier tooling into Environment instead of installing during Judge",
-                    )
-                if self._bare_nproc(text):
-                    self.error(
-                        "NPROC_BARE",
-                        path,
-                        "do not use bare nproc; choose task-bounded parallelism",
-                    )
-                if "/logs/verifier/reward.txt" in text:
-                    self.error(
-                        "LEGACY_REWARD_FORBIDDEN",
-                        path,
-                        "write standard reward.json, not legacy reward.txt",
-                    )
-                if "/tmp/" in text:
-                    self.error(
-                        "VERIFIER_INTERMEDIATE_FILE",
-                        path,
-                        "Verifier must stream feedback and keep task-authored intermediates out of files",
-                    )
-                if path.suffix.lower() == ".py":
-                    attempts, exclusive = self._python_verifier_writes(path, text)
-                    reward_write_attempts += attempts
-                    exclusive_reward_writes += exclusive
-                if self._shell_like(path, text):
-                    for target in self._shell_write_targets(text):
-                        if target == "/logs/verifier/reward.json":
-                            reward_write_attempts += 1
-                        elif target not in {
-                            "/dev/null",
-                            "/dev/stderr",
-                            "/dev/stdout",
-                        }:
-                            self.error(
-                                "VERIFIER_INTERMEDIATE_FILE",
-                                path,
-                                f"Verifier output must stay on stdout/stderr, not {target}",
-                            )
+                verifier_files[path] = text
+        python_targets = self._python_invoked_test_paths(verifier_files)
+        combined_parts: list[str] = []
+        reward_write_attempts = 0
+        exclusive_reward_writes = 0
+        for path, text in verifier_files.items():
+            combined_parts.append(text)
+            if FETCH_RE.search(text):
+                self.error(
+                    "VERIFIER_NETWORK_FETCH",
+                    path,
+                    "Verifier must not fetch tests, data, packages, or tools at runtime",
+                )
+            if INSTALL_RE.search(text):
+                self.error(
+                    "VERIFIER_RUNTIME_INSTALL",
+                    path,
+                    "bake verifier tooling into Environment instead of installing during Judge",
+                )
+            if self._bare_nproc(text):
+                self.error(
+                    "NPROC_BARE",
+                    path,
+                    "do not use bare nproc; choose task-bounded parallelism",
+                )
+            if "/logs/verifier/reward.txt" in text:
+                self.error(
+                    "LEGACY_REWARD_FORBIDDEN",
+                    path,
+                    "write standard reward.json, not legacy reward.txt",
+                )
+            test_target = "/tests/" + path.relative_to(directory).as_posix()
+            language = self._verifier_language(
+                path, text, python_invoked=test_target in python_targets
+            )
+            if language == "python":
+                attempts, exclusive = self._python_verifier_writes(path, text)
+                reward_write_attempts += attempts
+                exclusive_reward_writes += exclusive
+            elif language == "shell":
+                for target in self._shell_write_targets(text):
+                    if target == "/logs/verifier/reward.json":
+                        reward_write_attempts += 1
+                    elif target not in {
+                        "/dev/null",
+                        "/dev/stderr",
+                        "/dev/stdout",
+                    }:
+                        self.error(
+                            "VERIFIER_INTERMEDIATE_FILE",
+                            path,
+                            f"Verifier output must stay on stdout/stderr, not {target}",
+                        )
         combined = "\n".join(combined_parts)
         if "/logs/verifier/reward.json" not in combined:
             self.error(
@@ -785,11 +1021,18 @@ class Validator:
                 "Verifier should print safe diagnostics and the score to stdout/stderr",
             )
         if re.search(r"\bpytest\b", combined):
-            dockerfile = self._read(self.task_dir / "environment" / "Dockerfile") or ""
-            if "pytest==9.1.1" not in dockerfile:
+            dockerfile_path = self.task_dir / "environment" / "Dockerfile"
+            dockerfile = self._read(dockerfile_path)
+            if dockerfile is None:
+                self.warning(
+                    "PYTEST_PIN_UNVERIFIED",
+                    self.task_dir / "environment",
+                    "verify that the immutable prebuilt image contains pytest==9.1.1",
+                )
+            elif "pytest==9.1.1" not in dockerfile:
                 self.error(
                     "PYTEST_PIN",
-                    self.task_dir / "environment" / "Dockerfile",
+                    dockerfile_path,
                     "tasks using pytest must bake pytest==9.1.1 into Environment",
                 )
 
@@ -888,17 +1131,118 @@ class Validator:
         return target, mode, writes
 
     @staticmethod
-    def _shell_like(path: Path, text: str) -> bool:
+    def _verifier_language(
+        path: Path, text: str, *, python_invoked: bool = False
+    ) -> str | None:
         first_line = text.splitlines()[0] if text.splitlines() else ""
-        return (
-            path.suffix.lower() == ".sh"
-            or path.name == "Makefile"
-            or not path.suffix
-            or (
-                first_line.startswith("#!")
-                and re.search(r"\b(?:ba|da|k|z)?sh\b", first_line) is not None
+        if first_line.startswith("#!"):
+            if re.search(r"\bpython(?:\d+(?:\.\d+)?)?\b", first_line):
+                return "python"
+            if re.search(r"\b(?:a|ba|da|k|z)?sh\b", first_line):
+                return "shell"
+            return "shell" if path.suffix.lower() == ".sh" else None
+        if path.suffix.lower() == ".py":
+            return "python"
+        if path.suffix.lower() == ".sh" or path.name == "Makefile":
+            return "shell"
+        if not path.suffix:
+            return "python" if python_invoked else "shell"
+        return None
+
+    @classmethod
+    def _python_invoked_test_paths(cls, files: dict[Path, str]) -> set[str]:
+        targets: set[str] = set()
+        for path, text in files.items():
+            first_line = text.splitlines()[0] if text.splitlines() else ""
+            is_shell_source = (
+                path.suffix.lower() == ".sh"
+                or path.name == "Makefile"
+                or not path.suffix
+                or (
+                    first_line.startswith("#!")
+                    and re.search(r"\b(?:a|ba|da|k|z)?sh\b", first_line)
+                )
             )
-        )
+            if not is_shell_source:
+                continue
+            for command in cls._shell_commands(text):
+                index = cls._shell_executable_index(command)
+                if index is None:
+                    continue
+                executable = command[index].rsplit("/", 1)[-1]
+                if re.fullmatch(r"python(?:\d+(?:\.\d+)?)?", executable) is None:
+                    continue
+                candidate = cls._python_script_argument(command[index + 1 :])
+                if candidate is not None and candidate.startswith("/tests/"):
+                    targets.add(candidate)
+        return targets
+
+    @staticmethod
+    def _shell_commands(text: str) -> Iterable[list[str]]:
+        logical = re.sub(r"\\\r?\n[ \t]*", " ", text)
+        for line in logical.splitlines():
+            try:
+                lexer = shlex.shlex(line, posix=True, punctuation_chars=";&|()")
+                lexer.whitespace_split = True
+                lexer.commenters = "#"
+                tokens = list(lexer)
+            except ValueError:
+                continue
+            command: list[str] = []
+            for token in tokens:
+                if re.fullmatch(r"[;&|()]+", token):
+                    if command:
+                        yield command
+                        command = []
+                    continue
+                command.append(token)
+            if command:
+                yield command
+
+    @staticmethod
+    def _shell_executable_index(command: list[str]) -> int | None:
+        assignment = re.compile(r"[A-Za-z_][A-Za-z0-9_]*=.*")
+        index = 0
+        while index < len(command) and assignment.fullmatch(command[index]):
+            index += 1
+        while index < len(command) and command[index] in {"command", "exec"}:
+            index += 1
+            while index < len(command) and command[index].startswith("-"):
+                index += 1
+        if index < len(command) and command[index] == "env":
+            index += 1
+            while index < len(command):
+                token = command[index]
+                if assignment.fullmatch(token):
+                    index += 1
+                    continue
+                if token in {"-u", "--unset"}:
+                    index += 2
+                    continue
+                if token.startswith("-"):
+                    index += 1
+                    continue
+                break
+        return index if index < len(command) else None
+
+    @staticmethod
+    def _python_script_argument(arguments: list[str]) -> str | None:
+        index = 0
+        while index < len(arguments):
+            token = arguments[index]
+            if token == "--":
+                index += 1
+                break
+            if token in {"-c", "-m"} or re.match(r"^-[cm].+", token):
+                return None
+            if token in {"-W", "-X", "--check-hash-based-pycs"}:
+                index += 2
+                continue
+            if token.startswith("-"):
+                index += 1
+                continue
+            break
+        return arguments[index] if index < len(arguments) else None
 
     @staticmethod
     def _shell_write_targets(text: str) -> Iterable[str]:
@@ -1079,6 +1423,113 @@ class Validator:
             return False
         path = PurePosixPath(value)
         return ".." not in path.parts
+
+    @staticmethod
+    def _workdir_overlaps_engine_mount(value: Any) -> bool:
+        if not isinstance(value, str):
+            return False
+        path = PurePosixPath(value)
+        if path == PurePosixPath("/"):
+            return False
+        return any(
+            path == target or path in target.parents or target in path.parents
+            for target in ENGINE_MOUNT_TARGETS
+        )
+
+    @staticmethod
+    def _digest_pinned_image(value: str) -> bool:
+        return re.search(r"@sha256:[0-9a-fA-F]{64}$", value.strip()) is not None
+
+    @staticmethod
+    def _yaml_entries(text: str, indent: int) -> list[tuple[str, str]]:
+        entries: list[tuple[str, str]] = []
+        for raw in text.splitlines():
+            if not raw.strip() or raw.lstrip().startswith("#"):
+                continue
+            if len(raw) - len(raw.lstrip(" ")) != indent:
+                continue
+            match = re.fullmatch(
+                r"([A-Za-z_][A-Za-z0-9_.-]*):(?:\s*(.*))?", raw.strip()
+            )
+            if match:
+                entries.append(
+                    (
+                        match.group(1),
+                        Validator._yaml_strip_comment(match.group(2) or ""),
+                    )
+                )
+        return entries
+
+    @staticmethod
+    def _yaml_strip_comment(value: str) -> str:
+        quote: str | None = None
+        escaped = False
+        for index, char in enumerate(value):
+            if escaped:
+                escaped = False
+                continue
+            if char == "\\" and quote == '"':
+                escaped = True
+                continue
+            if char in {"'", '"'}:
+                if quote is None:
+                    quote = char
+                elif quote == char:
+                    quote = None
+                continue
+            if (
+                char == "#"
+                and quote is None
+                and (index == 0 or value[index - 1].isspace())
+            ):
+                return value[:index].rstrip()
+        return value.rstrip()
+
+    @staticmethod
+    def _yaml_block(text: str, parent_indent: int, parent_key: str) -> str:
+        lines = text.splitlines()
+        start: int | None = None
+        pattern = re.compile(
+            rf"^ {{{parent_indent}}}{re.escape(parent_key)}:\s*(?:#.*)?$"
+        )
+        for index, raw in enumerate(lines):
+            if pattern.fullmatch(raw):
+                start = index
+                break
+        if start is None:
+            return ""
+        end = len(lines)
+        for index in range(start + 1, len(lines)):
+            raw = lines[index]
+            if not raw.strip() or raw.lstrip().startswith("#"):
+                continue
+            indent = len(raw) - len(raw.lstrip(" "))
+            if indent <= parent_indent:
+                end = index
+                break
+        return "\n".join(lines[start:end])
+
+    @staticmethod
+    def _yaml_scalar(value: str) -> str:
+        candidate = Validator._yaml_strip_comment(value.strip())
+        if (
+            len(candidate) >= 2
+            and candidate[0] == candidate[-1]
+            and candidate[0] in {"'", '"'}
+        ):
+            candidate = candidate[1:-1]
+        return candidate
+
+    @staticmethod
+    def _yaml_quoted(value: str | None) -> bool:
+        if value is None:
+            return False
+        candidate = Validator._yaml_strip_comment(value.strip())
+        return (
+            len(candidate) >= 2
+            and candidate[0] == candidate[-1]
+            and candidate[0] in {"'", '"'}
+        )
 
     @staticmethod
     def _bare_nproc(text: str) -> bool:
