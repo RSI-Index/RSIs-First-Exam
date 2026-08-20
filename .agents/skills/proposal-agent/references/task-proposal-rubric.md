@@ -43,6 +43,9 @@ compute check, and then assess proposal quality when the gates pass.
   candidate.
 - **Baseline:** a traceable reference implementation or artifact evaluated under
   the same primary metric and comparison protocol as the agent's candidate.
+- **Evaluation run:** scoring the model, checkpoint, or other candidate artifact
+  submitted by the research agent. It does not include rerunning the candidate's
+  training recipe.
 - **Normal compute reference:** at most 8 H100-equivalent GPUs and at most 12
   hours for one single experiment run. This is a planning reference, not a
   proposal-stage acceptance limit.
@@ -96,12 +99,16 @@ Evaluate all seven gates before deciding. Do not stop at the first concern.
 - The proposal must identify a concrete baseline and explain how the agent will
   be compared with it under a matched protocol.
 - Acceptable baselines include:
-  - a runnable experiment, configuration, or launch path shipped by the source
-    repository;
   - an official released checkpoint or artifact evaluated under the proposal's
     fixed matched protocol; or
+  - when no suitable released artifact exists or the comparison requires fresh
+    training, a runnable experiment, configuration, or launch path shipped by
+    the source repository; or
   - a benchmark-owned matched, hardened, or clean-room baseline derived
     transparently from the source repository or task harness.
+- Prefer the official evaluation-ready checkpoint or artifact when it represents
+  the intended reference method. Do not require baseline retraining merely
+  because a training recipe also exists.
 - The baseline provenance, relevant paths, ref, command or artifact, metric, and
   comparison protocol must be traceable. The contributor need not have run it
   successfully yet; reproduction happens after proposal acceptance.
@@ -116,11 +123,14 @@ Evaluate all seven gates before deciding. Do not stop at the first concern.
   from ordinary metric noise.
 - At proposal stage, a technically plausible contributor justification is
   sufficient. Do not demand measured variance, repeated baseline runs,
-  confidence intervals, or a finalized minimum detectable effect before the
-  baseline has been run.
-- After baseline reproduction, the task must measure run-to-run variability (or
-  document why the metric is deterministic) and set a meaningful improvement
-  gate. That later empirical check is outside this proposal decision.
+  confidence intervals, p-values, fixed repeat counts, or a finalized minimum
+  detectable effect before the baseline has been run.
+- After baseline reproduction, use noise controls proportional to observed
+  uncertainty. A deterministic evaluation of a fixed artifact needs no repeated
+  evaluation by default. Repeat training or evaluation only when observed
+  variability could change the conclusion, then set a practically meaningful
+  comparison gate from that evidence. That later empirical check is outside this
+  proposal decision.
 
 ### 5. Research Action Space
 
@@ -136,13 +146,21 @@ Evaluate all seven gates before deciding. Do not stop at the first concern.
 
 - The proposal must state exactly which datasets, examples, aggregate scores,
   per-example feedback, logs, or trajectories the agent can see during research,
-  and what remains reserved for final evaluation.
-- A hidden final evaluation is preferred but is not the only acceptable design.
-  When evaluation-derived feedback is exposed, the contributor may justify why
-  it is scientifically useful and explain the safeguards against memorization,
-  evaluator tampering, answer hard-coding, and adaptive overfitting.
+  and what remains hidden or reserved.
+- By default, a protected evaluator scores each submitted candidate artifact
+  directly and returns aggregate evaluation-set scores needed for iteration. It
+  must not rerun the candidate's training recipe during evaluation.
+- By default, evaluation examples, answers, generated samples, per-example
+  outcomes, caches, and evaluator internals remain outside the agent-readable
+  workspace. A separate hidden final split is optional, not preferred or
+  mechanically required.
+- When the feedback boundary differs from these defaults, the contributor must
+  explain why it is scientifically useful and define safeguards against
+  memorization, evaluator tampering, answer hard-coding, and adaptive overfitting.
 - Judge whether that design is reasonable from the proposal and repository
-  evidence. Do not automatically send every non-hidden design to human review.
+  evidence. Do not send the default aggregate-score-visible,
+  evaluation-content-hidden design to human review merely because there is no
+  separate hidden final split.
 - Fail this gate only when the design leaves a credible direct path to evaluation
   leakage or reward hacking, or when the exposure and safeguards are materially
   undefined.
@@ -164,8 +182,11 @@ Always report compute separately from the seven proposal gates.
 - Record the GPU or accelerator type, peak count, and estimated wall-clock time
   for one scoreable candidate run when provided. Distinguish a single run from
   the full multi-trial agent trajectory.
-- Record available early stopping, smaller proxies, or parallelization when
-  provided.
+- Request or recommend early stopping and lower-cost proxies only when a run
+  significantly exceeds the normal reference or repository evidence shows
+  comparably material cost. Do not treat an absent proxy plan as a concern for
+  an ordinary run; clear failure termination such as divergence, NaN, OOM, or
+  execution failure is sufficient when relevant.
 - If a run exceeds 8 H100-equivalent GPUs or 12 hours, write a clear `Flag` and
   state which threshold is exceeded. The flag is retained for resource review
   after baseline reproduction.
