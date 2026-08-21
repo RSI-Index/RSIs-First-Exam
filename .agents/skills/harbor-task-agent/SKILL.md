@@ -15,6 +15,7 @@ Do not read every reference up front.
 2. Before deciding the Base/Work environment, read [references/environment-design.md](references/environment-design.md) completely.
 3. After the Environment interface is fixed and before authoring the task-owned evaluation, read [references/verifier-design.md](references/verifier-design.md) completely.
 4. Before the final contributor assumption review, read [references/task-template.md](references/task-template.md) and [references/validation-rules.md](references/validation-rules.md) completely.
+5. After generation and validation, immediately before dispatching the independent reviewer, read [references/independent-review.md](references/independent-review.md) completely.
 
 The references are part of this portable skill. Do not require files from the repository that happens to contain the skill. RSI-Harness itself is optional for static authoring and required only for the authoritative compiler check.
 
@@ -32,6 +33,7 @@ The references are part of this portable skill. Do not require files from the re
 - Do not downgrade an ordinary deliverable to a compile-only fixture because Docker, GPUs, or a full evaluation cannot be run during authoring. Produce a complete task and report unperformed execution checks as pending. Create a deliberately incomplete fixture only when the contributor explicitly requests a fixture or compiler demo.
 - Stop instead of leaving placeholders, invented credentials, fabricated measurements, missing task-owned assets, or an evaluator that cannot implement the confirmed protocol.
 - Do not claim Docker, Oracle/baseline, no-op, adversarial, GPU, or real-agent checks unless they were actually run.
+- Do not deliver a generated task without a passing review from a fresh independent Agent. The generator's own reread, static validation, and compiler check do not replace this review.
 
 ## Working state
 
@@ -180,7 +182,7 @@ Every task text file must contain the exact Harbor canary string in a comment. K
 
 `solution/solve.sh`, when justified, is a traceable baseline/smoke helper for external or manual execution. RSI-Harness does not execute it. It is not an oracle, is never copied into Environment or Verifier, and need not achieve the best possible reward.
 
-### Stage 8 — Validate and report
+### Stage 8 — Validate
 
 Run the included standard-library validator first:
 
@@ -203,13 +205,22 @@ and infrastructure/incomplete failure. Confirm that each path writes the
 declared scalar or no reward exactly as specified; prose and static checks alone
 do not establish this.
 
-Report:
+Do not build Docker, execute the baseline/solution, run GPU evaluation, or launch a real Agent unless the contributor separately authorizes those stateful/expensive checks. When those checks are not authorized, keep the task complete and self-contained and record them as pending—not as a compile-only fixture.
+
+### Stage 9 — Independent review and handoff
+
+Read [references/independent-review.md](references/independent-review.md). Dispatch a fresh Agent that did not generate or edit the task. Give it the approved proposal, contributor-confirmed assumptions, generated task, repository evidence, known RSI-Harness checkout or documentation, and exact validation results. Do not prime it with the generator's preferred conclusion or ask it to modify files.
+
+The independent reviewer is mandatory. If an independent Agent is unavailable, stop and report the review as pending instead of substituting generator self-review or claiming completion.
+
+Any `BLOCKER` or `MAJOR` finding prevents handoff. The generating Agent owns corrections, reruns every affected validation, and requests a new independent review; the reviewer never edits the task. A task is ready only after a fresh review returns `PASS`. Minor findings must be fixed or explicitly dispositioned in the handoff.
+
+After `PASS`, report:
 
 - generated destination and file tree;
 - repository/ref actually used;
 - Environment, Verifier, optional Solution, and timeout decisions;
 - exact static/compiler commands and outcomes;
+- independent-review decision and disposition of every finding;
 - remaining execution checks not performed;
 - any known security or reproducibility limitation.
-
-Do not build Docker, execute the baseline/solution, run GPU evaluation, or launch a real Agent unless the contributor separately authorizes those stateful/expensive checks. When those checks are not authorized, keep the task complete and self-contained and report them as pending—not as a compile-only fixture.

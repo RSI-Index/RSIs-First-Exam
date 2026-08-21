@@ -1,6 +1,6 @@
 # Validation rules
 
-Validation has four layers. Passing an earlier layer never proves a later one.
+Validation has five layers. Passing an earlier layer never proves a later one.
 
 ## Layer A — Proposal-to-task semantics
 
@@ -57,7 +57,13 @@ The validator invokes `HarborTaskCompiler.compile(...)` with the reward, directi
 
 Do not replace the static layer with compilation. Harbor's parser may accept unknown metadata, and the compiler intentionally does not lint canaries, dependency pins, Dockerfile hygiene, reward lifecycle, or proposal semantics.
 
-## Layer D — Execution checks
+## Layer D — Independent task review
+
+After Layers A–C, a fresh Agent that did not generate or edit the task performs the read-only review defined in [independent-review.md](independent-review.md). It independently checks proposal fidelity, package completeness, RSI-Harness compatibility, evaluator and reward behavior, feedback and anti-cheat boundaries, and truthfulness of the reported validation state.
+
+Generator self-review is not a substitute. `BLOCKER` and `MAJOR` findings prevent handoff. The generator fixes findings and reruns affected checks; every modification invalidates the prior decision and requires a new independent review. Delivery requires `PASS`. If no independent Agent is available, report this layer as pending and do not claim the task is complete.
+
+## Layer E — Execution checks
 
 These are separate, stateful, and potentially expensive. Run only when authorized and report each independently:
 
@@ -69,7 +75,7 @@ These are separate, stateful, and potentially expensive. Run only when authorize
 6. Real GPU full evaluation within Verifier timeout and resource limits.
 7. Real multi-round Agent run with submission budget, timeout, GPU release/reuse, feedback, and retained workspace.
 
-Do not label a task “runtime-verified” solely because it compiled. A complete self-contained package may be reported as “statically valid and Harness-compilable; execution checks pending.” Missing Docker/build definitions, evaluator assets, or real runtime commands make the package incomplete rather than a valid compile-only fixture.
+Do not label a task “runtime-verified” solely because it compiled or passed independent review. After Layer D, a complete self-contained package may be reported as “statically valid, Harness-compilable, and independently reviewed; execution checks pending.” Missing Docker/build definitions, evaluator assets, or real runtime commands make the package incomplete rather than a valid compile-only fixture.
 
 ## Terminal-Bench rule disposition
 
