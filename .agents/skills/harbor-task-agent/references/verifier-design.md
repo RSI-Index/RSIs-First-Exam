@@ -1,14 +1,14 @@
 # Verifier design
 
-Verifier implements the fixed scientific comparison inside each disposable Judge. It is private task code, not a second image.
+Verifier implements the fixed scientific comparison inside each disposable Judge. Its source and required assets live in the generated task's `tests/` directory; it is not a second image or an external bundle.
 
 ## Actual isolation model
 
-On `rsi-submit`, RSI-Harness pauses Work, snapshots Work state, creates Judge from the shared Base/Work environment, injects exactly `tests/` into a private `/tests` tmpfs, mounts `/logs/verifier`, and runs `/bin/bash /tests/test.sh`. In split-WORKDIR mode Judge sees the current effective WORKDIR snapshot read-only. Judge writes never flow back to Work.
+On `rsi-submit`, RSI-Harness pauses Work, snapshots Work state, creates Judge from the shared Base/Work environment, injects the task's complete `tests/` directory into a Judge-only `/tests` tmpfs, mounts `/logs/verifier`, and runs `/bin/bash /tests/test.sh`. In split-WORKDIR mode Judge sees the current effective WORKDIR snapshot read-only. Judge writes never flow back to Work.
 
 Work never receives the task's `tests/` source. Do not add `tests/Dockerfile` or `environment_mode = "separate"`; RSI-Harness rejects them.
 
-This is not an independent trusted verifier image. The Agent is root in Work and can modify system packages, shells, binaries, and libraries that Judge later inherits. Private `/tests` and a read-only candidate WORKDIR materially help, but they do not make every shared runtime dependency trustworthy. State this limitation and use task-specific defenses.
+This is not an independent trusted verifier image. The Agent is root in Work and can modify system packages, shells, binaries, and libraries that Judge later inherits. Judge-only `/tests` and a read-only candidate WORKDIR materially help, but they do not make every shared runtime dependency trustworthy. State this limitation and use task-specific defenses.
 
 Docker commit transfers filesystem state only. Judge cannot inherit Work's live model server, GPU memory, open files, or background processes. The scoreable candidate must be completely materialized and flushed before submission; Verifier starts clean and reloads it from disk. In split-WORKDIR mode, candidate loading must succeed while that directory is read-only. Put unavoidable disposable runtime/cache scratch outside it and never use scratch as a result, feedback, or cross-round state channel.
 
@@ -27,7 +27,7 @@ Translate the confirmed proposal into exact constants:
 
 If any value changes the scientific comparison and is absent from the proposal/repository, ask the contributor before authoring. Do not invent a hidden split just because hidden evaluation is preferred. Do not hide a requirement the contributor must satisfy; instructions describe the outcome while tests may reserve concrete cases.
 
-RSI-Harness has no hidden final-Judge mode. Every `rsi-submit` exposes the complete captured Judge stdout/stderr through `/run/rsi-harness/feedback/agent-N.log` and reports a footer with round, status, reward, optional score, exit code, timeout flag, duration, remaining submission budget, and any error. `rsi-submit --list` exposes the submission history. The 1,000,000-byte `output_limit_bytes` default bounds the in-memory/report copy, not the separately streamed durable `agent-N.log`; do not use it to claim that the Agent cannot access the complete log. If the scientific protocol requires a truly hidden final evaluation, define that as an external post-run evaluation or change the proposal; do not mislabel the in-Harness Judge as hidden.
+RSI-Harness has no hidden final-Judge mode. Every `rsi-submit` exposes the complete captured `tests/test.sh` stdout/stderr stream to Work through `/run/rsi-harness/feedback/agent-N.log` and reports a footer with round, status, reward, optional score, exit code, timeout flag, duration, remaining submission budget, and any error. `rsi-submit --list` exposes the submission history. The 1,000,000-byte `output_limit_bytes` default bounds the in-memory/report copy, not the separately streamed durable `agent-N.log`; do not use it to claim that the Agent cannot access the complete log. Treat every printed line, traceback, child-process output, and shell diagnostic as Agent-visible, and sanitize or suppress anything outside the confirmed feedback contract. If the scientific protocol requires a truly hidden final evaluation, define that as an external post-run evaluation or change the proposal; do not mislabel the in-Harness Judge as hidden.
 
 ## AutoResearch scoring
 
@@ -57,15 +57,15 @@ For stochastic quality tasks, fix seeds/workload and use enough repetitions or m
 
 ## Reward and output lifecycle
 
-`tests/test.sh` and helpers must use stdout/stderr for all contributor-visible feedback. They must not create task-authored temporary reports, pytest capture files, JSON intermediates, or side-channel reason files. A plain reference to `/tmp` is not itself a write; inspect actual control flow. Unavoidable disposable scratch created internally by a library is acceptable only outside a read-only WORKDIR, with no protected contents and no role in scoring persistence.
+`tests/test.sh` and helpers must use stdout/stderr for all contributor-visible feedback, knowing that Work receives the complete stream. They must not create task-authored temporary reports, pytest capture files, JSON intermediates, or side-channel reason files. A plain reference to `/tmp` is not itself a write; inspect actual control flow. Unavoidable disposable scratch created internally by a library is acceptable only outside a read-only WORKDIR, with no protected contents and no role in scoring persistence.
 
-The sole result file is the final Harbor reward:
+The sole evaluator-authored result file is the final Harbor reward:
 
 ```text
 /logs/verifier/reward.json
 ```
 
-Keep evaluation results in process memory. After every required check and metric calculation succeeds:
+Keep evaluation results in process memory. Stdout/stderr is streamed feedback, not a result file. After every required check and metric calculation succeeds:
 
 1. verify the scalar is finite and within any declared domain;
 2. print the safe aggregate feedback and reward to stdout/stderr;
@@ -99,8 +99,8 @@ through its actual control flow:
 
 Choose controls matched to the task:
 
-- validate changes against a private manifest of permitted candidate-owned paths;
-- compare prohibited source/config/dependency files to private baseline hashes;
+- when task-specific defenses require them, validate changes against a task-owned manifest under `tests/`;
+- when task-specific defenses require them, compare prohibited source/config/dependency files to task-owned reference hashes under `tests/`;
 - keep baseline/reference code and hidden inputs only in `/tests` when they must be secret;
 - invoke candidate functionality in a subprocess with a minimal environment and explicit absolute commands where practical;
 - avoid importing candidate-controlled test frameworks, plugins, startup hooks, `sitecustomize`, shell profiles, or working-directory modules into the evaluator process;
@@ -111,7 +111,7 @@ Choose controls matched to the task:
 - ensure evaluator, timing, and reference code are not candidate-owned;
 - never expose hidden inputs, per-example errors, or trajectories unless the confirmed feedback policy permits them.
 
-No static pattern proves anti-cheat safety. Review the actual candidate execution boundary and document residual shared-environment risk in README.
+These are optional defenses selected from the confirmed threat model, not a requirement for a separate evaluator delivery. Every referenced manifest, hash list, input, runner, or helper must either be included under `tests/` or be intentionally visible in Environment and documented. No static pattern proves anti-cheat safety. Review the actual candidate execution boundary and document residual shared-environment risk in README.
 
 ## Optional baseline solution
 

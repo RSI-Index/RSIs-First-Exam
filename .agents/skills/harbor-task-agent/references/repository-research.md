@@ -46,13 +46,15 @@ If the baseline exists only in an inaccessible private artifact, stop and ask fo
 
 Prefer this order for starting material:
 
-1. prebuilt image pinned by digest, when it is official, reviewable, and contains no hidden answer;
-2. Docker build from an exact repository SHA plus pinned dependencies and checksummed assets;
+1. Docker build from an exact repository SHA plus pinned dependencies and checksummed assets;
+2. a real prebuilt image only when the contributor explicitly supplies or approves that exact image and its contents are reviewable;
 3. contributor-supplied local asset only when its provenance, license, hash, and inclusion boundary are confirmed.
 
-An immutable Git SHA alone does not pin package indexes, base images, datasets, checkpoints, submodules, Git LFS objects, or generated assets. Pin each independently where the ecosystem supports it. Do not pin apt package versions; apt repositories commonly stop serving old point versions. Pin the base image digest and clean apt lists instead.
+The generated directory must contain the complete build definition and task-owned evaluator/assets needed by RSI-Harness. Do not substitute a fake registry, repeated-character digest, undocumented runner path, or separately delivered evaluator bundle merely because an actual Docker/GPU run is not available during authoring.
 
-If a build needs private credentials, do not put them in task files, build args, URLs, or image layers. Prefer an authorized prebuilt digest. If no safe delivery path exists, stop.
+An immutable Git SHA alone does not pin package indexes, base images, datasets, checkpoints, submodules, Git LFS objects, or generated assets. Pin each independently where the ecosystem supports it. A real stable image tag is acceptable; record a digest when the contributor or registry supplies one, but never invent or require one merely to complete the package. Do not pin apt package versions; apt repositories commonly stop serving old point versions. Clean apt lists instead.
+
+If a build needs private credentials, do not put them in task files, build args, URLs, or image layers. Ask for a contributor-approved delivery method or exact prebuilt image. If no safe delivery path exists, stop.
 
 ## Evidence changes task semantics
 

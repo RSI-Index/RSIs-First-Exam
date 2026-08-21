@@ -1,6 +1,6 @@
 # Environment design
 
-Environment defines the clean Base image and the persistent Work state. Judge shares this image family; private tests are injected later and never belong here.
+Environment defines the clean Base image and the persistent Work state. Judge shares this image family; task-owned tests are injected later and never belong here.
 
 ## Required output contract
 
@@ -36,11 +36,11 @@ A common build pattern is:
 
 Do not rely on a default branch, shallow `HEAD`, mutable release URL, or unverified archive. Do not copy the contributor's current working tree unless that local state is an explicitly confirmed starting artifact.
 
-Everything under `environment/` enters the Work build context and may be visible to the Agent in image layers. Never place private tests, hidden cases/seeds, expected outputs, answer patches, optimal checkpoints, private baseline comparators, `solution/`, or credentials there.
+Everything under `environment/` enters the Work build context and may be visible to the Agent in image layers. Never place the task-owned `tests/` tree, hidden cases/seeds, expected outputs, answer patches, optimal checkpoints, hidden baseline comparators, `solution/`, or credentials there.
 
 ## Dependencies and assets
 
-- Pin base images by digest when available.
+- Use a real, available base image. A stable tag is sufficient; record a registry-provided digest when available, but never fabricate one.
 - Pin external Python packages exactly. Requirements files, local paths, and VCS URLs with immutable revisions are valid exceptions to inline `==` syntax.
 - Pin external source repositories and submodules by immutable revision.
 - Pin public datasets/checkpoints by immutable revision and checksum. Record license and provenance.
@@ -48,9 +48,9 @@ Everything under `environment/` enters the Work build context and may be visible
 - Bake all Verifier tooling into the shared Environment. `tests/test.sh` must not install it later.
 - Do not use bare `nproc`; set task-bounded parallelism explicitly.
 
-If a public asset is too large for `tests/`, it may be baked into Environment only when it is intentionally visible to Work and contains no hidden evaluation information. Hidden `tests/` injection is limited to 100,000 entries and 1 GiB of regular-file bytes.
+If a public asset is too large for `tests/`, it may be baked into Environment only when it is intentionally visible to Work and contains no hidden evaluation information. Task-owned `tests/` injection is limited to 100,000 entries and 1 GiB of regular-file bytes.
 
-A Dockerfile is optional when `[environment].docker_image` or Compose `image` names a reviewed prebuilt image. Pin that image by digest and confirm its effective WORKDIR, source/assets, dependencies, user, license, provenance, and empty Docker `Config.Volumes`. RSI-Harness rejects an image that declares any volume because its contents fall outside snapshot ownership. Checking image metadata is an image-preflight execution check, not something the static validator can prove. Do not add an empty Dockerfile merely to satisfy a file-tree example.
+Author a real `environment/Dockerfile` by default so the task directory contains its build recipe. A Dockerfile is optional only when the contributor explicitly supplies or approves the exact `[environment].docker_image` or Compose `image`. For that exception, confirm the image is accessible and review its effective WORKDIR, source/assets, dependencies, user, license, provenance, and empty Docker `Config.Volumes`. A registry-provided digest may be recorded but is not mandatory. RSI-Harness rejects an image that declares any volume because its contents fall outside snapshot ownership. Checking image metadata is an image-preflight execution check, not something the static validator can prove. Never invent an image reference or add an empty Dockerfile merely to make compilation pass.
 
 ## RSI-Harness shape
 
@@ -103,7 +103,7 @@ Confirm:
 - the candidate is fully materialized on disk before submission and Judge reloads it without Work process state;
 - non-root Judge evaluation works with the WORKDIR mounted read-only;
 - Verifier dependencies are present before runtime;
-- a prebuilt image declares no Docker volumes;
+- a contributor-supplied prebuilt image, when used, is real, accessible, and declares no Docker volumes;
 - common resources/env and Judge-only overrides match the confirmed execution plan;
 - network and provider routing are operationally possible;
 - no hidden or solution material enters the build context or image history.

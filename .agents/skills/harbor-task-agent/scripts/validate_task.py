@@ -541,15 +541,15 @@ class Validator:
             self.error(
                 "ENVIRONMENT_DEFINITION_MISSING",
                 directory,
-                "provide Dockerfile, Compose, or an immutable docker_image",
+                "provide a Dockerfile, a supported Compose build/image, or docker_image",
             )
-        if isinstance(docker_image, str) and not self._digest_pinned_image(
+        if isinstance(docker_image, str) and self._obvious_placeholder_image(
             docker_image
         ):
             self.error(
-                "IMAGE_NOT_IMMUTABLE",
+                "IMAGE_PLACEHOLDER",
                 self.task_dir / "task.toml",
-                f"prebuilt environment image is not digest-pinned: {docker_image}",
+                f"environment image is an obvious placeholder: {docker_image}",
             )
         if compose_alt.exists():
             self.error(
@@ -633,11 +633,11 @@ class Validator:
             r"^\s*FROM\s+(?:--\S+\s+)?(\S+)", logical, re.IGNORECASE | re.MULTILINE
         )
         for image in from_lines:
-            if "@sha256:" not in image:
-                self.warning(
-                    "IMAGE_NOT_IMMUTABLE",
+            if self._obvious_placeholder_image(image):
+                self.error(
+                    "IMAGE_PLACEHOLDER",
                     path,
-                    f"base image is not digest-pinned: {image}",
+                    f"Dockerfile base image is an obvious placeholder: {image}",
                 )
         if re.search(r"\bapt(?:-get)?\s+install\b", logical):
             if not re.search(r"\bapt(?:-get)?\s+update\b", logical):
@@ -759,11 +759,11 @@ class Validator:
                     )
 
         image = self._yaml_scalar(main.get("image", ""))
-        if image and not self._digest_pinned_image(image):
+        if image and self._obvious_placeholder_image(image):
             self.error(
-                "IMAGE_NOT_IMMUTABLE",
+                "IMAGE_PLACEHOLDER",
                 path,
-                f"prebuilt Compose image is not digest-pinned: {image}",
+                f"Compose image is an obvious placeholder: {image}",
             )
         environment = self.config.get("environment", {})
         harbor_image = (
@@ -943,6 +943,24 @@ class Validator:
             text = self._read(path)
             if text is not None:
                 verifier_files[path] = text
+        for reference in sorted(self._absolute_references(verifier_files)):
+            if not reference.startswith("/tests/"):
+                continue
+            relative = PurePosixPath(reference.removeprefix("/tests/"))
+            if ".." in relative.parts:
+                self.error(
+                    "TEST_ASSET_MISSING",
+                    directory,
+                    f"Verifier test path must stay inside task-owned tests/: {reference}",
+                )
+                continue
+            packaged = directory.joinpath(*relative.parts)
+            if not packaged.exists():
+                self.error(
+                    "TEST_ASSET_MISSING",
+                    directory,
+                    f"Verifier references task-owned asset that is absent from tests/: {reference}",
+                )
         python_targets = self._python_invoked_test_paths(verifier_files)
         combined_parts: list[str] = []
         reward_write_attempts = 0
@@ -1027,7 +1045,7 @@ class Validator:
                 self.warning(
                     "PYTEST_PIN_UNVERIFIED",
                     self.task_dir / "environment",
-                    "verify that the immutable prebuilt image contains pytest==9.1.1",
+                    "verify that the contributor-supplied prebuilt image contains pytest==9.1.1",
                 )
             elif "pytest==9.1.1" not in dockerfile:
                 self.error(
@@ -1437,8 +1455,12 @@ class Validator:
         )
 
     @staticmethod
-    def _digest_pinned_image(value: str) -> bool:
-        return re.search(r"@sha256:[0-9a-fA-F]{64}$", value.strip()) is not None
+    def _obvious_placeholder_image(value: str) -> bool:
+        candidate = value.strip().strip("'\"").lower()
+        if re.search(r"(?:^|\.)invalid(?::[0-9]+)?/", candidate):
+            return True
+        digest = re.search(r"@sha256:([0-9a-f]{64})$", candidate)
+        return digest is not None and len(set(digest.group(1))) == 1
 
     @staticmethod
     def _yaml_entries(text: str, indent: int) -> list[tuple[str, str]]:

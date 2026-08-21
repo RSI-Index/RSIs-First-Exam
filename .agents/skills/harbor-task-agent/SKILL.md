@@ -1,11 +1,11 @@
 ---
 name: harbor-task-agent
-description: Use when converting an approved RSI-Index AutoResearch proposal into an RSI-Harness-compatible Harbor task.
+description: Use when converting an approved RSI-Index AutoResearch proposal into a self-contained RSI-Harness-compatible Harbor task.
 ---
 
 # Harbor Task Agent
 
-Turn an approved AutoResearch proposal into a runnable RSI-Harness task. RSI-Harness is the authoritative runtime contract. Terminal-Bench conventions are only useful where this skill explicitly preserves or adapts them.
+Turn an approved AutoResearch proposal into a self-contained, runnable RSI-Harness task. Copying the generated task directory into an RSI-Harness workspace must be sufficient to build and run it, apart from RSI-Harness itself, the declared GPUs, provider credentials, and other operator inputs explicitly documented in the task. RSI-Harness is the authoritative runtime contract. Terminal-Bench conventions are only useful where this skill explicitly preserves or adapts them.
 
 ## Load references by stage
 
@@ -13,7 +13,7 @@ Do not read every reference up front.
 
 1. Before inspecting a proposal or remote repository, read [references/repository-research.md](references/repository-research.md) completely.
 2. Before deciding the Base/Work environment, read [references/environment-design.md](references/environment-design.md) completely.
-3. After the Environment interface is fixed and before authoring any private evaluation, read [references/verifier-design.md](references/verifier-design.md) completely.
+3. After the Environment interface is fixed and before authoring the task-owned evaluation, read [references/verifier-design.md](references/verifier-design.md) completely.
 4. Before the final contributor assumption review, read [references/task-template.md](references/task-template.md) and [references/validation-rules.md](references/validation-rules.md) completely.
 
 The references are part of this portable skill. Do not require files from the repository that happens to contain the skill. RSI-Harness itself is optional for static authoring and required only for the authoritative compiler check.
@@ -27,7 +27,10 @@ The references are part of this portable skill. Do not require files from the re
 - Ask only for contributor-owned choices or inaccessible facts that can materially change the task. Explain operational questions in plain language; contributors need not know Harbor internals.
 - Do not write any task file until the contributor has confirmed one consolidated final assumption review.
 - Never overwrite an existing target. Immediately before every write, check the exact target path. If any target exists, obtain explicit permission for that exact directory or choose a new target, then check again.
-- Stop instead of leaving placeholders, invented credentials, fabricated measurements, guessed private assets, or an evaluator that cannot implement the confirmed protocol.
+- Generate a Dockerfile-based, self-contained package by default. Use a prebuilt image only when the contributor explicitly supplies or approves that exact real image. Never invent an image registry, tag, digest, external evaluator bundle, runner, or asset location.
+- `tests/` and every evaluator asset it needs are normal task-owned files. Harness-only Judge injection keeps them unavailable to Work at runtime; it does not imply a separately delivered private bundle.
+- Do not downgrade an ordinary deliverable to a compile-only fixture because Docker, GPUs, or a full evaluation cannot be run during authoring. Produce a complete task and report unperformed execution checks as pending. Create a deliberately incomplete fixture only when the contributor explicitly requests a fixture or compiler demo.
+- Stop instead of leaving placeholders, invented credentials, fabricated measurements, missing task-owned assets, or an evaluator that cannot implement the confirmed protocol.
 - Do not claim Docker, Oracle/baseline, no-op, adversarial, GPU, or real-agent checks unless they were actually run.
 
 ## Working state
@@ -59,7 +62,7 @@ Require at least:
 
 Do not require measured baseline results, measured variance, verified runtime, or claimed final-verifier behavior at proposal stage. Preserve “not yet reproduced” labels.
 
-If a required author name/email, private asset, license permission, registry access, runtime provider route, or other contributor-owned fact is missing, ask one small related question group. Otherwise continue without interaction.
+If a required author name/email, license permission, contributor-supplied prebuilt image or asset, registry access, runtime provider route, or other contributor-owned fact is missing, ask one small related question group. Otherwise continue without interaction. Do not manufacture a dependency on an external evaluator asset when the evaluator can be included under `tests/`.
 
 ### Stage 2 — Repository evidence
 
@@ -71,7 +74,7 @@ If the repository contradicts the proposal in a way that changes the baseline or
 
 ### Stage 3 — Environment design
 
-Read [references/environment-design.md](references/environment-design.md). Design the clean Base image and persistent Work state before thinking about private tests.
+Read [references/environment-design.md](references/environment-design.md). Design the clean Base image and persistent Work state before writing the task-owned tests.
 
 Fix and record this interface:
 
@@ -90,9 +93,9 @@ The Environment build context is exactly `environment/`. It must not contain or 
 
 ### Stage 4 — Verifier design
 
-Only after the interface above is stable, read [references/verifier-design.md](references/verifier-design.md). Design the private fixed evaluation against the confirmed protocol.
+Only after the interface above is stable, read [references/verifier-design.md](references/verifier-design.md). Design the task-owned fixed evaluation against the confirmed protocol.
 
-RSI-Harness uses a clean Base/Judge derived from the shared Environment plus a snapshot of Work. It does not support Harbor's separate verifier image. Work never receives the task's `tests/`; Judge receives them privately at submission time. Use `tests/test.sh`, not `tests/Dockerfile`.
+RSI-Harness uses a clean Base/Judge derived from the shared Environment plus a snapshot of Work. It does not support Harbor's separate verifier image. The generated task contains its complete `tests/` tree; RSI-Harness withholds that tree from Work and injects it into Judge at submission time. This runtime visibility rule is not an external bundle requirement. Use `tests/test.sh`, not `tests/Dockerfile`.
 
 The Verifier must:
 
@@ -105,7 +108,7 @@ The Verifier must:
 - give a valid continuously scored baseline/no-op result when the baseline itself is valid;
 - enforce correctness and task-specific anti-cheat controls before performance/quality scoring.
 
-Every submission exposes the complete Judge stdout/stderr at `/run/rsi-harness/feedback/agent-N.log` plus a footer containing round, status, reward, optional score, exit code, timeout flag, duration, remaining submission budget, and any error. `rsi-submit --list` exposes submission history. Do not confuse the bounded in-memory/report `output_limit_bytes` field with this separately captured durable file: the feedback log is the complete stream. There is no feedback-hidden final Judge phase inside RSI-Harness, so never promise one; if a proposal requires hidden final evaluation, distinguish an external final evaluation from the in-Harness development Judge and obtain contributor confirmation.
+Every submission exposes the complete `tests/test.sh` stdout/stderr stream to Work at `/run/rsi-harness/feedback/agent-N.log`, plus a footer containing round, status, reward, optional score, exit code, timeout flag, duration, remaining submission budget, and any error. `rsi-submit --list` exposes submission history. Therefore stdout/stderr is the intentional Agent-visible feedback channel and must contain only the confirmed safe feedback—never hidden cases, gold answers, secrets, or undeclared per-example details. Do not confuse the bounded in-memory/report `output_limit_bytes` field with this separately captured durable file: the feedback log is the complete stream. There is no feedback-hidden final Judge phase inside RSI-Harness, so never promise one; if a proposal requires hidden final evaluation, distinguish an external final evaluation from the in-Harness development Judge and obtain contributor confirmation.
 
 Treat candidate code and all Work-modified system state as untrusted. State the shared-environment isolation limitation honestly; do not claim the protection of an independent verifier image.
 
@@ -147,7 +150,7 @@ Read [references/task-template.md](references/task-template.md) and [references/
 - common CPU, memory, storage, shared-memory, build-timeout and environment assumptions, plus Judge-only overrides;
 - shared Base/Judge limitation, actual full submission feedback/footer, and Verifier trust boundary;
 - whether an optional baseline `solution/solve.sh` will exist as an external/manual helper (RSI-Harness never executes it);
-- Dockerfile build versus immutable prebuilt-image choice, including a no-declared-volumes image preflight;
+- Dockerfile build by default, or the exact contributor-supplied prebuilt image when explicitly chosen, including a no-declared-volumes image preflight for the latter;
 - validation that will be run now versus Docker/GPU/execution checks left pending.
 
 Call out conservative assumptions as assumptions, not facts. Ask the contributor to confirm or correct the entire review. Do not write in the same response that asks for confirmation.
@@ -164,16 +167,16 @@ Generate the contract in [references/task-template.md](references/task-template.
 ├── instruction.md
 ├── README.md
 ├── environment/
-│   ├── Dockerfile                  # omit for a confirmed immutable prebuilt image
+│   ├── Dockerfile                  # default; omit only for an explicit real prebuilt image
 │   └── docker-compose.yaml        # only when a supported Compose field is needed
 ├── tests/
 │   ├── test.sh
-│   └── task-specific private evaluator/assets
+│   └── complete task-owned evaluator/assets
 └── solution/
     └── solve.sh                   # optional external/manual baseline helper only
 ```
 
-Every task text file must contain the exact Harbor canary string in a comment. Keep all paths in `instruction.md` absolute. Use ML taxonomy `Training`, `Inference`, `Evaluation`, or `Kernels`. Do not add Terminal-Bench's standard timeout suffix, separate-verifier files, CTRF artifacts, or a full “optimal” solution.
+Every task text file must contain the exact Harbor canary string in a comment. Keep all paths in `instruction.md` absolute. Use ML taxonomy `Training`, `Inference`, `Evaluation`, or `Kernels`. Do not add Terminal-Bench's standard timeout suffix, separate-verifier files, CTRF artifacts, or a full “optimal” solution. Every literal `/tests/...` reference must resolve to a file or directory included in the generated task. Do not reference undeclared `/tests/private`, an out-of-package evaluator bundle, or a synthetic runner.
 
 `solution/solve.sh`, when justified, is a traceable baseline/smoke helper for external or manual execution. RSI-Harness does not execute it. It is not an oracle, is never copied into Environment or Verifier, and need not achieve the best possible reward.
 
@@ -192,7 +195,7 @@ python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task \
   --harness-root /absolute/path/to/RSI-Harness
 ```
 
-Fix every error. Review warnings against task evidence; fix them or document why they are intentional. Reread the actual generated files and verify the destination did not change.
+Fix every error. Review warnings against task evidence; fix them or document why they are intentional. Reread the actual generated files and verify the destination did not change. Compilation without Docker/GPU execution is valid evidence only for the compiler layer; it never justifies missing build files, evaluator assets, or runtime commands.
 
 As part of that reread, trace the Verifier's actual terminal control-flow paths
 for baseline/no-op, declared candidate correctness failure, successful scoring,
@@ -209,4 +212,4 @@ Report:
 - remaining execution checks not performed;
 - any known security or reproducibility limitation.
 
-Do not build Docker, execute the baseline/solution, run GPU evaluation, or launch a real Agent unless the contributor separately authorizes those stateful/expensive checks.
+Do not build Docker, execute the baseline/solution, run GPU evaluation, or launch a real Agent unless the contributor separately authorizes those stateful/expensive checks. When those checks are not authorized, keep the task complete and self-contained and report them as pending—not as a compile-only fixture.

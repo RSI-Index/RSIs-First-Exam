@@ -13,6 +13,7 @@ Review manually before and after generation:
 - Work/Judge resources, network/data policy, proxy needs, timeouts, and submissions match the final assumption review;
 - the effective WORKDIR and snapshot mode match the image, candidate is fully materialized on disk, and split-WORKDIR evaluation succeeds read-only;
 - complete Judge stdout/stderr and Harness footer visibility match the contributor-confirmed feedback contract;
+- every evaluator helper/input referenced under `/tests/...` is present in the generated task, with no undeclared external evaluator bundle or runner dependency;
 - no measured result, variance, runtime, or successful verification was invented.
 - evaluator control flow, not merely its documentation, implements every
   declared terminal outcome: valid baseline score, candidate correctness-fail
@@ -33,7 +34,7 @@ Run:
 python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task
 ```
 
-It is read-only and uses the Python standard library. It checks required files and metadata, task identity/taxonomy, language-appropriate text canaries, absolute/effective WORKDIR declarations, major RSI-Harness unsupported fields, the supported Compose subset, Dockerfile/prebuilt-image safety, dependency pins, absolute instruction paths, Verifier network/install rules, common direct Python/shell intermediate writes, direct exclusive reward creation, README run options and a necessary timeout lower bound, and selected solution/test reference alignment.
+It is read-only and uses the Python standard library. It checks required files and metadata, task identity/taxonomy, language-appropriate text canaries, absolute/effective WORKDIR declarations, major RSI-Harness unsupported fields, the supported Compose subset, obvious placeholder image references, dependency pins, absolute instruction paths, missing task-owned `/tests/...` assets, Verifier network/install rules, common direct Python/shell intermediate writes, direct exclusive reward creation, README run options and a necessary timeout lower bound, and selected solution/test reference alignment.
 
 `ERROR` must be fixed. A `WARNING` needs evidence-backed review; warnings do not automatically make a task invalid. Static pattern and AST checks are conservative and cannot prove Docker buildability, full reward control flow, evaluator correctness, anti-cheat security, statistical validity, or successful GPU execution.
 
@@ -68,7 +69,7 @@ These are separate, stateful, and potentially expensive. Run only when authorize
 6. Real GPU full evaluation within Verifier timeout and resource limits.
 7. Real multi-round Agent run with submission budget, timeout, GPU release/reuse, feedback, and retained workspace.
 
-Do not label a task “runnable” solely because it compiled. Say “statically valid and Harness-compilable; execution checks pending” until Layer D evidence exists.
+Do not label a task “runtime-verified” solely because it compiled. A complete self-contained package may be reported as “statically valid and Harness-compilable; execution checks pending.” Missing Docker/build definitions, evaluator assets, or real runtime commands make the package incomplete rather than a valid compile-only fixture.
 
 ## Terminal-Bench rule disposition
 
@@ -90,7 +91,7 @@ RSI-Harness is authoritative. Apply the referenced Terminal-Bench checks as foll
 | `allow_internet` true/false | Keep omission; use current `network_mode`/`allowed_hosts`. |
 | slug length | Keep the at-most-three-token naming convention. |
 | package name | Adapt to exact `rsi/<task-directory>`. |
-| separate verifier | Invert: forbid it; RSI-Harness uses shared Base/Judge with private tests injection. |
+| separate verifier | Invert: forbid it; RSI-Harness uses shared Base/Judge and injects the task-owned tests only into Judge. |
 | verifier tooling baked | Adapt: bake it into Environment, not tests image. |
 | verifier network fetch | Keep prohibition; Verifier is no-network. |
 | pip pinning | Keep exact pins with requirements/local/revisioned-VCS exceptions. |
@@ -110,6 +111,9 @@ Also reject:
 - multiple or explicit GPU types for this task program;
 - wildcard runtime allowlists when exact provider/data hosts can be named;
 - Verifier reward written early, legacy `reward.txt`, runtime fetch/install, or task-authored intermediates.
+- obvious fake image references and any literal `/tests/...` dependency absent from the task's own `tests/` tree.
+
+Do not require an image digest. Prefer a Dockerfile and accept real stable tags; when a contributor supplies a digest, preserve and verify it rather than synthesizing one. A prebuilt-image path is an explicit contributor decision, not a fallback for unavailable execution checks.
 
 Do not reject a read-only path reference merely because it contains `/tmp`. Reject actual task-authored result, feedback, or control-flow writes. Unavoidable library/runtime scratch outside a read-only WORKDIR still requires manual review and must not persist task results, protected data, or cross-round state.
 
