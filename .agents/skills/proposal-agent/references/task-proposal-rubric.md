@@ -147,13 +147,12 @@ Evaluate all seven gates before deciding. Do not stop at the first concern.
 - The proposal must state exactly which datasets, examples, aggregate scores,
   per-example feedback, logs, or trajectories the agent can see during research,
   and what remains hidden or reserved.
-- By default, a protected evaluator scores each submitted candidate artifact
-  directly and returns aggregate evaluation-set scores needed for iteration. It
+- By default, a fixed evaluator scores each submitted candidate artifact
+  directly and returns the declared aggregate feedback needed for iteration. It
   must not rerun the candidate's training recipe during evaluation.
-- By default, evaluation examples, answers, generated samples, per-example
-  outcomes, caches, and evaluator internals remain outside the agent-readable
-  workspace. A separate hidden final split is optional, not preferred or
-  mechanically required.
+- By default, evaluation examples, answers, per-example outcomes, and evaluator
+  internals are not returned to the agent. A separate hidden final split is
+  optional, not preferred or mechanically required.
 - When the feedback boundary differs from these defaults, the contributor must
   explain why it is scientifically useful and define safeguards against
   memorization, evaluator tampering, answer hard-coding, and adaptive overfitting.
@@ -161,6 +160,9 @@ Evaluate all seven gates before deciding. Do not stop at the first concern.
   evidence. Do not send the default aggregate-score-visible,
   evaluation-content-hidden design to human review merely because there is no
   separate hidden final split.
+- Safeguards must be realistic for the intended task. Do not claim protections
+  that the proposal and evidence do not establish; record material residual
+  limitations instead.
 - Fail this gate only when the design leaves a credible direct path to evaluation
   leakage or reward hacking, or when the exposure and safeguards are materially
   undefined.
