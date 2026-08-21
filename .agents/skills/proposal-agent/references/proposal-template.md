@@ -19,12 +19,12 @@ runtime, or final verifier behavior.
 | Reference Baseline | Repository evidence paths | [Repository-relative paths and external artifact revisions supporting the baseline, configuration, evaluator, metric, and matched comparison; proposal agent verifies] |
 | Reference Baseline | Baseline evaluation path | [Exact evaluator and command or launch path that scores the baseline artifact under the matched protocol; proposal agent verifies] |
 | Reference Baseline | Baseline metric reported by the repository | [Metric, value if reported, and source; label it not yet reproduced when applicable; do not invent a missing value] |
-| Evaluation | Fixed evaluation protocol | [Protected dataset/workload, evaluator, fixed comparison semantics, submitted artifact interface, and per-run evaluation budget; contributor drafts, proposal agent verifies] |
+| Evaluation | Fixed evaluation protocol | [Fixed dataset/workload, evaluator, fixed comparison semantics, submitted artifact interface, and per-run evaluation budget; contributor drafts, proposal agent verifies] |
 | Evaluation | Evaluation input artifact | [Model, checkpoint, or other candidate artifact submitted by the research agent and scored directly; evaluation does not rerun its training recipe] |
 | Evaluation | Reward or score definition | [Metric, direction, aggregation, and units; contributor drafts, proposal agent verifies] |
-| Evaluation | Feedback visible to the agent | [Default: aggregate evaluation-set scores after each submitted candidate; list any additional visible errors, logs, or trajectories] |
-| Evaluation | Evaluation information hidden from the agent | [Default: evaluation examples, answers, generated samples, per-example outcomes, caches, and evaluator internals] |
-| Evaluation | Measures preventing reward hacking | [Controls against leakage, memorization, hard-coding, evaluator tampering, fabricated results, and adaptive overfitting; proposal agent drafts, contributor confirms] |
+| Evaluation | Feedback visible to the agent | [All feedback returned after each submitted candidate; normally aggregate scores and bounded diagnostics, plus any additional errors, logs, or trajectories] |
+| Evaluation | Evaluation information hidden from the agent | [Evaluation content not returned by default, such as examples, answers, per-example outcomes, and evaluator internals; state any exceptions] |
+| Evaluation | Measures preventing reward hacking | [Realistic controls against leakage, memorization, hard-coding, evaluator tampering, fabricated results, and adaptive overfitting, plus material residual limitations; proposal agent drafts, contributor confirms] |
 | Evaluation | Noise handling and meaningful improvement | [Proposal-stage plausibility argument; after baseline reproduction, use repeats or formal uncertainty estimates only when observed variability could change the conclusion] |
 | Workspace | Is web search required? | [Disabled by default, or define its research purpose and boundary; contributor decides and justifies] |
 | Workspace | May the agent use external services? | [No, or list each service, purpose, data flow, and boundary; contributor decides and justifies] |

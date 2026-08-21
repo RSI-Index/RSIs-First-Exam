@@ -14,6 +14,6 @@ Prefer the official open-source repository that contains the starting implementa
 
 ## Sample task shape
 
-A suitable task might compare several bounded candidate variants against an official released checkpoint under one fixed dataset, budget, evaluator, and score. The protected evaluator scores each submitted candidate artifact directly and returns aggregate scores while keeping evaluation content hidden. Adding one CLI flag, porting an already specified function, or reproducing a paper once would be engineering work, not an iterative AutoResearch task.
+A suitable task might compare several bounded candidate variants against an official released checkpoint under one fixed dataset, budget, evaluator, and score. The fixed evaluator scores each submitted candidate directly and returns the declared feedback needed for iteration while keeping answers and undeclared evaluation content unavailable. Adding one CLI flag, porting an already specified function, or reproducing a paper once would be engineering work, not an iterative AutoResearch task.
 
 After the orientation, ask for the repository URL, exact commit or tag if known, the contributor's relationship to or familiarity with the project, a few sentences describing the initial research idea, and whether one candidate run is likely to exceed the normal compute reference significantly. Do not request exact compute details yet.
