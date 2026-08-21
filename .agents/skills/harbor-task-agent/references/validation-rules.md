@@ -61,7 +61,11 @@ Do not replace the static layer with compilation. Harbor's parser may accept unk
 
 After Layers A–C, a fresh Agent that did not generate or edit the task performs the read-only review defined in [independent-review.md](independent-review.md). It independently checks proposal fidelity, package completeness, RSI-Harness compatibility, evaluator and reward behavior, feedback and anti-cheat boundaries, and truthfulness of the reported validation state.
 
-Generator self-review is not a substitute. `BLOCKER` and `MAJOR` findings prevent handoff. The generator fixes findings and reruns affected checks; every modification invalidates the prior decision and requires a new independent review. Delivery requires `PASS`. If no independent Agent is available, report this layer as pending and do not claim the task is complete.
+Layer D has a hard budget: one full initial review, at most one generator correction, one targeted re-review, and at most one final generator correction. There is no third review. Prefer resuming the first reviewer for the re-review; if a fresh Agent must substitute, give it the prior report and correction evidence and keep the same targeted scope.
+
+Generator self-review is not a substitute for the initial review. A `BLOCKER` or `MAJOR` must cite a concrete delivered path, a confirmed requirement, and a plausible reachable consequence. Execution-only uncertainty without such static evidence belongs in Layer E residual risks rather than an unbounded review loop.
+
+Report Layer D as `PASS` only when an independent decision says `PASS`. When the second review requires changes, the generator may make the final allowed correction and rerun affected checks, then hand off as `REVIEWED_WITH_FINAL_CORRECTIONS`; do not imply that those last edits were independently re-reviewed. If a material defect or evidence gap remains, report `BLOCKED`. If the initial independent Agent is unavailable, report this layer as pending and do not claim the task is complete.
 
 ## Layer E — Execution checks
 

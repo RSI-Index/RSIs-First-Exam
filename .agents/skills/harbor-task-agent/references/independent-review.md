@@ -1,6 +1,8 @@
 # Independent task review
 
-Review the generated RSI-Harness AutoResearch Harbor task as a fresh, read-only Agent. You are the reviewer, not a second generator. Do not modify the task, invent missing facts, contact the contributor, build images, execute repository code, allocate GPUs, or run the evaluator.
+Review the generated RSI-Harness AutoResearch Harbor task as a read-only Agent. The initial reviewer must be fresh and must not have generated or edited the task; the targeted re-review should reuse that reviewer when possible. You are the reviewer, not a second generator. Do not modify the task, invent missing facts, contact the contributor, build images, execute repository code, allocate GPUs, or run the evaluator.
+
+This is a bounded release review, not an open-ended formal-verification or adversarial-security engagement. Review only once per assigned pass and return a decision; do not request another reviewer or recursively broaden the audit.
 
 ## Inputs
 
@@ -13,6 +15,15 @@ Require these inputs before reviewing:
 - the generator's static-validator and compiler commands and complete results.
 
 Missing evidence that prevents a material judgment produces `BLOCKED`; do not fill the gap with assumptions. Treat the generator's summaries and validation results as claims to verify, not conclusions to repeat.
+
+For a re-review, also require the prior report, the generator's disposition of every finding, the paths changed, and updated validation results. If these are missing, return `BLOCKED` rather than restarting a full initial review.
+
+## Review mode
+
+- **Initial review:** inspect the complete package against all independent checks below.
+- **Re-review:** verify the prior findings and inspect the changed paths and their direct dependents for regressions. Do not restart a fresh open-ended audit. A new `BLOCKER` or `MAJOR` is appropriate only when concrete delivered evidence shows a task-breaking defect or a direct regression that the first correction exposed or introduced.
+
+The re-review is the final independent pass. Return its decision and stop. The generator may make one final correction after it, but no third review is part of this workflow.
 
 ## Independent checks
 
@@ -30,6 +41,16 @@ Review all of the following:
 
 Do not reject a complete task merely because authorized Docker/GPU execution checks remain pending. Do reject a compile-only fixture, a task whose evaluator cannot run from the delivered package, or a task that changes the approved research semantics.
 
+## Materiality boundary
+
+A `BLOCKER` or `MAJOR` requires all three of:
+
+1. a concrete path, field, or control-flow location in the delivered package or authoritative Harness contract;
+2. a violated confirmed task requirement; and
+3. a plausible reachable consequence for task execution, scoring, integrity, or compatibility.
+
+Do not elevate absence of exhaustive proof, speculative hardening, or a property that can only be established by an unauthorized Docker/GPU/runtime check. Record such uncertainty under residual risks and name the appropriate execution check. Static evidence may still be blocking when the delivered code or configuration itself directly contradicts the approved semantics; lack of runtime authorization does not excuse a concrete defect.
+
 ## Findings and decision
 
 Each finding must include severity, evidence path or source, the violated task requirement, and the required correction. Use:
@@ -41,6 +62,7 @@ Each finding must include severity, evidence path or source, the violated task r
 Return exactly this structure:
 
 ```text
+Review pass: INITIAL | RE-REVIEW
 Decision: PASS | CHANGES_REQUIRED | BLOCKED
 
 Findings:

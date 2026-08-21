@@ -33,7 +33,7 @@ The references are part of this portable skill. Do not require files from the re
 - Do not downgrade an ordinary deliverable to a compile-only fixture because Docker, GPUs, or a full evaluation cannot be run during authoring. Produce a complete task and report unperformed execution checks as pending. Create a deliberately incomplete fixture only when the contributor explicitly requests a fixture or compiler demo.
 - Stop instead of leaving placeholders, invented credentials, fabricated measurements, missing task-owned assets, or an evaluator that cannot implement the confirmed protocol.
 - Do not claim Docker, Oracle/baseline, no-op, adversarial, GPU, or real-agent checks unless they were actually run.
-- Do not deliver a generated task without a passing review from a fresh independent Agent. The generator's own reread, static validation, and compiler check do not replace this review.
+- Complete the bounded independent-review workflow in Stage 9 before handoff. The generator's own reread, static validation, and compiler check do not replace the initial independent review. Do not exceed two independent review passes or two generator correction rounds unless the contributor explicitly requests a deeper audit.
 
 ## Working state
 
@@ -157,6 +157,8 @@ Read [references/task-template.md](references/task-template.md) and [references/
 
 Call out conservative assumptions as assumptions, not facts. Ask the contributor to confirm or correct the entire review. Do not write in the same response that asks for confirmation.
 
+This is a contributor decision review, not an implementation audit. Keep it compact and explain only choices or assumptions that could materially change the task. Keep exact hash inventories, evaluator internals, process/thread cleanup details, line-level evidence, and validation-test matrices in the internal ledger or final handoff unless the contributor must decide among alternatives because of them.
+
 ### Stage 7 — Generate the package
 
 After explicit confirmation, choose one destination, defaulting to `<slug>/` beside the proposal unless the contributor specified another location. Recheck existence immediately before writing.
@@ -207,20 +209,34 @@ do not establish this.
 
 Do not build Docker, execute the baseline/solution, run GPU evaluation, or launch a real Agent unless the contributor separately authorizes those stateful/expensive checks. When those checks are not authorized, keep the task complete and self-contained and record them as pending—not as a compile-only fixture.
 
+Keep authoring-time verification proportional to the evidence it can establish. Safe contract tests may exercise important evaluator-owned branches, but do not turn static authoring into an attempt to prove Docker-, GPU-, kernel-, or process-runtime properties that belong to separately authorized execution checks.
+
 ### Stage 9 — Independent review and handoff
 
-Read [references/independent-review.md](references/independent-review.md). Dispatch a fresh Agent that did not generate or edit the task. Give it the approved proposal, contributor-confirmed assumptions, generated task, repository evidence, known RSI-Harness checkout or documentation, and exact validation results. Do not prime it with the generator's preferred conclusion or ask it to modify files.
+Read [references/independent-review.md](references/independent-review.md). The reviewer is always read-only; the generating Agent owns every correction.
 
-The independent reviewer is mandatory. If an independent Agent is unavailable, stop and report the review as pending instead of substituting generator self-review or claiming completion.
+Use this fixed review budget:
 
-Any `BLOCKER` or `MAJOR` finding prevents handoff. The generating Agent owns corrections, reruns every affected validation, and requests a new independent review; the reviewer never edits the task. A task is ready only after a fresh review returns `PASS`. Minor findings must be fixed or explicitly dispositioned in the handoff.
+1. Dispatch one fresh Agent that did not generate or edit the task for the full initial review. Give it the approved proposal, contributor-confirmed assumptions, generated task, repository evidence, known RSI-Harness checkout or documentation, and exact validation results. Do not prime it with the generator's preferred conclusion or ask it to modify files.
+2. If the initial decision has a fixable `BLOCKER` or `MAJOR`, make correction round one and rerun every affected validation. Resume the same reviewer for one targeted re-review when possible. If that Agent is unavailable, use a fresh reviewer but provide the first report, correction dispositions, touched paths, and updated validation evidence so the pass remains a re-review rather than a new open-ended audit.
+3. The re-review is the second and final independent review. If it reports a fixable `BLOCKER` or `MAJOR`, make correction round two and rerun affected validation, then stop. Do not dispatch a third reviewer. If the final correction cannot be completed or essential evidence remains unavailable, stop as `BLOCKED`.
 
-After `PASS`, report:
+If an independent Agent is unavailable for the initial pass, stop and report review as pending instead of substituting generator self-review. If it is unavailable only for the re-review, report the first decision, completed correction, and missing re-review rather than claiming `PASS`.
+
+End Stage 9 with one truthful status:
+
+- `PASS`: the initial review or re-review returned `PASS`; any accompanying minor findings were fixed or explicitly dispositioned.
+- `REVIEWED_WITH_FINAL_CORRECTIONS`: the final allowed correction round addressed the second review's findings and affected validation passed, but those final edits were not independently re-reviewed. Never describe this status as reviewer `PASS`.
+- `BLOCKED`: a material finding or evidence gap remains after the allowed workflow.
+
+Do not start another automatic review/fix loop. A contributor may explicitly request a separate deeper audit later.
+
+At handoff, report:
 
 - generated destination and file tree;
 - repository/ref actually used;
 - Environment, Verifier, optional Solution, and timeout decisions;
 - exact static/compiler commands and outcomes;
-- independent-review decision and disposition of every finding;
+- both independent-review decisions when applicable, every finding and disposition, the number of correction rounds, and the final Stage 9 status;
 - remaining execution checks not performed;
 - any known security or reproducibility limitation.
