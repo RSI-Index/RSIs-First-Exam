@@ -113,8 +113,17 @@ Choose controls matched to the task:
 
 These are optional defenses selected from the confirmed threat model, not a requirement for a separate evaluator delivery. Every referenced manifest, hash list, input, runner, or helper must either be included under `tests/` or be intentionally visible in Environment and documented. No static pattern proves anti-cheat safety. Review the actual candidate execution boundary and document residual shared-environment risk in README.
 
-## Optional baseline solution
+## Required baseline solution
 
-Generate `solution/solve.sh` only when the repository baseline can be expressed as a traceable external/manual smoke helper. RSI-Harness never executes it. It demonstrates how the starting candidate can reach a scoreable baseline; it is not an optimal answer and must not be copied or referenced by Environment or Verifier.
+Generate `solution/solve.sh` for every task. It idempotently restores or
+materializes the approved reference baseline in candidate-owned workspace paths
+from starting assets already present in the Environment. For a no-op baseline,
+it clears candidate-owned changes and restores the starting policy or
+configuration. It must not train, evaluate, access `/tests`, call `rsi-submit`,
+write reward, or print an expected result. RSI-Harness never executes it; the
+Judge's baseline/no-op path remains responsible for the real score.
 
-For inherently long runs, a precomputed baseline artifact is acceptable only when the proposal confirms it, its generation script and provenance are included, its checksum is fixed, and it contains no hidden final answer. Otherwise omit Solution and leave baseline execution as a pending check.
+Prefer an official evaluation-ready artifact. If the approved baseline can only
+be produced by a long training run and no suitable artifact or restorable
+starting state exists, stop and return that baseline decision to the contributor
+instead of hiding training inside Solution.

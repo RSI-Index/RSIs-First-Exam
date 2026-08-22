@@ -17,13 +17,19 @@ For each material claim, retain the immutable URL or repository-relative path, t
 - baseline implementation or official artifact;
 - launch/benchmark/evaluation entrypoints and fixed configuration;
 - dependency manifests, supported runtime/CUDA versions, and build instructions;
-- data/checkpoint names, licenses, official download locations, revisions, and checksums when published;
+- data/checkpoint names, licenses, official download locations, and immutable official revisions where supported;
 - exact candidate-owned files and any generated files or package-install behavior;
 - public tests or benchmarks that can become a safe development proxy;
 - commands that can be expressed without network at Agent/Verifier runtime;
-- repository-reported metric text, still labeled not yet reproduced.
+- officially reported baseline results in the repository, releases, model cards,
+  papers, or author-published result artifacts, still labeled not yet reproduced.
 
-Do not replace repository evidence with paper claims. A paper may explain the hypothesis but cannot establish that a path, command, artifact, or metric exists at the task ref.
+Repository evidence remains authoritative for code paths, commands, artifacts,
+and evaluator behavior. Official papers, model cards, release notes, and
+author-published result artifacts may establish a reported number. Record
+whether that number exactly matches the Judge dataset, metric, aggregation,
+units, and inference/training protocol. A nearby result with any material
+difference is reference context, not a matched baseline claim.
 
 ## Baseline traceability record
 
@@ -36,7 +42,7 @@ resolved immutable ref: <40-character SHA>
 baseline path/artifact: <repository path or immutable artifact>
 entrypoint/config: <paths>
 matched protocol evidence: <paths>
-reported metric: <value and source, or not reported>
+reported metric: <matched value and source; otherwise closest official value and protocol difference; otherwise not reported>
 reproduction status: not yet reproduced
 ```
 
@@ -46,13 +52,18 @@ If the baseline exists only in an inaccessible private artifact, stop and ask fo
 
 Prefer this order for starting material:
 
-1. Docker build from an exact repository SHA plus pinned dependencies and checksummed assets;
+1. Docker build from an exact repository ref plus pinned dependencies and immutable official asset revisions where supported;
 2. a real prebuilt image only when the contributor explicitly supplies or approves that exact image and its contents are reviewable;
-3. contributor-supplied local asset only when its provenance, license, hash, and inclusion boundary are confirmed.
+3. contributor-supplied local asset only when its provenance, license, and inclusion boundary are confirmed.
 
 The generated directory must contain the complete build definition and task-owned evaluator/assets needed by RSI-Harness. Do not substitute a fake registry, repeated-character digest, undocumented runner path, or separately delivered evaluator bundle merely because an actual Docker/GPU run is not available during authoring.
 
-An immutable Git SHA alone does not pin package indexes, base images, datasets, checkpoints, submodules, Git LFS objects, or generated assets. Pin each independently where the ecosystem supports it. A real stable image tag is acceptable; record a digest when the contributor or registry supplies one, but never invent or require one merely to complete the package. Do not pin apt package versions; apt repositories commonly stop serving old point versions. Clean apt lists instead.
+An immutable Git ref alone does not pin package indexes, base images, datasets,
+checkpoints, submodules, Git LFS objects, or generated assets. Use immutable
+official revisions where the ecosystem supports them. Do not require file-hash
+inventories merely to package a task. A real stable image tag is acceptable;
+never invent or require an image digest. Do not pin apt package versions; apt
+repositories commonly stop serving old point versions. Clean apt lists instead.
 
 If a build needs private credentials, do not put them in task files, build args, URLs, or image layers. Ask for a contributor-approved delivery method or exact prebuilt image. If no safe delivery path exists, stop.
 

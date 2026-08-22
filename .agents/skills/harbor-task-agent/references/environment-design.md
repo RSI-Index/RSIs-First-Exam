@@ -9,7 +9,7 @@ Freeze these values before Verifier design:
 ```text
 WORKDIR: existing absolute POSIX path; /workspace is the default convention
 starting source: official URL + exact 40-character SHA
-starting assets: exact paths, revisions, hashes, and visibility
+starting assets: exact paths, immutable official revisions where supported, and visibility
 candidate-owned paths: absolute paths
 prohibited paths/state: absolute paths or named components
 Verifier entry interface: command/module/artifact to evaluate
@@ -40,17 +40,17 @@ Everything under `environment/` enters the Work build context and may be visible
 
 ## Dependencies and assets
 
-- Use a real, available base image. A stable tag is sufficient; record a registry-provided digest when available, but never fabricate one.
+- Use a real, available base image. A stable tag is sufficient; do not require an image digest.
 - Pin external Python packages exactly. Requirements files, local paths, and VCS URLs with immutable revisions are valid exceptions to inline `==` syntax.
 - Pin external source repositories and submodules by immutable revision.
-- Pin public datasets/checkpoints by immutable revision and checksum. Record license and provenance.
+- Pin public datasets/checkpoints by immutable official revision where supported. Record material license and provenance without requiring file-checksum inventories.
 - Do not pin apt package versions. Run apt update in the install layer, use `--no-install-recommends`, and remove `/var/lib/apt/lists/*` in that layer.
 - Bake all Verifier tooling into the shared Environment. `tests/test.sh` must not install it later.
 - Do not use bare `nproc`; set task-bounded parallelism explicitly.
 
 If a public asset is too large for `tests/`, it may be baked into Environment only when it is intentionally visible to Work and contains no hidden evaluation information. Task-owned `tests/` injection is limited to 100,000 entries and 1 GiB of regular-file bytes.
 
-Author a real `environment/Dockerfile` by default so the task directory contains its build recipe. A Dockerfile is optional only when the contributor explicitly supplies or approves the exact `[environment].docker_image` or Compose `image`. For that exception, confirm the image is accessible and review its effective WORKDIR, source/assets, dependencies, user, license, provenance, and empty Docker `Config.Volumes`. A registry-provided digest may be recorded but is not mandatory. RSI-Harness rejects an image that declares any volume because its contents fall outside snapshot ownership. Checking image metadata is an image-preflight execution check, not something the static validator can prove. Never invent an image reference or add an empty Dockerfile merely to make compilation pass.
+Author a real `environment/Dockerfile` by default so the task directory contains its build recipe. A Dockerfile is optional only when the contributor explicitly supplies or approves the exact `[environment].docker_image` or Compose `image`. For that exception, confirm the image is accessible and review its effective WORKDIR, source/assets, dependencies, user, license, provenance, and empty Docker `Config.Volumes`. RSI-Harness rejects an image that declares any volume because its contents fall outside snapshot ownership. Checking image metadata is an image-preflight execution check, not something the static validator can prove. Never invent an image reference or add an empty Dockerfile merely to make compilation pass.
 
 ## RSI-Harness shape
 

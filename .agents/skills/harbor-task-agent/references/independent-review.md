@@ -32,14 +32,23 @@ Inspect the actual proposal, task files, evidence, and relevant RSI-Harness cont
 Review all of the following:
 
 1. **Proposal fidelity:** repository and ref, baseline, scientific loop, starting state, deliverable, editable scope, prohibited actions, fixed evaluation, reward direction, feedback boundary, resources, network, data, and contributor decisions are preserved without invented facts.
-2. **Self-contained package:** the Docker build or explicitly contributor-approved real image is usable in principle; every task-owned evaluator, helper, input, and referenced `/tests/...` asset is included; there are no placeholders, fake images, undeclared bundles, synthetic runners, or dependencies on the repository that merely contains the skill.
-3. **RSI-Harness contract:** task metadata, Work and Judge resources, WORKDIR/snapshot assumptions, network policy, timeouts, README run options, Compose usage, and shared-environment limitations match the current Harness behavior. Unsupported Terminal-Bench fields or a separate verifier are absent.
-4. **Evaluation and reward:** `tests/test.sh` invokes the real fixed evaluation, uses preinstalled tooling, and has no runtime fetch. Correctness gates precede scoring. A valid baseline/no-op remains scoreable. The primary finite `reward` follows the declared formula and direction and is written exactly once only after complete evaluation.
-5. **Terminal outcomes:** trace baseline/no-op, declared candidate correctness failure, successful scoring, timeout, crash, dependency/infrastructure failure, and incomplete evaluation. Confirm each path produces the declared reward or no reward.
-6. **Feedback and integrity:** all Agent-visible feedback stays within the confirmed boundary; hidden cases, answers, and evaluator internals are not exposed. Safeguards address the task's concrete leakage, hard-coding, fabrication, evaluator-tampering, and adaptive-overfitting paths without overstating isolation.
-7. **Truthful handoff:** reported checks were actually run, pending execution checks remain labeled pending, repository-reported metrics remain not yet reproduced where applicable, and no runtime, variance, security, or reproducibility claim exceeds the evidence.
+2. **Baseline chain:** the Proposal baseline, Instruction reported result/status, `solution/solve.sh` materialized workspace state, and Judge baseline/no-op path describe the same reference baseline. README identifies the official source and any difference between the reported and Judge protocols. Solution only changes workspace files; it does not train, evaluate, access `/tests`, submit, or write reward.
+3. **Agent-facing instruction:** `instruction.md` is layered and scannable, contains Workspace, Reference baseline, Research loop, modification boundary, Evaluation and feedback, and submission checks, and does not burden the Agent with repository URLs, immutable refs, licenses, build provenance, or evaluator internals.
+4. **Human maintainer guide:** README is concise enough to read and covers baseline evidence, material protocol differences, environment/evaluation, run/validation, and known limitations without duplicating file inventories or low-level control flow.
+5. **Self-contained package:** the Docker build or explicitly contributor-approved real image is usable in principle; every task-owned evaluator, helper, input, and referenced `/tests/...` asset is included; there are no placeholders, fake images, undeclared bundles, synthetic runners, or dependencies on the repository that merely contains the skill.
+6. **RSI-Harness contract:** task metadata, Work and Judge resources, WORKDIR/snapshot assumptions, network policy, timeouts, README run options, Compose usage, and shared-environment limitations match the current Harness behavior. Unsupported Terminal-Bench fields or a separate verifier are absent.
+7. **Evaluation and reward:** `tests/test.sh` invokes the real fixed evaluation, uses preinstalled tooling, and has no runtime fetch. Correctness gates precede scoring. A valid baseline/no-op remains scoreable. The primary finite `reward` follows the declared formula and direction and is written exactly once only after complete evaluation.
+8. **Terminal outcomes:** trace baseline/no-op, declared candidate correctness failure, successful scoring, timeout, crash, dependency/infrastructure failure, and incomplete evaluation. Confirm each path produces the declared reward or no reward.
+9. **Feedback and integrity:** all Agent-visible feedback stays within the confirmed boundary; hidden cases, answers, and evaluator internals are not exposed. Safeguards address the task's concrete leakage, hard-coding, fabrication, evaluator-tampering, and adaptive-overfitting paths without overstating isolation.
+10. **Truthful handoff:** reported checks were actually run, pending execution checks remain labeled pending, officially reported results remain not yet reproduced where applicable, and no runtime, variance, security, or reproducibility claim exceeds the evidence.
 
 Do not reject a complete task merely because authorized Docker/GPU execution checks remain pending. Do reject a compile-only fixture, a task whose evaluator cannot run from the delivered package, or a task that changes the approved research semantics.
+
+Missing `solution/solve.sh`, a Solution that launches training/evaluation, a
+fabricated or protocol-mismatched reported result presented as matched, or a
+Judge that scores a different baseline is normally `MAJOR` because it breaks the
+approved comparison. Prose density by itself is `MINOR` unless it hides or
+contradicts an executable requirement.
 
 ## Materiality boundary
 

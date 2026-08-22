@@ -24,7 +24,7 @@ The references are part of this portable skill. Do not require files from the re
 - Start from an approved proposal. If the scientific question, baseline, evaluation, action space, or compute decision is still draft, route it back to proposal work instead of silently defining it here.
 - Work remote-first. Verify the official repository and immutable commit from remote evidence; use a local checkout only when the contributor explicitly points to one or remote inspection is insufficient.
 - Never execute untrusted repository code, training, installation hooks, or task images merely to research or package the task.
-- Keep Environment, Verifier, and optional Solution as separate decisions. Freeze the Environment-to-Verifier interface before writing Verifier logic.
+- Keep Environment, Verifier, and baseline Solution as separate decisions. Freeze the Environment-to-Verifier interface before writing Verifier logic.
 - Ask only for contributor-owned choices or inaccessible facts that can materially change the task. Explain operational questions in plain language; contributors need not know Harbor internals.
 - Do not write any task file until the contributor has confirmed one consolidated final assumption review.
 - Never overwrite an existing target. Immediately before every write, check the exact target path. If any target exists, obtain explicit permission for that exact directory or choose a new target, then check again.
@@ -56,19 +56,19 @@ Require at least:
 
 - official repository URL and resolved 40-character commit SHA;
 - iterative model-development question and candidate-owned deliverable;
-- traceable baseline and repository evidence paths;
+- traceable baseline, its evaluation path, and its officially reported result or an explicit `not reported` status;
 - fixed evaluation protocol, scalar metric, direction, and visible-feedback boundary;
 - explicit editable scope and prohibited actions;
 - Work and single-evaluation compute estimates;
 - network and additional-data decisions.
 
-Do not require measured baseline results, measured variance, verified runtime, or claimed final-verifier behavior at proposal stage. Preserve “not yet reproduced” labels.
+Do not require baseline reproduction, measured variance, verified runtime, or claimed final-verifier behavior at proposal stage. Preserve “reported, not yet reproduced” labels and never turn a nearby but mismatched result into a matched baseline claim.
 
 If a required author name/email, license permission, contributor-supplied prebuilt image or asset, registry access, runtime provider route, or other contributor-owned fact is missing, ask one small related question group. Otherwise continue without interaction. Do not manufacture a dependency on an external evaluator asset when the evaluator can be included under `tests/`.
 
 ### Stage 2 — Repository evidence
 
-Follow [references/repository-research.md](references/repository-research.md). Resolve moving refs to the proposal SHA, verify that material baseline, entrypoint, config, evaluator, and dependency paths exist at that SHA, and record exact remote URLs or repository-relative paths.
+Follow [references/repository-research.md](references/repository-research.md). Resolve moving refs to the proposal SHA, verify that material baseline, entrypoint, config, evaluator, and dependency paths exist at that SHA, and search official repository documentation, releases, model cards, papers, and author-published result artifacts for the reported baseline value.
 
 Investigate packaging facts yourself. Do not ask the contributor to locate ordinary files, commands, dependencies, or existing benchmark behavior that remote repository evidence can answer.
 
@@ -141,7 +141,8 @@ Omit `gpu_types` and every `allow_internet` field. Declare Work GPUs with `[envi
 Read [references/task-template.md](references/task-template.md) and [references/validation-rules.md](references/validation-rules.md). Present one compact, plain-language review containing every material assumption:
 
 - task slug and `rsi/<slug>` package name;
-- repository URL, exact commit, source/assets, and reproducibility pins;
+- repository identity and exact ref;
+- reference baseline, reported result and source status, whether it matches the Judge protocol, and how `solution/solve.sh` materializes it without training or evaluation;
 - starting state, editable scope, prohibited actions, and final deliverable;
 - fixed evaluation, correctness gate, scalar reward, direction, aggregation, units, and exactly visible feedback;
 - hidden/public inputs and leakage controls;
@@ -151,13 +152,13 @@ Read [references/task-template.md](references/task-template.md) and [references/
 - effective WORKDIR, split/read-only versus full-rootfs snapshot mode, materialized deliverable/reload path, and any snapshot storage cost;
 - common CPU, memory, storage, shared-memory, build-timeout and environment assumptions, plus Judge-only overrides;
 - shared Base/Judge limitation, actual full submission feedback/footer, and Verifier trust boundary;
-- whether an optional baseline `solution/solve.sh` will exist as an external/manual helper (RSI-Harness never executes it);
+- confirmation that the required `solution/solve.sh` materializes the baseline workspace state while RSI-Harness leaves scoring to `tests/test.sh`;
 - Dockerfile build by default, or the exact contributor-supplied prebuilt image when explicitly chosen, including a no-declared-volumes image preflight for the latter;
 - validation that will be run now versus Docker/GPU/execution checks left pending.
 
 Call out conservative assumptions as assumptions, not facts. Ask the contributor to confirm or correct the entire review. Do not write in the same response that asks for confirmation.
 
-This is a contributor decision review, not an implementation audit. Keep it compact and explain only choices or assumptions that could materially change the task. Keep exact hash inventories, evaluator internals, process/thread cleanup details, line-level evidence, and validation-test matrices in the internal ledger or final handoff unless the contributor must decide among alternatives because of them.
+This is a contributor decision review, not an implementation audit. Keep it compact and explain only choices or assumptions that could materially change the task. Keep file inventories, evaluator internals, process/thread cleanup details, line-level evidence, and validation-test matrices out of the contributor review unless the contributor must decide among alternatives because of them.
 
 ### Stage 7 — Generate the package
 
@@ -177,12 +178,12 @@ Generate the contract in [references/task-template.md](references/task-template.
 │   ├── test.sh
 │   └── complete task-owned evaluator/assets
 └── solution/
-    └── solve.sh                   # optional external/manual baseline helper only
+    └── solve.sh                   # required baseline materializer
 ```
 
 Every task text file must contain the exact Harbor canary string in a comment. Keep all paths in `instruction.md` absolute. Use ML taxonomy `Training`, `Inference`, `Evaluation`, or `Kernels`. Do not add Terminal-Bench's standard timeout suffix, separate-verifier files, CTRF artifacts, or a full “optimal” solution. Every literal `/tests/...` reference must resolve to a file or directory included in the generated task. Do not reference undeclared `/tests/private`, an out-of-package evaluator bundle, or a synthetic runner.
 
-`solution/solve.sh`, when justified, is a traceable baseline/smoke helper for external or manual execution. RSI-Harness does not execute it. It is not an oracle, is never copied into Environment or Verifier, and need not achieve the best possible reward.
+`solution/solve.sh` is required. It idempotently materializes the proposal's reference baseline in the candidate-owned workspace, using starting assets already present in the Environment. It does not train, evaluate, access `/tests`, submit, or write reward. RSI-Harness does not execute it; `tests/test.sh` remains the only scoring path. For a no-op baseline, the script restores or clears candidate-owned state so the Judge takes its declared baseline path.
 
 ### Stage 8 — Validate
 
@@ -235,7 +236,7 @@ At handoff, report:
 
 - generated destination and file tree;
 - repository/ref actually used;
-- Environment, Verifier, optional Solution, and timeout decisions;
+- Environment, Verifier, baseline Solution, and timeout decisions;
 - exact static/compiler commands and outcomes;
 - both independent-review decisions when applicable, every finding and disposition, the number of correction rounds, and the final Stage 9 status;
 - remaining execution checks not performed;

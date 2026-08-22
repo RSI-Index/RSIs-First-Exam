@@ -8,6 +8,10 @@ Review manually before and after generation:
 
 - repository URL and exact SHA match the approved proposal;
 - baseline, workload, metric, direction, units, aggregation, and budget did not change;
+- Instruction names the baseline, reported result/status, and matched comparison;
+  README gives concise official evidence and labels protocol differences; required
+  `solution/solve.sh` materializes that same baseline; Judge scores that same
+  baseline/no-op under the fixed protocol;
 - public/hidden feedback boundary and leakage controls are implemented as confirmed;
 - starting artifacts, editable scope, prohibited actions, and deliverable align;
 - Work/Judge resources, network/data policy, proxy needs, timeouts, and submissions match the final assumption review;
@@ -34,7 +38,7 @@ Run:
 python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task
 ```
 
-It is read-only and uses the Python standard library. It checks required files and metadata, task identity/taxonomy, language-appropriate text canaries, absolute/effective WORKDIR declarations, major RSI-Harness unsupported fields, the supported Compose subset, obvious placeholder image references, dependency pins, absolute instruction paths, missing task-owned `/tests/...` assets, Verifier network/install rules, common direct Python/shell intermediate writes, direct exclusive reward creation, README run options and a necessary timeout lower bound, and selected solution/test reference alignment.
+It is read-only and uses the Python standard library. It checks required files and metadata, required Instruction sections, required executable baseline Solution, task identity/taxonomy, language-appropriate text canaries, absolute/effective WORKDIR declarations, major RSI-Harness unsupported fields, the supported Compose subset, obvious placeholder image references, dependency pins, absolute instruction paths, missing task-owned `/tests/...` assets, Verifier network/install rules, common direct Python/shell intermediate writes, direct exclusive reward creation, README run options and a necessary timeout lower bound, and selected solution/test reference alignment.
 
 `ERROR` must be fixed. A `WARNING` needs evidence-backed review; warnings do not automatically make a task invalid. Static pattern and AST checks are conservative and cannot prove Docker buildability, full reward control flow, evaluator correctness, anti-cheat security, statistical validity, or successful GPU execution.
 
@@ -53,13 +57,13 @@ python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task \
   --harness-root /absolute/path/to/RSI-Harness
 ```
 
-The validator invokes `HarborTaskCompiler.compile(...)` with the reward, direction, and maximum-submission settings parsed from README. Compilation reads and hashes the task but does not build Docker, allocate GPUs, use network, run solution/tests, or mutate the task.
+The validator invokes `HarborTaskCompiler.compile(...)` with the reward, direction, and maximum-submission settings parsed from README. Compilation reads the task but does not build Docker, allocate GPUs, use network, run solution/tests, or mutate the task.
 
 Do not replace the static layer with compilation. Harbor's parser may accept unknown metadata, and the compiler intentionally does not lint canaries, dependency pins, Dockerfile hygiene, reward lifecycle, or proposal semantics.
 
 ## Layer D — Independent task review
 
-After Layers A–C, a fresh Agent that did not generate or edit the task performs the read-only review defined in [independent-review.md](independent-review.md). It independently checks proposal fidelity, package completeness, RSI-Harness compatibility, evaluator and reward behavior, feedback and anti-cheat boundaries, and truthfulness of the reported validation state.
+After Layers A–C, a fresh Agent that did not generate or edit the task performs the read-only review defined in [independent-review.md](independent-review.md). It independently checks proposal fidelity; Instruction/README/Solution/Judge baseline alignment; package completeness; RSI-Harness compatibility; evaluator and reward behavior; feedback and anti-cheat boundaries; and truthfulness of the reported validation state.
 
 Layer D has a hard budget: one full initial review, at most one generator correction, one targeted re-review, and at most one final generator correction. There is no third review. Prefer resuming the first reviewer for the re-review; if a fresh Agent must substitute, give it the prior report and correction evidence and keep the same targeted scope.
 
@@ -73,7 +77,7 @@ These are separate, stateful, and potentially expensive. Run only when authorize
 
 1. Docker/Compose image build and image preflight.
 2. Baseline/no-op submission: valid continuous baseline score, safe feedback, no leaked cases.
-3. Optional external/manual baseline Solution helper: traceable smoke/baseline behavior, never presumed full score or Harness-executed.
+3. Required external/manual baseline Solution materializer: restores the declared baseline workspace without training/evaluation, never presumed full score or Harness-executed.
 4. Negative controls: prohibited edits, evaluator tampering, hard-coded cases, fabricated outputs, dependency/path changes, missing/incomplete evaluation.
 5. Repeated deterministic/reliability runs and variance characterization.
 6. Real GPU full evaluation within Verifier timeout and resource limits.
