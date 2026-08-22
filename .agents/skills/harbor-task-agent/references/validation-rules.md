@@ -11,7 +11,7 @@ When no known Harness checkout is available, run:
 python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task
 ```
 
-It is read-only and uses the Python standard library. It checks required files and metadata, required Instruction sections, required executable baseline Solution, task identity/taxonomy, language-appropriate text canaries, absolute/effective WORKDIR declarations, major RSI-Harness unsupported fields, the supported Compose subset, obvious placeholder image references, dependency pins, suspicious Git-baseline/ignored-file scope closure, absolute instruction paths, missing task-owned `/tests/...` assets, Verifier network/install rules, common direct Python/shell intermediate writes, direct exclusive reward creation, README run options and a necessary timeout lower bound, and selected solution/test reference alignment. For common Ray/vLLM distributed launch patterns it also warns when no runtime `VLLM_HOST_IP` assignment is visible and rejects a statically configured or hard-coded IPv4. This is conservative static evidence; it cannot prove address filtering, import order, subprocess propagation, or failure cleanup.
+It is read-only and uses the Python standard library. It checks required files and metadata, required Instruction sections, required executable baseline Solution, task identity/taxonomy, language-appropriate text canaries, absolute/effective WORKDIR declarations, major RSI-Harness unsupported fields, the supported Compose subset, obvious placeholder image references, dependency pins, suspicious Git-baseline/ignored-file scope closure, absolute instruction paths, missing task-owned `/tests/...` assets, Verifier network/install rules, common direct Python/shell intermediate writes, direct exclusive reward creation, README run options and a necessary timeout lower bound, and selected solution/test reference alignment. For common Ray/vLLM distributed launch patterns it also warns when no runtime `VLLM_HOST_IP` assignment is visible and rejects a statically configured or hard-coded IPv4. For `lm-evaluation-harness` it warns when logged-sample rows are used as a document-completeness count or when `n-samples` effective-count handling is not visible. This is conservative static evidence; it cannot prove address filtering, import order, subprocess propagation, failure cleanup, per-document filter grouping, or metric selection.
 
 `ERROR` must be fixed. A `WARNING` needs evidence-backed review; warnings do not automatically make a task invalid. Static pattern and AST checks are conservative and cannot prove Docker buildability, full reward control flow, evaluator correctness, anti-cheat security, statistical validity, or successful GPU execution.
 
@@ -62,6 +62,11 @@ overlapping rereads. Check all of the following together:
   runtime before initialization, propagates it to every relevant child, never
   falls back to `0.0.0.0`, and leaves no reward on discovery/startup failure;
   and
+- conditionally, `lm-evaluation-harness` completeness uses
+  `n-samples[task].effective`; logged samples are uniquely grouped by
+  `(doc_id, filter)`, every document has exactly the declared filters, one
+  filter is selected explicitly for consumption, and the synthetic
+  single-task/multi-filter regression passes; and
 - no measured result, variance, runtime, or successful verification was invented.
 
 The validator and compiler cannot prove this mapping because neither
@@ -181,6 +186,9 @@ Also reject:
 - distributed Ray/vLLM without runtime Judge IPv4 derivation, with a hard-coded
   `VLLM_HOST_IP`, with a `0.0.0.0` fallback, or with address/bootstrap failure
   incorrectly converted into a candidate score.
+- `lm-evaluation-harness` document completeness inferred from logged-sample row
+  count, or multi-filter samples consumed without explicit `doc_id` grouping
+  and filter selection.
 - obvious fake image references and any literal `/tests/...` dependency absent from the task's own `tests/` tree.
 
 Do not require an image digest. Prefer a Dockerfile and accept real stable tags; when a contributor supplies a digest, preserve and verify it rather than synthesizing one. A prebuilt-image path is an explicit contributor decision, not a fallback for unavailable execution checks.

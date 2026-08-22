@@ -55,6 +55,41 @@ For performance tasks:
 
 For stochastic quality tasks, fix seeds/workload and use enough repetitions or matched comparisons to distinguish expected gain from ordinary noise. Preserve the proposal's justification; do not claim measured variance before reproduction.
 
+## `lm-evaluation-harness` result cardinality
+
+Apply this section when the fixed evaluator uses `lm-evaluation-harness`,
+especially with `log_samples=True` or more than one filter. Treat its returned
+structures according to their declared meanings:
+
+- `result["n-samples"][task]["effective"]` is the authoritative number of
+  documents actually evaluated. Require an integer (not `bool`) equal to the
+  fixed expected document count. Never use `len(result["samples"][task])` as a
+  document-completeness check.
+- `result["samples"][task]` contains document-by-filter records. When reading
+  it, group by `doc_id`; require the expected number of unique documents, no
+  duplicate `(doc_id, filter)` pair, and exactly the filter set declared by the
+  fixed task configuration for every document. Normalize a task with no
+  explicit filter list to the framework's default filter.
+- Select one declared filter explicitly for every downstream sample or metric
+  consumer. Keep the selected sample filter aligned with the corresponding
+  aggregate metric key; never count multiple filters as additional examples or
+  silently mix their outputs.
+
+Missing or malformed `n-samples`, incomplete filter coverage, duplicate sample
+keys, an unknown selected filter, or a disagreement between effective count
+and the fixed workload is an incomplete/evaluator failure: emit no reward. A
+safe diagnostic names only the task, expected document count, effective
+document count, and declared filter count; do not print sample contents.
+
+During Layer 2, exercise this contract with a synthetic single-task,
+multi-filter result before accepting the generated evaluator. The positive
+case must represent 1,319 documents and two declared filters (2,638 sample
+rows), pass completeness, and yield exactly 1,319 rows for the selected filter.
+Negative cases must cover an effective-count mismatch, a missing filter for one
+document, a duplicate `(doc_id, filter)` pair, and an unknown selected filter.
+Keep this generator regression outside the delivered task unless the task
+already has an appropriate task-owned evaluator test suite.
+
 ## Reward and output lifecycle
 
 `tests/test.sh` and helpers must use stdout/stderr for all contributor-visible feedback, knowing that Work receives the complete stream. They must not create task-authored temporary reports, pytest capture files, JSON intermediates, or side-channel reason files. A plain reference to `/tmp` is not itself a write; inspect actual control flow. Unavoidable disposable scratch created internally by a library is acceptable only outside a read-only WORKDIR, with no protected contents and no role in scoring persistence.

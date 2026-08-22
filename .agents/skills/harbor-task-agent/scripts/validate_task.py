@@ -1154,6 +1154,7 @@ class Validator:
                             f"Verifier output must stay on stdout/stderr, not {target}",
                         )
         combined = "\n".join(combined_parts)
+        self._lm_eval_result_checks(verifier_files, combined)
         for path in hardcoded_vllm_host_ip_paths:
             self.error(
                 "VLLM_HOST_IP_HARDCODED",
@@ -1207,6 +1208,118 @@ class Validator:
                     dockerfile_path,
                     "tasks using pytest must bake pytest==9.1.1 into Environment",
                 )
+
+    def _lm_eval_result_checks(
+        self, verifier_files: dict[Path, str], combined: str
+    ) -> None:
+        if re.search(r"\b(?:lm_eval|simple_evaluate)\b", combined) is None:
+            return
+
+        if (
+            re.search(r"\blog_samples\s*=\s*True\b", combined)
+            and re.search(r"['\"]n-samples['\"]", combined) is None
+        ):
+            self.warning(
+                "LMEVAL_EFFECTIVE_COUNT_MISSING",
+                self.task_dir / "tests",
+                "lm-evaluation-harness logged-sample evaluation should validate "
+                "document completeness with result['n-samples'][task]['effective']",
+            )
+
+        for path, text in verifier_files.items():
+            if path.suffix.lower() != ".py":
+                continue
+            if self._python_compares_lm_eval_sample_length(text):
+                self.warning(
+                    "LMEVAL_SAMPLE_COUNT_UNSAFE",
+                    path,
+                    "do not infer lm-evaluation-harness document completeness "
+                    "from len(result['samples'][task]); samples are document-by-filter rows",
+                )
+
+    @classmethod
+    def _python_compares_lm_eval_sample_length(cls, text: str) -> bool:
+        try:
+            tree = ast.parse(text)
+        except SyntaxError:
+            return False
+
+        sample_aliases: set[str] = set()
+        assignments: list[tuple[list[ast.expr], ast.expr | None]] = []
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Assign):
+                assignments.append((node.targets, node.value))
+            elif isinstance(node, ast.AnnAssign):
+                assignments.append(([node.target], node.value))
+
+        changed = True
+        while changed:
+            changed = False
+            for targets, value in assignments:
+                if value is None or not cls._is_lm_eval_sample_collection(
+                    value, sample_aliases
+                ):
+                    continue
+                for target in targets:
+                    if isinstance(target, ast.Name) and target.id not in sample_aliases:
+                        sample_aliases.add(target.id)
+                        changed = True
+
+        count_aliases: set[str] = set()
+        for targets, value in assignments:
+            if not cls._is_lm_eval_sample_len(value, sample_aliases):
+                continue
+            for target in targets:
+                if isinstance(target, ast.Name):
+                    count_aliases.add(target.id)
+
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Compare):
+                continue
+            for operand in (node.left, *node.comparators):
+                if cls._is_lm_eval_sample_len(operand, sample_aliases):
+                    return True
+                if isinstance(operand, ast.Name) and operand.id in count_aliases:
+                    return True
+        return False
+
+    @classmethod
+    def _is_lm_eval_sample_len(
+        cls, node: ast.AST | None, aliases: set[str]
+    ) -> bool:
+        return (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "len"
+            and len(node.args) == 1
+            and cls._is_lm_eval_sample_collection(node.args[0], aliases)
+        )
+
+    @classmethod
+    def _is_lm_eval_sample_collection(
+        cls, node: ast.AST, aliases: set[str]
+    ) -> bool:
+        if isinstance(node, ast.Name):
+            return node.id in aliases
+        if isinstance(node, ast.Attribute):
+            return node.attr == "samples"
+        if isinstance(node, ast.Subscript):
+            if isinstance(node.slice, ast.Constant) and node.slice.value == "samples":
+                return True
+            return cls._is_lm_eval_sample_collection(node.value, aliases)
+        if (
+            isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Attribute)
+            and node.func.attr == "get"
+        ):
+            if (
+                node.args
+                and isinstance(node.args[0], ast.Constant)
+                and node.args[0].value == "samples"
+            ):
+                return True
+            return cls._is_lm_eval_sample_collection(node.func.value, aliases)
+        return False
 
     @staticmethod
     def _uses_distributed_vllm(text: str) -> bool:

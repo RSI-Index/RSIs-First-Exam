@@ -230,6 +230,15 @@ first Ray/vLLM import with initialization side effects or subprocess launch.
 Pass the same derived environment to child processes. Failure must terminate as
 sanitized infrastructure/no-reward; never fall back to `0.0.0.0`.
 
+### Conditional `lm-evaluation-harness` result handling
+
+When the evaluator uses `lm-evaluation-harness`, implement the
+[`lm-evaluation-harness` result cardinality](verifier-design.md#lm-evaluation-harness-result-cardinality)
+contract. Document completeness comes from `n-samples[task].effective`, while
+logged samples are grouped by `doc_id` and consumed through one explicitly
+selected declared filter. Run the required single-task, multi-filter generator
+regression during Layer 2.
+
 ## Task-owned evaluator reward ending
 
 The task-specific evaluator and every helper or data asset it references must be included under `tests/`. It performs real checks before this ending. Keep the reward in memory, stream only safe Agent-visible feedback to stdout/stderr, and write the only evaluator result file at the end:
