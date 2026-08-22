@@ -4,9 +4,11 @@
 from __future__ import annotations
 
 import gc
+import ipaddress
 import json
 import math
 import os
+import socket
 import subprocess
 import sys
 from dataclasses import dataclass
@@ -525,7 +527,40 @@ def release_generation_runtime() -> None:
             pass
 
 
+def configure_vllm_host_ip() -> str:
+    """Pin vLLM to the Judge container's routable IPv4 address."""
+
+    hostname = socket.gethostname()
+    try:
+        candidates = socket.getaddrinfo(
+            hostname,
+            None,
+            family=socket.AF_INET,
+            type=socket.SOCK_STREAM,
+        )
+    except OSError as error:
+        raise RuntimeError("could not resolve the Judge container IPv4 address") from error
+
+    addresses = sorted(
+        {
+            address[4][0]
+            for address in candidates
+            if not (
+                (parsed := ipaddress.IPv4Address(address[4][0])).is_unspecified
+                or parsed.is_loopback
+                or parsed.is_link_local
+                or parsed.is_multicast
+            )
+        }
+    )
+    if len(addresses) != 1:
+        raise RuntimeError("could not identify one Judge container IPv4 address")
+    os.environ["VLLM_HOST_IP"] = addresses[0]
+    return addresses[0]
+
+
 def run_generation(model_path: Path) -> GeneratedEvaluation:
+    configure_vllm_host_ip()
     from lm_eval import simple_evaluate
     from lm_eval.tasks import TaskManager
 
