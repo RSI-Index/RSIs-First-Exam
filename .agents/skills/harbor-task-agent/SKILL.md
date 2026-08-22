@@ -124,6 +124,14 @@ The Verifier must:
 - give a valid continuously scored baseline/no-op result when the baseline itself is valid;
 - enforce correctness and task-specific anti-cheat controls before performance/quality scoring.
 
+When the fixed evaluator uses Ray, vLLM data parallelism, multi-node vLLM, or
+another vLLM execution path that needs a routable host address, the task owns
+that framework-specific bootstrap. It must derive the disposable Judge
+container's IPv4 at runtime and set `VLLM_HOST_IP` before initializing or
+spawning Ray/vLLM. Never bake an IP into task configuration or fall back to an
+unspecified address; address-discovery failure is infrastructure failure with
+no reward. Do not make this a Harness-global requirement for unrelated tasks.
+
 Every submission exposes the complete `tests/test.sh` stdout/stderr stream to Work at `/run/rsi-harness/feedback/agent-N.log`, plus a footer containing round, status, reward, optional score, exit code, timeout flag, duration, remaining submission budget, and any error. `rsi-submit --list` exposes submission history. Therefore stdout/stderr is the intentional Agent-visible feedback channel and must contain only the confirmed safe feedback—never hidden cases, gold answers, secrets, or undeclared per-example details. Do not confuse the bounded in-memory/report `output_limit_bytes` field with this separately captured durable file: the feedback log is the complete stream. There is no feedback-hidden final Judge phase inside RSI-Harness, so never promise one; if a proposal requires hidden final evaluation, distinguish an external final evaluation from the in-Harness development Judge and obtain contributor confirmation.
 
 Treat candidate code and all Work-modified system state as untrusted. State the shared-environment isolation limitation honestly; do not claim the protection of an independent verifier image.
@@ -260,5 +268,7 @@ At handoff, report:
 
 Follow Layers 4–5 in [references/validation-rules.md](references/validation-rules.md).
 They begin only after the Stage 9 handoff, never by default. Layer 4 is one
-combined Environment preflight with a planning-and-authorization gate. Layer 5
+combined Environment preflight with a planning-and-authorization gate. Its
+inspection container uses a private internal bridge so no-network Judge
+addressing can be inspected without public egress. Layer 5
 contains separately authorized scientific and end-to-end execution checks.

@@ -11,7 +11,7 @@ When no known Harness checkout is available, run:
 python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task
 ```
 
-It is read-only and uses the Python standard library. It checks required files and metadata, required Instruction sections, required executable baseline Solution, task identity/taxonomy, language-appropriate text canaries, absolute/effective WORKDIR declarations, major RSI-Harness unsupported fields, the supported Compose subset, obvious placeholder image references, dependency pins, suspicious Git-baseline/ignored-file scope closure, absolute instruction paths, missing task-owned `/tests/...` assets, Verifier network/install rules, common direct Python/shell intermediate writes, direct exclusive reward creation, README run options and a necessary timeout lower bound, and selected solution/test reference alignment.
+It is read-only and uses the Python standard library. It checks required files and metadata, required Instruction sections, required executable baseline Solution, task identity/taxonomy, language-appropriate text canaries, absolute/effective WORKDIR declarations, major RSI-Harness unsupported fields, the supported Compose subset, obvious placeholder image references, dependency pins, suspicious Git-baseline/ignored-file scope closure, absolute instruction paths, missing task-owned `/tests/...` assets, Verifier network/install rules, common direct Python/shell intermediate writes, direct exclusive reward creation, README run options and a necessary timeout lower bound, and selected solution/test reference alignment. For common Ray/vLLM distributed launch patterns it also warns when no runtime `VLLM_HOST_IP` assignment is visible and rejects a statically configured or hard-coded IPv4. This is conservative static evidence; it cannot prove address filtering, import order, subprocess propagation, or failure cleanup.
 
 `ERROR` must be fixed. A `WARNING` needs evidence-backed review; warnings do not automatically make a task invalid. Static pattern and AST checks are conservative and cannot prove Docker buildability, full reward control flow, evaluator correctness, anti-cheat security, statistical validity, or successful GPU execution.
 
@@ -58,6 +58,10 @@ overlapping rereads. Check all of the following together:
 - evaluator control flow implements valid baseline scoring, declared candidate
   correctness failure, successful final reward, and no reward for
   infrastructure/incomplete failure; and
+- conditionally, distributed Ray/vLLM startup derives one valid Judge IPv4 at
+  runtime before initialization, propagates it to every relevant child, never
+  falls back to `0.0.0.0`, and leaves no reward on discovery/startup failure;
+  and
 - no measured result, variance, runtime, or successful verification was invented.
 
 The validator and compiler cannot prove this mapping because neither
@@ -100,12 +104,16 @@ python3 <skill-dir>/scripts/preflight_task.py /absolute/path/to/task \
   --execute --acknowledge-authorized
 ```
 
-This creates an untouched, no-network, no-GPU inspection container and mounts
-the task's tests read-only. It never runs `tests/test.sh`, Solution, training,
-evaluation, submission, or reward writing. The Agent then performs only the
-task-specific read-only diagnostics needed to establish the starting-state
-gate. Container/image cleanup is another state-changing action and requires
-authorization.
+This creates an untouched, no-GPU inspection container on a new private Docker
+`--internal` bridge and mounts the task's tests read-only. That topology matches
+the no-network Judge property relevant to container-local IPv4 discovery: the
+container has a dynamic private address but no external route. It never runs
+`tests/test.sh`, Solution, training, evaluation, submission, or reward writing.
+The Agent then performs only the task-specific read-only diagnostics needed to
+establish the starting-state gate and, when the Verifier uses distributed
+Ray/vLLM, confirms that runtime address resolution returns one valid non-
+loopback IPv4 without initializing the framework. Container/image/network
+cleanup is another state-changing action and requires authorization.
 
 Layer 4 combines Docker build or approved-image retrieval, image metadata
 preflight, fresh untouched container creation, and the no-Agent
@@ -169,7 +177,10 @@ Also reject:
 - MCP, skills_dir, healthchecks, TPU;
 - multiple or explicit GPU types for this task program;
 - wildcard runtime allowlists when exact provider/data hosts can be named;
-- Verifier reward written early, legacy `reward.txt`, runtime fetch/install, or task-authored intermediates.
+- Verifier reward written early, legacy `reward.txt`, runtime fetch/install, or task-authored intermediates;
+- distributed Ray/vLLM without runtime Judge IPv4 derivation, with a hard-coded
+  `VLLM_HOST_IP`, with a `0.0.0.0` fallback, or with address/bootstrap failure
+  incorrectly converted into a candidate score.
 - obvious fake image references and any literal `/tests/...` dependency absent from the task's own `tests/` tree.
 
 Do not require an image digest. Prefer a Dockerfile and accept real stable tags; when a contributor supplies a digest, preserve and verify it rather than synthesizing one. A prebuilt-image path is an explicit contributor decision, not a fallback for unavailable execution checks.

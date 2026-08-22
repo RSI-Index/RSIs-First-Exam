@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import ast
+import ipaddress
 import json
 import os
 import re
@@ -347,6 +348,14 @@ class Validator:
             ("agent", agent),
             ("verifier", verifier),
         ):
+            table_env = table.get("env")
+            if isinstance(table_env, dict) and "VLLM_HOST_IP" in table_env:
+                self.error(
+                    "VLLM_HOST_IP_STATIC_CONFIG",
+                    path,
+                    f"[{table_name}.env] must not preconfigure VLLM_HOST_IP; "
+                    "derive the Judge container IPv4 at runtime",
+                )
             mode = table.get("network_mode")
             if mode is not None and mode not in {"public", "no-network", "allowlist"}:
                 self.error(
@@ -689,6 +698,17 @@ class Validator:
                 path,
                 "Docker VOLUME bypasses RSI-Harness snapshot ownership",
             )
+        if re.search(
+            r"^\s*(?:ENV|ARG)\s+VLLM_HOST_IP(?:\s|=)",
+            logical,
+            re.IGNORECASE | re.MULTILINE,
+        ):
+            self.error(
+                "VLLM_HOST_IP_STATIC_CONFIG",
+                path,
+                "Dockerfile must not bake VLLM_HOST_IP; derive the Judge "
+                "container IPv4 at runtime",
+            )
         if self._bare_nproc(logical):
             self.error(
                 "NPROC_BARE",
@@ -796,6 +816,17 @@ class Validator:
         text = self._read(path)
         if text is None:
             return
+        if re.search(
+            r"^\s*(?:-\s*)?VLLM_HOST_IP\s*(?::|=)",
+            text,
+            re.IGNORECASE | re.MULTILINE,
+        ):
+            self.error(
+                "VLLM_HOST_IP_STATIC_CONFIG",
+                path,
+                "Compose must not preconfigure VLLM_HOST_IP; derive the Judge "
+                "container IPv4 at runtime",
+            )
         if "\t" in text:
             self.error(
                 "COMPOSE_UNSUPPORTED", path, "Compose indentation must use spaces"
@@ -1068,6 +1099,8 @@ class Validator:
         combined_parts: list[str] = []
         reward_write_attempts = 0
         exclusive_reward_writes = 0
+        vllm_host_ip_configured = False
+        hardcoded_vllm_host_ip_paths: list[Path] = []
         for path, text in verifier_files.items():
             combined_parts.append(text)
             if FETCH_RE.search(text):
@@ -1098,6 +1131,10 @@ class Validator:
             language = self._verifier_language(
                 path, text, python_invoked=test_target in python_targets
             )
+            configured, hardcoded = self._vllm_host_ip_assignment(text, language)
+            vllm_host_ip_configured = vllm_host_ip_configured or configured
+            if hardcoded:
+                hardcoded_vllm_host_ip_paths.append(path)
             if language == "python":
                 attempts, exclusive = self._python_verifier_writes(path, text)
                 reward_write_attempts += attempts
@@ -1117,6 +1154,20 @@ class Validator:
                             f"Verifier output must stay on stdout/stderr, not {target}",
                         )
         combined = "\n".join(combined_parts)
+        for path in hardcoded_vllm_host_ip_paths:
+            self.error(
+                "VLLM_HOST_IP_HARDCODED",
+                path,
+                "derive Judge IPv4 at runtime; do not hard-code VLLM_HOST_IP",
+            )
+        if self._uses_distributed_vllm(combined) and not vllm_host_ip_configured:
+            self.warning(
+                "VLLM_HOST_IP_RUNTIME_MISSING",
+                directory,
+                "distributed Ray/vLLM execution must derive and set "
+                "VLLM_HOST_IP from the Judge container IPv4 before runtime "
+                "initialization",
+            )
         if "/logs/verifier/reward.json" not in combined:
             self.error(
                 "REWARD_OUTPUT_MISSING",
@@ -1156,6 +1207,96 @@ class Validator:
                     dockerfile_path,
                     "tasks using pytest must bake pytest==9.1.1 into Environment",
                 )
+
+    @staticmethod
+    def _uses_distributed_vllm(text: str) -> bool:
+        if re.search(r"\bvllm\b", text, re.IGNORECASE) is None:
+            return False
+        return any(
+            pattern.search(text) is not None
+            for pattern in (
+                re.compile(r"\bray\b", re.IGNORECASE),
+                re.compile(
+                    r"\bdata[_-]parallel(?:[_-](?:size|address|rank))?\b",
+                    re.IGNORECASE,
+                ),
+                re.compile(
+                    r"distributed[_-]executor[_-]backend[^\n]*\bray\b",
+                    re.IGNORECASE,
+                ),
+                re.compile(r"--(?:nnodes|node-rank|head-node-address)\b", re.IGNORECASE),
+            )
+        )
+
+    @classmethod
+    def _vllm_host_ip_assignment(
+        cls, text: str, language: str | None
+    ) -> tuple[bool, bool]:
+        """Return (configured, hardcoded_ipv4) for verifier runtime code."""
+        if "VLLM_HOST_IP" not in text:
+            return False, False
+        if language == "python":
+            try:
+                tree = ast.parse(text)
+            except SyntaxError:
+                return False, False
+            configured = False
+            hardcoded = False
+            for node in ast.walk(tree):
+                if isinstance(node, ast.Dict):
+                    for key, value in zip(node.keys, node.values, strict=True):
+                        if not (
+                            isinstance(key, ast.Constant)
+                            and key.value == "VLLM_HOST_IP"
+                        ):
+                            continue
+                        configured = True
+                        if isinstance(value, ast.Constant) and isinstance(
+                            value.value, str
+                        ):
+                            hardcoded = cls._is_ipv4_literal(value.value) or hardcoded
+                    continue
+                if isinstance(node, ast.Assign):
+                    targets = node.targets
+                    value = node.value
+                elif isinstance(node, ast.AnnAssign):
+                    targets = [node.target]
+                    value = node.value
+                else:
+                    continue
+                if not any(cls._vllm_host_ip_target(target) for target in targets):
+                    continue
+                configured = True
+                if isinstance(value, ast.Constant) and isinstance(value.value, str):
+                    hardcoded = cls._is_ipv4_literal(value.value) or hardcoded
+            return configured, hardcoded
+        if language == "shell":
+            configured = False
+            hardcoded = False
+            for command in cls._shell_commands(text):
+                for token in command:
+                    if not token.startswith("VLLM_HOST_IP="):
+                        continue
+                    configured = True
+                    value = token.split("=", 1)[1].strip("'\"")
+                    hardcoded = cls._is_ipv4_literal(value) or hardcoded
+            return configured, hardcoded
+        return False, False
+
+    @staticmethod
+    def _vllm_host_ip_target(target: ast.expr) -> bool:
+        return (
+            isinstance(target, ast.Subscript)
+            and isinstance(target.slice, ast.Constant)
+            and target.slice.value == "VLLM_HOST_IP"
+        )
+
+    @staticmethod
+    def _is_ipv4_literal(value: str) -> bool:
+        try:
+            return isinstance(ipaddress.ip_address(value), ipaddress.IPv4Address)
+        except ValueError:
+            return False
 
     def _python_verifier_writes(self, path: Path, text: str) -> tuple[int, int]:
         try:

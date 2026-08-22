@@ -95,6 +95,39 @@ through its actual control flow:
 - Use absolute paths such as `/tests/...`, `<effective-workdir>/...`, and `/logs/verifier/reward.json`.
 - Keep `tests/` below the 100,000-entry/1-GiB injection limit.
 
+## Distributed vLLM and Ray host addressing
+
+Apply this section only when the Verifier uses Ray, vLLM data parallelism,
+multi-node vLLM, or a pinned vLLM execution path that requires a routable host
+address. Ordinary single-process evaluators do not need `VLLM_HOST_IP`; do not
+turn this into a task-wide or Harness-wide default.
+
+RSI-Harness attaches each no-network Judge to a private internal Docker bridge.
+The container has a dynamically assigned IPv4 but no public route. A framework
+that tries to infer its address by contacting a public endpoint may therefore
+fall back to `0.0.0.0`, after which Ray can wait forever for a nonexistent
+`node:0.0.0.0` resource.
+
+Before the first Ray/vLLM initialization, import with initialization side
+effects, or vLLM subprocess launch:
+
+1. resolve the current container hostname with `socket.getaddrinfo(...,
+   family=AF_INET, type=SOCK_STREAM)`;
+2. deduplicate results and reject unspecified, loopback, link-local, multicast,
+   and otherwise invalid IPv4 addresses with `ipaddress.IPv4Address`;
+3. require exactly one remaining address, optionally checking that it is locally
+   bindable;
+4. set `os.environ["VLLM_HOST_IP"]` for in-process initialization and pass the
+   same derived value in every relevant child-process environment; and
+5. if discovery, validation, propagation, or initialization fails, emit a clear
+   sanitized infrastructure category, terminate promptly, and write no reward.
+
+Never put `VLLM_HOST_IP` in `task.toml`, Dockerfile, Compose, or another
+generation-time constant. Never use `0.0.0.0` as a fallback. Static validation
+can recognize common distributed launch patterns and assignments, but the
+Generator and independent reviewer must inspect actual import/startup ordering,
+filtering, propagation, and no-reward control flow.
+
 ## Defenses against an untrusted candidate
 
 Choose controls matched to the task:

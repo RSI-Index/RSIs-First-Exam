@@ -2,8 +2,9 @@
 """Plan or explicitly execute a final authoring-time Environment preflight.
 
 The default mode is read-only. Execution builds or obtains the task image and
-starts one untouched, no-network, no-GPU container for Agent-led inspection.
-It never runs the task evaluator, training, Solution, or reward path.
+starts one untouched, no-egress, no-GPU container on a private internal bridge
+for Agent-led inspection. It never runs the task evaluator, training, Solution,
+or reward path.
 """
 
 from __future__ import annotations
@@ -66,6 +67,9 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument("--image-tag", help="non-existing image tag to create")
     parser.add_argument("--container-name", help="non-existing container name to create")
+    parser.add_argument(
+        "--network-name", help="non-existing internal bridge name to create"
+    )
     return parser.parse_args()
 
 
@@ -198,6 +202,12 @@ def container_exists(name: str) -> bool:
     ).returncode == 0
 
 
+def network_exists(name: str) -> bool:
+    return run(
+        ["docker", "network", "inspect", name], capture=True, check=False
+    ).returncode == 0
+
+
 def validate_task(task_dir: Path) -> None:
     validator = Path(__file__).with_name("validate_task.py")
     completed = run(
@@ -215,6 +225,7 @@ def print_plan(
     source: str,
     image: str,
     container: str,
+    network: str,
     docker_root: Path,
     free_bytes: int,
     required_bytes: int,
@@ -237,11 +248,18 @@ def print_plan(
     print("Expected duration: task-dependent; the declared build timeout is the upper bound")
     print(f"Will create/use image: {image}")
     print(f"Will create container: {container}")
+    print(f"Will create internal bridge: {network}")
     print(f"Inspection WORKDIR: {workdir}")
-    print("Inspection container: network=none, GPUs=none, task tests mounted read-only")
+    print(
+        "Inspection container: private internal bridge (no external route), "
+        "GPUs=none, task tests mounted read-only"
+    )
     print("Will not run tests/test.sh, Solution, training, evaluation, submission, or reward writing")
-    print("The created image and container will be retained for inspection")
-    print("Removing either is a separate state-changing action requiring authorization")
+    print(
+        "The created image, container, and internal bridge will be retained "
+        "for inspection"
+    )
+    print("Removing any of them is a separate state-changing action requiring authorization")
     print("Execution requires a later explicit contributor authorization")
 
 
@@ -254,10 +272,15 @@ def inspect_image(image: str) -> None:
         raise PreflightError("image declares Docker volumes and is incompatible with snapshot ownership")
 
 
+def create_inspection_network(name: str) -> None:
+    run(["docker", "network", "create", "--driver", "bridge", "--internal", name])
+
+
 def create_inspection_container(
     *,
     image: str,
     name: str,
+    network: str,
     task_dir: Path,
     workdir: str,
     environment: dict,
@@ -269,7 +292,7 @@ def create_inspection_container(
         "--name",
         name,
         "--network",
-        "none",
+        network,
         "--entrypoint",
         "/bin/sh",
         "--mount",
@@ -310,6 +333,7 @@ def execute(
     source: str,
     image: str,
     container: str,
+    network: str,
 ) -> None:
     environment_dir = task_dir / "environment"
     dockerfile = environment_dir / "Dockerfile"
@@ -318,6 +342,8 @@ def execute(
 
     if container_exists(container):
         raise PreflightError(f"refusing to overwrite existing container: {container}")
+    if network_exists(network):
+        raise PreflightError(f"refusing to reuse existing Docker network: {network}")
     if source == "Dockerfile":
         if image_exists(image):
             raise PreflightError(f"refusing to overwrite existing image tag: {image}")
@@ -338,9 +364,11 @@ def execute(
             run(["docker", "pull", image], timeout=timeout)
 
     inspect_image(image)
+    create_inspection_network(network)
     create_inspection_container(
         image=image,
         name=container,
+        network=network,
         task_dir=task_dir,
         workdir=environment["workdir"],
         environment=environment,
@@ -349,8 +377,12 @@ def execute(
     print("Environment preflight container is ready for Agent-led read-only inspection")
     print(f"Inspect: docker exec -it {container} /bin/bash")
     print(f"Root inspect when needed: docker exec -u 0 -it {container} /bin/bash")
+    print(f"Internal bridge retained: {network}")
     print("Do not run /tests/test.sh, training, evaluation, or rsi-submit in this preflight")
-    print("Container and image are intentionally retained; removal requires separate authorization")
+    print(
+        "Container, image, and internal bridge are intentionally retained; "
+        "removal requires separate authorization"
+    )
 
 
 def main() -> int:
@@ -390,6 +422,7 @@ def main() -> int:
 
     fingerprint = environment_fingerprint(environment_dir)
     container = args.container_name or f"rsi-preflight-{task_dir.name}-{fingerprint}"
+    network = args.network_name or f"{container}-net"
     docker_root, free_bytes = docker_root_and_free()
     required_bytes = int(args.required_free_gb * GIB)
     hosts, notes = detected_build_network(environment_dir)
@@ -401,6 +434,7 @@ def main() -> int:
         source=source,
         image=image,
         container=container,
+        network=network,
         docker_root=docker_root,
         free_bytes=free_bytes,
         required_bytes=required_bytes,
@@ -420,6 +454,7 @@ def main() -> int:
         source=source,
         image=image,
         container=container,
+        network=network,
     )
     return 0
 
@@ -433,7 +468,8 @@ if __name__ == "__main__":
     except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired) as error:
         print(f"preflight execution failed: {type(error).__name__}", file=sys.stderr)
         print(
-            "An image or container may have been retained; inspect it before separately authorized cleanup.",
+            "An image, container, or internal bridge may have been retained; "
+            "inspect them before separately authorized cleanup.",
             file=sys.stderr,
         )
         raise SystemExit(2)
