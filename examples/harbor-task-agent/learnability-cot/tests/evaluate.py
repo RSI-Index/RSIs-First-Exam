@@ -559,6 +559,33 @@ def configure_vllm_host_ip() -> str:
     return addresses[0]
 
 
+def validate_generation_coverage(
+    result: dict[str, Any], expected_counts: dict[str, int]
+) -> None:
+    samples = result.get("samples")
+    counts = result.get("n-samples")
+    if not isinstance(samples, dict) or not isinstance(counts, dict):
+        raise RuntimeError("lm-evaluation-harness returned no sample coverage")
+    for task_id, expected_count in expected_counts.items():
+        task_count = counts.get(task_id)
+        task_samples = samples.get(task_id)
+        if (
+            not isinstance(task_count, dict)
+            or task_count.get("effective") != expected_count
+            or not isinstance(task_samples, list)
+        ):
+            raise RuntimeError(f"incomplete fixed evaluation for {task_id}")
+        doc_ids = {
+            sample.get("doc_id")
+            for sample in task_samples
+            if isinstance(sample, dict)
+            and isinstance(sample.get("doc_id"), int)
+            and not isinstance(sample.get("doc_id"), bool)
+        }
+        if len(doc_ids) != expected_count:
+            raise RuntimeError(f"incomplete fixed evaluation for {task_id}")
+
+
 def run_generation(model_path: Path) -> GeneratedEvaluation:
     configure_vllm_host_ip()
     from lm_eval import simple_evaluate
@@ -592,12 +619,10 @@ def run_generation(model_path: Path) -> GeneratedEvaluation:
         verbosity="ERROR",
     )
     release_generation_runtime()
-    if not isinstance(result, dict) or not isinstance(result.get("samples"), dict):
-        raise RuntimeError("lm-evaluation-harness returned no sample set")
+    if not isinstance(result, dict):
+        raise RuntimeError("lm-evaluation-harness returned no result")
+    validate_generation_coverage(result, EXPECTED_COUNTS)
     samples = result["samples"]
-    for task_id, expected_count in EXPECTED_COUNTS.items():
-        if task_id not in samples or len(samples[task_id]) != expected_count:
-            raise RuntimeError(f"incomplete fixed evaluation for {task_id}")
     task_results = result.get("results", {}).get("rsi_gsm8k", {})
     gsm8k = task_results.get("exact_match,flexible-extract")
     if not isinstance(gsm8k, (int, float)) or not math.isfinite(float(gsm8k)):
