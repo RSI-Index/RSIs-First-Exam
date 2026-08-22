@@ -99,6 +99,9 @@ through its actual control flow:
 
 Choose controls matched to the task:
 
+- define change detection against the finalized post-build WORKDIR, and verify
+  that the pristine no-Agent state passes before assigning any candidate-caused
+  failure; Git `HEAD` does not represent ignored or untracked build products;
 - when task-specific defenses require them, validate changes against a task-owned manifest under `tests/`;
 - when task-specific defenses require them, compare prohibited source/config/dependency files to task-owned reference hashes under `tests/`;
 - keep baseline/reference code and hidden inputs only in `/tests` when they must be secret;

@@ -180,6 +180,15 @@ WORKDIR <confirmed-workdir>
 
 Do not copy outside `environment/`, pin apt versions, use `FROM --platform`, or use Docker `VOLUME`. If editable install behavior would let the Agent alter Verifier dependencies, separate task/evaluator dependencies carefully within the shared image and document the remaining risk.
 
+If the Verifier uses Git or another filesystem comparison for editable-scope
+enforcement, establish that baseline only after the final install, build, code
+generation, and initialization step that can write the WORKDIR. A normal Git
+commit omits ignored files. Remove or relocate incidental products, explicitly
+represent accepted post-build paths when needed, and make the image build fail
+if the final tracked, staged, ordinary-untracked, or ignored-untracked state
+does not match the intended pristine baseline. Keep this starting-state
+contract separate from the paths the Agent is allowed to modify.
+
 ## Optional `environment/docker-compose.yaml`
 
 Create only when needed for `shm_size` or another supported main-service setting:

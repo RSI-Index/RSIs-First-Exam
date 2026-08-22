@@ -36,6 +36,28 @@ A common build pattern is:
 
 Do not rely on a default branch, shallow `HEAD`, mutable release URL, or unverified archive. Do not copy the contributor's current working tree unless that local state is an explicitly confirmed starting artifact.
 
+### Post-build starting-state closure
+
+The clean starting state is the complete WORKDIR filesystem after every build
+step that can mutate it, not merely the checked-out source revision. Finish
+editable installs, package builds, generated configuration, import probes, and
+other WORKDIR-writing initialization before closing the baseline. If a later
+build step can write there, close the baseline again afterward.
+
+When Verifier uses Git to detect candidate changes, do not assume a fresh
+commit represents ignored or untracked files. After the final WORKDIR mutation,
+enumerate tracked changes, staged changes, ordinary untracked files, and ignored
+untracked files using the same semantics as the Verifier. Remove or relocate
+incidental products such as `*.egg-info`, `__pycache__`, caches, build output,
+and logs; alternatively, deliberately represent accepted post-build paths in
+the baseline. A path/type inventory or content manifest is optional when the
+task's threat model needs it, not a universal checksum requirement.
+
+Keep the accepted starting-state representation separate from the candidate
+allowlist. The former says what exists before research; the latter says what
+the Agent may change. The unmodified post-build workspace must pass every
+pre-scoring scope and integrity gate.
+
 Everything under `environment/` enters the Work build context and may be visible to the Agent in image layers. Never place the task-owned `tests/` tree, hidden cases/seeds, expected outputs, answer patches, optimal checkpoints, hidden baseline comparators, `solution/`, or credentials there.
 
 ## Dependencies and assets
@@ -97,6 +119,9 @@ Do not place provider credentials in `task.toml`, Compose, Dockerfile, README, o
 Confirm:
 
 - image creation produces the exact approved starting state;
+- all WORKDIR-mutating build operations precede starting-state closure, and the
+  pristine post-build state passes the Verifier's scope/integrity gate,
+  including its treatment of ignored and untracked files;
 - the effective WORKDIR exists and contains only public starting artifacts;
 - the Agent can run the public proxy/development commands without changing task definition;
 - candidate-owned paths are inside the Judge-visible WORKDIR;

@@ -37,10 +37,16 @@ Review all of the following:
 4. **Human maintainer guide:** README is concise enough to read and covers baseline evidence, material protocol differences, environment/evaluation, run/validation, and known limitations without duplicating file inventories or low-level control flow.
 5. **Self-contained package:** the Docker build or explicitly contributor-approved real image is usable in principle; every task-owned evaluator, helper, input, and referenced `/tests/...` asset is included; there are no placeholders, fake images, undeclared bundles, synthetic runners, or dependencies on the repository that merely contains the skill.
 6. **RSI-Harness contract:** task metadata, Work and Judge resources, WORKDIR/snapshot assumptions, network policy, timeouts, README run options, Compose usage, and shared-environment limitations match the current Harness behavior. Unsupported Terminal-Bench fields or a separate verifier are absent.
-7. **Evaluation and reward:** `tests/test.sh` invokes the real fixed evaluation, uses preinstalled tooling, and has no runtime fetch. Correctness gates precede scoring. A valid baseline/no-op remains scoreable. The primary finite `reward` follows the declared formula and direction and is written exactly once only after complete evaluation.
-8. **Terminal outcomes:** trace baseline/no-op, declared candidate correctness failure, successful scoring, timeout, crash, dependency/infrastructure failure, and incomplete evaluation. Confirm each path produces the declared reward or no reward.
-9. **Feedback and integrity:** all Agent-visible feedback stays within the confirmed boundary; hidden cases, answers, and evaluator internals are not exposed. Safeguards address the task's concrete leakage, hard-coding, fabrication, evaluator-tampering, and adaptive-overfitting paths without overstating isolation.
-10. **Truthful handoff:** reported checks were actually run, pending execution checks remain labeled pending, officially reported results remain not yet reproduced where applicable, and no runtime, variance, security, or reproducibility claim exceeds the evidence.
+7. **Starting-state closure:** trace Dockerfile installs, builds, code generation,
+   import probes, repository initialization, and other operations that can write
+   WORKDIR. Verify that the baseline representation covers the resulting
+   tracked, untracked, ignored, generated, and type-changing paths, remains
+   separate from the candidate allowlist, and cannot cause an untouched
+   post-build workspace to fail the Verifier's pre-scoring scope/integrity gate.
+8. **Evaluation and reward:** `tests/test.sh` invokes the real fixed evaluation, uses preinstalled tooling, and has no runtime fetch. Correctness gates precede scoring. A valid baseline/no-op remains scoreable. The primary finite `reward` follows the declared formula and direction and is written exactly once only after complete evaluation.
+9. **Terminal outcomes:** trace baseline/no-op, declared candidate correctness failure, successful scoring, timeout, crash, dependency/infrastructure failure, and incomplete evaluation. Confirm each path produces the declared reward or no reward.
+10. **Feedback and integrity:** all Agent-visible feedback stays within the confirmed boundary; hidden cases, answers, and evaluator internals are not exposed. Safeguards address the task's concrete leakage, hard-coding, fabrication, evaluator-tampering, and adaptive-overfitting paths without overstating isolation.
+11. **Truthful handoff:** reported checks were actually run, pending execution checks remain labeled pending, officially reported results remain not yet reproduced where applicable, and no runtime, variance, security, or reproducibility claim exceeds the evidence.
 
 Do not reject a complete task merely because authorized Docker/GPU execution checks remain pending. Do reject a compile-only fixture, a task whose evaluator cannot run from the delivered package, or a task that changes the approved research semantics.
 

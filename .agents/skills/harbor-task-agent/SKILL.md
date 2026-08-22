@@ -33,6 +33,10 @@ The references are part of this portable skill. Do not require files from the re
 - Do not downgrade an ordinary deliverable to a compile-only fixture because Docker, GPUs, or a full evaluation cannot be run during authoring. Produce a complete task and report unperformed execution checks as pending. Create a deliberately incomplete fixture only when the contributor explicitly requests a fixture or compiler demo.
 - Stop instead of leaving placeholders, invented credentials, fabricated measurements, missing task-owned assets, or an evaluator that cannot implement the confirmed protocol.
 - Do not claim Docker, Oracle/baseline, no-op, adversarial, GPU, or real-agent checks unless they were actually run.
+- Never run Environment preflight or any other execution check automatically.
+  Finish Stage 9 and hand off the task first. Explain the exact network, Docker
+  disk, image/container, GPU, time, and cleanup implications, then wait for
+  explicit contributor authorization in a later response before execution.
 - Complete the bounded independent-review workflow in Stage 9 before handoff. The generator's own reread, static validation, and compiler check do not replace the initial independent review. Do not exceed two independent review passes or two generator correction rounds unless the contributor explicitly requests a deeper audit.
 
 ## Working state
@@ -88,6 +92,16 @@ Fix and record this interface:
 - Work GPU count, CPU, memory, storage estimate, shared memory, and build budget;
 - common `[environment.env]` values and any Judge-only `[verifier.env]` overrides;
 - Agent network policy and any exact provider/proxy reachability requirement.
+
+Treat the starting workspace as the filesystem state after every image-build
+operation that can write the WORKDIR, including editable installs, package
+metadata generation, compilation, import checks, and repository
+initialization. Close that state before Verifier design. A Git commit alone is
+not a complete baseline when ignored or untracked files can exist: remove or
+relocate build byproducts, deliberately represent the accepted post-build
+state, and keep the candidate modification allowlist separate. The unchanged
+post-build workspace must satisfy the same pre-scoring scope and integrity gate
+that Judge will apply after an Agent submission.
 
 For a non-root WORKDIR, Judge mounts that directory read-only. Confirm that candidate loading and evaluation need no cache, compilation output, checkpoint update, or scratch write there. Docker commit captures files, not live processes or GPU memory: before `rsi-submit`, candidate code/config/checkpoints must be closed, flushed, and complete on disk. Judge must start any local serving process afresh and reload the candidate from the snapshot.
 
@@ -185,34 +199,34 @@ Every task text file must contain the exact Harbor canary string in a comment. K
 
 `solution/solve.sh` is required. It idempotently materializes the proposal's reference baseline in the candidate-owned workspace, using starting assets already present in the Environment. It does not train, evaluate, access `/tests`, submit, or write reward. RSI-Harness does not execute it; `tests/test.sh` remains the only scoring path. For a no-op baseline, the script restores or clears candidate-owned state so the Judge takes its declared baseline path.
 
-### Stage 8 — Validate
+### Stage 8 — Validate (Layers 1–2)
 
-Run the included standard-library validator first:
+Complete Layers 1–2 in [references/validation-rules.md](references/validation-rules.md): the static validator, the authoritative compiler when its checkout is available, and one Generator final review. Do not split proposal fidelity, evaluator control flow, and starting-state closure into repeated rereads; cover them together in that final review.
+
+Choose one validation command. If no known RSI-Harness checkout is available,
+run the included standard-library validator and report the compiler as pending:
 
 ```bash
 python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task
 ```
 
-If the contributor or workspace provides a known RSI-Harness checkout, also run the read-only authoritative compiler through the same command. Do not guess a checkout path from a stale editable installation:
+If the contributor or workspace provides a known RSI-Harness checkout, use one
+combined command instead; it runs the same static checks once and then invokes
+the read-only authoritative compiler. Do not first repeat the static-only
+command, and do not guess a checkout path from a stale editable installation:
 
 ```bash
 python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task \
   --harness-root /absolute/path/to/RSI-Harness
 ```
 
-Fix every error. Review warnings against task evidence; fix them or document why they are intentional. Reread the actual generated files and verify the destination did not change. Compilation without Docker/GPU execution is valid evidence only for the compiler layer; it never justifies missing build files, evaluator assets, or runtime commands.
+Fix every error. Review warnings against task evidence; fix them or document why they are intentional. Reread the actual generated files once and verify the destination did not change. Compilation without Docker/GPU execution is valid evidence only for the compiler portion; it never justifies missing build files, evaluator assets, or runtime commands.
 
-As part of that reread, trace the Verifier's actual terminal control-flow paths
-for baseline/no-op, declared candidate correctness failure, successful scoring,
-and infrastructure/incomplete failure. Confirm that each path writes the
-declared scalar or no reward exactly as specified; prose and static checks alone
-do not establish this.
+Use the single Layer 2 review checklist for proposal fidelity, reward control
+flow, starting-state closure, and truthful pending checks. Do not repeat those
+as separate audits. Do not perform Layers 4–5 during Stage 8.
 
-Do not build Docker, execute the baseline/solution, run GPU evaluation, or launch a real Agent unless the contributor separately authorizes those stateful/expensive checks. When those checks are not authorized, keep the task complete and self-contained and record them as pending—not as a compile-only fixture.
-
-Keep authoring-time verification proportional to the evidence it can establish. Safe contract tests may exercise important evaluator-owned branches, but do not turn static authoring into an attempt to prove Docker-, GPU-, kernel-, or process-runtime properties that belong to separately authorized execution checks.
-
-### Stage 9 — Independent review and handoff
+### Stage 9 — Independent review and handoff (Layer 3)
 
 Read [references/independent-review.md](references/independent-review.md). The reviewer is always read-only; the generating Agent owns every correction.
 
@@ -241,3 +255,10 @@ At handoff, report:
 - both independent-review decisions when applicable, every finding and disposition, the number of correction rounds, and the final Stage 9 status;
 - remaining execution checks not performed;
 - any known security or reproducibility limitation.
+
+### Post-handoff execution (Layers 4–5)
+
+Follow Layers 4–5 in [references/validation-rules.md](references/validation-rules.md).
+They begin only after the Stage 9 handoff, never by default. Layer 4 is one
+combined Environment preflight with a planning-and-authorization gate. Layer 5
+contains separately authorized scientific and end-to-end execution checks.

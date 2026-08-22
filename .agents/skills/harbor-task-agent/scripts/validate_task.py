@@ -755,6 +755,43 @@ class Validator:
                     "each git clone RUN instruction must checkout and verify an immutable 40-character commit SHA",
                 )
 
+        baseline_commits = list(
+            re.finditer(
+                r"\bgit(?:\s+-C\s+(?:\"[^\"]+\"|'[^']+'|\S+))?\s+commit\b",
+                logical,
+                re.IGNORECASE,
+            )
+        )
+        if baseline_commits and self._verifier_tracks_git_ignored():
+            after_last_commit = logical[baseline_commits[-1].end() :]
+            closes_ignored_state = (
+                re.search(r"\btest\s+-z\b", after_last_commit) is not None
+                and "ls-files" in after_last_commit
+                and "--others" in after_last_commit
+                and "--ignored" in after_last_commit
+                and "--exclude-standard" in after_last_commit
+            )
+            if not closes_ignored_state:
+                self.warning(
+                    "WORKDIR_BASELINE_CLOSURE_MISSING",
+                    path,
+                    "Verifier treats ignored files as candidate changes, but the Dockerfile does not assert the ignored/untracked state after its final Git baseline commit",
+                )
+
+    def _verifier_tracks_git_ignored(self) -> bool:
+        tests = self.task_dir / "tests"
+        if not tests.is_dir():
+            return False
+        for candidate in tests.rglob("*"):
+            if not candidate.is_file() or not self._looks_like_text(candidate):
+                continue
+            text = self._read(candidate)
+            if text is None:
+                continue
+            if re.search(r"(?:ls-files|status).{0,240}--ignored", text):
+                return True
+        return False
+
     def _compose(self, path: Path) -> None:
         text = self._read(path)
         if text is None:

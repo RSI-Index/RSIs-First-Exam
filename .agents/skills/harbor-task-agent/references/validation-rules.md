@@ -1,44 +1,17 @@
 # Validation rules
 
-Validation has five layers. Passing an earlier layer never proves a later one.
+Post-generation validation has five layers. Passing an earlier layer never
+proves a later one.
 
-## Layer A — Proposal-to-task semantics
+## Layer 1 — Included static validator
 
-Review manually before and after generation:
-
-- repository URL and exact SHA match the approved proposal;
-- baseline, workload, metric, direction, units, aggregation, and budget did not change;
-- Instruction names the baseline, reported result/status, and matched comparison;
-  README gives concise official evidence and labels protocol differences; required
-  `solution/solve.sh` materializes that same baseline; Judge scores that same
-  baseline/no-op under the fixed protocol;
-- public/hidden feedback boundary and leakage controls are implemented as confirmed;
-- starting artifacts, editable scope, prohibited actions, and deliverable align;
-- Work/Judge resources, network/data policy, proxy needs, timeouts, and submissions match the final assumption review;
-- the effective WORKDIR and snapshot mode match the image, candidate is fully materialized on disk, and split-WORKDIR evaluation succeeds read-only;
-- complete Judge stdout/stderr and Harness footer visibility match the contributor-confirmed feedback contract;
-- every evaluator helper/input referenced under `/tests/...` is present in the generated task, with no undeclared external evaluator bundle or runner dependency;
-- no measured result, variance, runtime, or successful verification was invented.
-- evaluator control flow, not merely its documentation, implements every
-  declared terminal outcome: valid baseline score, candidate correctness-fail
-  score when defined, successful final reward, and no reward for
-  infrastructure/incomplete failure.
-
-The included validator cannot prove this mapping because it does not reinterpret scientific intent.
-
-Reread the evaluator from entrypoint to reward write for this layer. A clean
-static report is not evidence that an exception path implements the confirmed
-score semantics.
-
-## Layer B — Included static validator
-
-Run:
+When no known Harness checkout is available, run:
 
 ```bash
 python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task
 ```
 
-It is read-only and uses the Python standard library. It checks required files and metadata, required Instruction sections, required executable baseline Solution, task identity/taxonomy, language-appropriate text canaries, absolute/effective WORKDIR declarations, major RSI-Harness unsupported fields, the supported Compose subset, obvious placeholder image references, dependency pins, absolute instruction paths, missing task-owned `/tests/...` assets, Verifier network/install rules, common direct Python/shell intermediate writes, direct exclusive reward creation, README run options and a necessary timeout lower bound, and selected solution/test reference alignment.
+It is read-only and uses the Python standard library. It checks required files and metadata, required Instruction sections, required executable baseline Solution, task identity/taxonomy, language-appropriate text canaries, absolute/effective WORKDIR declarations, major RSI-Harness unsupported fields, the supported Compose subset, obvious placeholder image references, dependency pins, suspicious Git-baseline/ignored-file scope closure, absolute instruction paths, missing task-owned `/tests/...` assets, Verifier network/install rules, common direct Python/shell intermediate writes, direct exclusive reward creation, README run options and a necessary timeout lower bound, and selected solution/test reference alignment.
 
 `ERROR` must be fixed. A `WARNING` needs evidence-backed review; warnings do not automatically make a task invalid. Static pattern and AST checks are conservative and cannot prove Docker buildability, full reward control flow, evaluator correctness, anti-cheat security, statistical validity, or successful GPU execution.
 
@@ -48,9 +21,10 @@ comment-capable source format or a genuinely binary asset and parse it
 accordingly. `docker-compose.yml` is invalid because RSI-Harness recognizes only
 `environment/docker-compose.yaml`.
 
-## Layer C — Authoritative RSI-Harness compiler
+## Layer 2 — RSI-Harness compiler and Generator final review
 
-When a Harness checkout is available:
+When a Harness checkout is available, use this as the single validation
+command; it performs Layer 1 once and then the compiler portion of Layer 2:
 
 ```bash
 python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task \
@@ -60,30 +34,101 @@ python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task \
 The validator invokes `HarborTaskCompiler.compile(...)` with the reward, direction, and maximum-submission settings parsed from README. Compilation reads the task but does not build Docker, allocate GPUs, use network, run solution/tests, or mutate the task.
 
 Do not replace the static layer with compilation. Harbor's parser may accept unknown metadata, and the compiler intentionally does not lint canaries, dependency pins, Dockerfile hygiene, reward lifecycle, or proposal semantics.
+Do not also run the static-only command first; that would duplicate Layer 1.
 
-## Layer D — Independent task review
+After compilation, perform one Generator final review rather than several
+overlapping rereads. Check all of the following together:
 
-After Layers A–C, a fresh Agent that did not generate or edit the task performs the read-only review defined in [independent-review.md](independent-review.md). It independently checks proposal fidelity; Instruction/README/Solution/Judge baseline alignment; package completeness; RSI-Harness compatibility; evaluator and reward behavior; feedback and anti-cheat boundaries; and truthfulness of the reported validation state.
+- repository URL and exact SHA match the approved proposal;
+- baseline, workload, metric, direction, units, aggregation, and budget did not change;
+- Instruction names the baseline, reported result/status, and matched comparison;
+  README gives concise official evidence and labels protocol differences;
+  `solution/solve.sh` materializes that same baseline; Judge scores that same
+  baseline/no-op under the fixed protocol;
+- public/hidden feedback boundary and leakage controls are implemented as confirmed;
+- starting artifacts, editable scope, prohibited actions, and deliverable align;
+- every Docker build/install/init operation that can mutate WORKDIR precedes
+  starting-state closure, and the pristine post-build state is accepted by the
+  same scope/integrity gate used for submissions, including ignored and
+  untracked paths;
+- Work/Judge resources, network/data policy, proxy needs, timeouts, and submissions match the final assumption review;
+- the effective WORKDIR and snapshot mode match the image, candidate is fully materialized on disk, and split-WORKDIR evaluation is designed for read-only reload;
+- complete Judge stdout/stderr and Harness footer visibility match the contributor-confirmed feedback contract;
+- every evaluator helper/input referenced under `/tests/...` is present in the generated task, with no undeclared external evaluator bundle or runner dependency;
+- evaluator control flow implements valid baseline scoring, declared candidate
+  correctness failure, successful final reward, and no reward for
+  infrastructure/incomplete failure; and
+- no measured result, variance, runtime, or successful verification was invented.
 
-Layer D has a hard budget: one full initial review, at most one generator correction, one targeted re-review, and at most one final generator correction. There is no third review. Prefer resuming the first reviewer for the re-review; if a fresh Agent must substitute, give it the prior report and correction evidence and keep the same targeted scope.
+The validator and compiler cannot prove this mapping because neither
+reinterprets scientific intent or executes the evaluator. Trace the evaluator
+from entrypoint to reward write and trace Dockerfile operations into the scope
+gate during this one review.
 
-Generator self-review is not a substitute for the initial review. A `BLOCKER` or `MAJOR` must cite a concrete delivered path, a confirmed requirement, and a plausible reachable consequence. Execution-only uncertainty without such static evidence belongs in Layer E residual risks rather than an unbounded review loop.
+## Layer 3 — Independent task review
 
-Report Layer D as `PASS` only when an independent decision says `PASS`. When the second review requires changes, the generator may make the final allowed correction and rerun affected checks, then hand off as `REVIEWED_WITH_FINAL_CORRECTIONS`; do not imply that those last edits were independently re-reviewed. If a material defect or evidence gap remains, report `BLOCKED`. If the initial independent Agent is unavailable, report this layer as pending and do not claim the task is complete.
+After Layers 1–2, follow Stage 9 in `SKILL.md` and
+[independent-review.md](independent-review.md). This is one bounded independent
+review workflow, not another Generator audit: one initial review, at most one
+targeted re-review, no third review, and no more than two Generator correction
+rounds. Execution-only uncertainty belongs in Layers 4–5 unless the reviewer
+can cite a concrete delivered defect and reachable consequence.
 
-## Layer E — Execution checks
+## Layer 4 — Authorized Environment preflight
 
-These are separate, stateful, and potentially expensive. Run only when authorized and report each independently:
+This layer is stateful and potentially expensive. It occurs only after
+the bounded independent review and task handoff. Never run it automatically
+or in the same response that first presents its requirements.
 
-1. Docker/Compose image build and image preflight.
-2. Baseline/no-op submission: valid continuous baseline score, safe feedback, no leaked cases.
-3. Required external/manual baseline Solution materializer: restores the declared baseline workspace without training/evaluation, never presumed full score or Harness-executed.
-4. Negative controls: prohibited edits, evaluator tampering, hard-coded cases, fabricated outputs, dependency/path changes, missing/incomplete evaluation.
-5. Repeated deterministic/reliability runs and variance characterization.
-6. Real GPU full evaluation within Verifier timeout and resource limits.
-7. Real multi-round Agent run with submission budget, timeout, GPU release/reuse, feedback, and retained workspace.
+For Environment preflight, first run the skill-owned planner without
+`--execute`:
 
-Do not label a task “runtime-verified” solely because it compiled or passed independent review. After Layer D, a complete self-contained package may be reported as “statically valid, Harness-compilable, and independently reviewed; execution checks pending.” Missing Docker/build definitions, evaluator assets, or real runtime commands make the package incomplete rather than a valid compile-only fixture.
+```bash
+python3 <skill-dir>/scripts/preflight_task.py /absolute/path/to/task \
+  --required-free-gb <conservative Agent estimate>
+```
+
+Explain the reported build/pull network endpoints, unresolved dynamic package
+repositories, Docker data root and free-space requirement, image/container
+names, expected duration, GPU requirement, retained state, and cleanup impact.
+Stop and wait for explicit contributor authorization. Only in a later response
+may the stateful mode run:
+
+```bash
+python3 <skill-dir>/scripts/preflight_task.py /absolute/path/to/task \
+  --required-free-gb <same approved estimate> \
+  --execute --acknowledge-authorized
+```
+
+This creates an untouched, no-network, no-GPU inspection container and mounts
+the task's tests read-only. It never runs `tests/test.sh`, Solution, training,
+evaluation, submission, or reward writing. The Agent then performs only the
+task-specific read-only diagnostics needed to establish the starting-state
+gate. Container/image cleanup is another state-changing action and requires
+authorization.
+
+Layer 4 combines Docker build or approved-image retrieval, image metadata
+preflight, fresh untouched container creation, and the no-Agent
+starting-state/scope gate. Report those outcomes together; do not duplicate
+them as separate layers. It does not establish a baseline score or scientific
+runtime result.
+
+## Layer 5 — Separately authorized full execution
+
+Authorize and report each requested check independently:
+
+1. Baseline/no-op submission: valid continuous baseline score, safe feedback, no leaked cases.
+2. Required external/manual baseline Solution materializer: restores the declared baseline workspace without training/evaluation, never presumed full score or Harness-executed.
+3. Negative controls: prohibited edits, evaluator tampering, hard-coded cases, fabricated outputs, dependency/path changes, missing/incomplete evaluation.
+4. Repeated deterministic/reliability runs and variance characterization.
+5. Real GPU full evaluation within Verifier timeout and resource limits.
+6. Real multi-round Agent run with submission budget, timeout, GPU release/reuse, feedback, and retained workspace.
+
+Do not label a task “runtime-verified” solely because it passed Layers 1–4.
+After Layer 3, a complete self-contained package may be reported as “statically
+valid, Harness-compilable, and independently reviewed; execution checks
+pending.” Missing Docker/build definitions, evaluator assets, or real runtime
+commands make the package incomplete rather than a valid compile-only fixture.
 
 ## Terminal-Bench rule disposition
 
