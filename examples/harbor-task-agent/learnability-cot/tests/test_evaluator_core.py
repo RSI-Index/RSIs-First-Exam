@@ -187,6 +187,21 @@ class TrainingConfigTests(unittest.TestCase):
         }
 
 
+class DistributedRuntimeTests(unittest.TestCase):
+    def test_configures_vllm_with_the_judge_container_ipv4(self) -> None:
+        addresses = [
+            (2, 1, 6, "", ("127.0.0.1", 0)),
+            (2, 1, 6, "", ("172.16.12.2", 0)),
+        ]
+        with (
+            patch.dict(evaluate.os.environ, {}, clear=True),
+            patch("socket.getaddrinfo", return_value=addresses),
+            patch("socket.gethostname", return_value="judge-container"),
+        ):
+            self.assertEqual(evaluate.configure_vllm_host_ip(), "172.16.12.2")
+            self.assertEqual(evaluate.os.environ["VLLM_HOST_IP"], "172.16.12.2")
+
+
 class InferenceConfigurationTests(unittest.TestCase):
     def setUp(self) -> None:
         self.directory = tempfile.TemporaryDirectory()
