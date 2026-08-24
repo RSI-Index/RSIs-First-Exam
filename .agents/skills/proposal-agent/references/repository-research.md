@@ -18,18 +18,22 @@ For each material claim, retain the repository-relative path and the fact it sup
 
 ## Contributor-project fit
 
-Verify one of two routes before leaving Round 0:
+Collect the contributor's full professional name and establish public expertise evidence before leaving Round 0. Use public author lists, papers, project pages, scholarly profiles, and repository profiles to disambiguate the person and assess alignment with the specific proposed research question. Assess task-relevant expertise, not prestige, institution, citation count, or popularity.
 
-1. the contributor personally coauthored the selected project, and it is the highest-impact project they choose to contribute; or
-2. the selected repository is a well-known project in the contributor's field, and the contributor has concrete, task-relevant familiarity with its codebase.
+Confirm one of two routes:
 
-Use public authorship, repository contribution, project, or professional evidence when available, then ask only for role details that remain inaccessible. Assess task-relevant expertise, not institutional prestige, citation count, or popularity. Coauthorship alone is insufficient when the contributor's actual role is unrelated to the proposed task area. If neither route can be substantiated or the contributor clearly lacks the relevant code and domain understanding, report the mismatch and stop in Round 0.
+1. the contributor confirms that they personally coauthored the selected project and choose it as their highest-impact project; or
+2. the contributor confirms that the selected repository is a well-known project in their field and that they are familiar with its codebase.
+
+For the coauthor route, verify public authorship but do not investigate the contributor's specific contribution. For the domain-expertise route, use the contributor's confirmation for codebase familiarity and public expertise evidence for domain alignment; do not request module-level experience. Stop in Round 0 when neither route applies or the public record clearly shows that the contributor is not expertise-aligned with the proposed question. If the name cannot be reliably disambiguated or public evidence is unavailable, route the proposal to human review instead of guessing or rejecting for missing access.
 
 ## Frontier evidence
 
-During Round 1, assess whether the exact research question is active using a rolling six-month window ending on the current date. Look for directly relevant papers or preprints, new methods or benchmarks, and releases from independent groups. Treat X topic activity as the primary community-interest signal when it can be inspected, considering recency, breadth across independent participants, and technical substance rather than a single viral post.
+During Round 1, use web search to assess the exact research question over the rolling six-month window ending on the review date. Record the title, public URL, publication or preprint date, and research team for directly related work. Distinguish work on the proposed question or its central mechanism from broad field mentions, repository releases, blog posts, and duplicate versions of the same paper.
 
-Frontier relevance is a preference, not an acceptance gate. Missing X access, weak X activity, or limited recent evidence cannot by itself reject or stop an otherwise valid proposal. State unavailable evidence instead of guessing, and use frontier evidence only to distinguish or prioritize otherwise credible research directions. An older foundational repository remains suitable when it provides a credible base for the selected question.
+Treat frontier relevance as a non-blocking preference, not an acceptance gate. Summarize the recency, breadth, and technical relevance of the evidence; when otherwise credible directions are comparable, surface the evidence and prefer the more active direction while leaving the choice to the contributor. Limited recent work, concentration within one team, or an older foundational repository does not by itself stop or reject a proposal.
+
+Treat X topic activity as a useful community-interest reference signal when it can be inspected, considering recency, breadth across participants, and technical substance rather than a single viral post. Missing X access or materially incomplete web search does not fail the proposal or require human review; state the evidence limitation instead of guessing.
 
 ## Trust and execution boundary
 

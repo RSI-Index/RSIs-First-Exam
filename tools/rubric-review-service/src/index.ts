@@ -71,7 +71,8 @@ function validateRequest(body: EvaluateRequest): string | Response {
 }
 
 function buildInput(proposal: string): Array<Record<string, unknown>> {
-  const payload = JSON.stringify({ task_proposal: proposal });
+  const reviewDateUtc = new Date().toISOString().slice(0, 10);
+  const payload = JSON.stringify({ task_proposal: proposal, review_date_utc: reviewDateUtc });
   return [{
     role: "user",
     content: [{
@@ -121,6 +122,8 @@ export default {
         reasoning: { effort: JUDGE_REASONING_EFFORT },
         instructions: rubric,
         input: buildInput(validated),
+        tools: [{ type: "web_search", search_context_size: "high" }],
+        tool_choice: "required",
         text: {
           format: {
             type: "json_schema",

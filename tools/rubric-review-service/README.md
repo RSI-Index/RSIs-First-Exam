@@ -1,6 +1,6 @@
 # Rubric Review Service
 
-`rsi-index-judge` is a private review service for local RSI-Index tooling. It
+`rsi-index-judge` is a private review service for FrontierRSI tooling. It
 accepts a task proposal (normally a `proposal.md` file), evaluates it against
 the private task-proposal rubric, and returns a structured decision plus a
 written review. The rubric remains on the service and is never included in the
@@ -34,6 +34,7 @@ Cloudflare Worker
   ├── validates JUDGE_API_KEY and request limits
   ├── reads RUBRICS/task-proposal from KV
   └── calls OpenAI Responses with fixed gpt-5.6-sol / xhigh settings
+      and required native web search with high search context
           ↓
 { "decision": "…", "review": "…" }
 ```
@@ -57,6 +58,13 @@ curl --fail --silent --show-error \
 
 The JSON body must contain a non-empty `proposal` string. A successful response
 contains `decision`, `review`, `model`, and `reasoning_effort`.
+
+The proposal must include `Contributor full name`. The judge uses web search to
+check public expertise alignment and review recent frontier activity in the
+rolling six-month window. Frontier evidence, including X topic activity, is a
+non-blocking quality signal rather than a publication-count gate. Ambiguous
+contributor identity produces `require human review`; incomplete frontier search
+is recorded as a limitation and does not change the decision by itself.
 
 ### Health check
 

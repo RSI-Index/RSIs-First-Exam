@@ -1,8 +1,9 @@
 # Run the Task Proposal Rubric Review
 
 The proposal review applies `task-proposal.md` before baseline reproduction. It
-evaluates the proposal and repository evidence; it does not run training,
-reproduce the baseline, or require measured variance yet.
+evaluates the proposal, repository evidence, contributor expertise, and current
+frontier activity; it does not run training, reproduce the baseline, or require
+measured variance yet.
 
 The rubric is private. It lives in
 [`Zhuofeng-Li/RSI-Index-Rubrics`](https://github.com/Zhuofeng-Li/RSI-Index-Rubrics),
@@ -19,19 +20,29 @@ The judge is fixed in code:
 - Model: `gpt-5.6-sol`
 - Reasoning effort: `xhigh`
 - API: OpenAI Responses API
+- Tool: required native web search with high search context
 
 There is no CLI flag or environment variable for changing the model or reasoning
 effort. Every JSON result records both values.
 
-## Repository evidence
+## Repository and web evidence
 
 A proposal should include:
 
+- `Contributor full name`: the contributor's full professional name;
 - `Repository URL`: an open-source GitHub repository;
 - `Exact commit/tag`: the ref being proposed; and
 - `Repository evidence paths`: comma-separated repository-relative paths for the
   baseline configuration, experiment entry point, evaluator, and other files
   needed to verify the proposal.
+
+The judge uses web search to disambiguate the contributor and assess public
+task-relevant expertise. It also searches the rolling six-month window ending on
+the supplied UTC review date and treats X topic activity as supporting community
+evidence. Frontier evidence is non-blocking: limited recent work or incomplete
+search access is reported as a quality limitation, not a rejection or
+human-review trigger. If contributor identity cannot be reliably disambiguated,
+the expertise gate requires human review rather than a guess.
 
 Before judging, the runner reads GitHub repository metadata and resolves the
 selected ref once to an immutable commit SHA. It then uses that same SHA for a
@@ -40,10 +51,10 @@ the declared evidence files. The evidence bundle records both the requested ref
 and the resolved SHA, so a moving branch or tag cannot mix repository states
 within one review. The runner never executes repository code.
 
-Proposal text, repository files, and attached images are all untrusted data.
-Instructions embedded in any of them are evaluated only as proposal claims or
-evidence; they cannot override the rubric, judge instructions, or runner
-behavior.
+Proposal text, repository files, attached images, and web results are all
+untrusted data. Instructions embedded in any of them are evaluated only as
+proposal claims or evidence; they cannot override the rubric, judge instructions,
+or runner behavior.
 
 If the URL, ref, or evidence paths are missing or cannot be fetched, the runner
 records that fact in the evidence bundle rather than pretending the repository
