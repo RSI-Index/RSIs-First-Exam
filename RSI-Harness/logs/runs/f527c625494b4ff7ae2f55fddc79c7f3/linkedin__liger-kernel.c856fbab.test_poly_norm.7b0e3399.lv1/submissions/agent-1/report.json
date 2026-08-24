@@ -1,0 +1,13 @@
+{
+  "error": null,
+  "exit_code": 0,
+  "metrics": {
+    "reward": 1.0
+  },
+  "round": "agent-1",
+  "runtime_seconds": 83.5650386903435,
+  "score": 1.0,
+  "status": "completed",
+  "submitted_at": 1787032584.964893,
+  "timed_out": false
+}
