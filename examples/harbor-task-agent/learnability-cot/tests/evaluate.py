@@ -77,7 +77,6 @@ class GeneratedEvaluation:
 
 @dataclass
 class RuleRecord:
-    owner: str
     task: str
     index: int
     problem: str
@@ -659,7 +658,6 @@ def problem_and_answer(task_id: str, sample: dict[str, Any]) -> tuple[str, str]:
 
 
 def collect_rule_results(
-    owner: str,
     generated: GeneratedEvaluation,
 ) -> tuple[dict[str, list[int]], list[RuleRecord]]:
     correctness: dict[str, list[int]] = {task_id: [] for task_id in NON_GSM_TASKS}
@@ -673,7 +671,6 @@ def collect_rule_results(
             if extracted is not None and not matched:
                 problematic.append(
                     RuleRecord(
-                        owner=owner,
                         task=task_id,
                         index=index,
                         problem=problem,
@@ -723,35 +720,20 @@ def judge_rule_failures(records: list[RuleRecord]) -> list[int | None]:
     return decisions
 
 
-def score_generated_pair(
-    baseline: GeneratedEvaluation,
-    candidate: GeneratedEvaluation | None,
-) -> tuple[dict[str, float], dict[str, float] | None]:
-    baseline_rules, problematic = collect_rule_results("baseline", baseline)
-    candidate_rules: dict[str, list[int]] | None = None
-    if candidate is not None:
-        candidate_rules, candidate_problematic = collect_rule_results("candidate", candidate)
-        problematic.extend(candidate_problematic)
+def score_generated(generated: GeneratedEvaluation) -> dict[str, float]:
+    rules, problematic = collect_rule_results(generated)
     decisions = judge_rule_failures(problematic)
     for record, decision in zip(problematic, decisions, strict=True):
-        target = baseline_rules if record.owner == "baseline" else candidate_rules
-        if target is None:
-            raise RuntimeError("internal score ownership error")
-        target[record.task][record.index] = 0 if decision is None else decision
+        rules[record.task][record.index] = 0 if decision is None else decision
 
-    def finish(generated: GeneratedEvaluation, rules: dict[str, list[int]]) -> dict[str, float]:
-        scores = {
-            DISPLAY_NAMES[task_id]: 100.0 * math.fsum(values) / len(values)
-            for task_id, values in rules.items()
-        }
-        scores["GSM8K"] = generated.gsm8k_percent
-        if set(scores) != set(TASK_NAMES):
-            raise RuntimeError("fixed task score mapping is incomplete")
-        return scores
-
-    baseline_scores = finish(baseline, baseline_rules)
-    candidate_scores = None if candidate is None or candidate_rules is None else finish(candidate, candidate_rules)
-    return baseline_scores, candidate_scores
+    scores = {
+        DISPLAY_NAMES[task_id]: 100.0 * math.fsum(values) / len(values)
+        for task_id, values in rules.items()
+    }
+    scores["GSM8K"] = generated.gsm8k_percent
+    if set(scores) != set(TASK_NAMES):
+        raise RuntimeError("fixed task score mapping is incomplete")
+    return scores
 
 
 def operation() -> tuple[float, dict[str, Any]]:
@@ -761,27 +743,25 @@ def operation() -> tuple[float, dict[str, Any]]:
         if not model_path.is_dir():
             raise RuntimeError(f"staged model asset is missing: {model_path.name}")
 
-    baseline_generated = run_generation(BASELINE_MODEL)
-    candidate_generated = run_generation(CANDIDATE_CHECKPOINT) if mode == "candidate" else None
-    baseline_scores, candidate_scores = score_generated_pair(baseline_generated, candidate_generated)
-    baseline_macro = macro_percent(baseline_scores)
+    model_path = BASELINE_MODEL if mode == "baseline" else CANDIDATE_CHECKPOINT
+    scores = score_generated(run_generation(model_path))
+    score = macro_percent(scores)
 
     if mode == "baseline":
         summary = {
             "mode": "baseline",
             "correctness": "passed",
-            "baseline": {**baseline_scores, "macro": baseline_macro},
+            "baseline": {**scores, "macro": score},
             "reported_context": {
                 "macro": 45.9,
                 "status": "not protocol matched and not reproduced",
                 "validation_loss": 0.2159,
             },
         }
-        return baseline_macro, summary
+        return score, summary
 
-    if candidate_scores is None or provenance is None or metrics is None:
+    if provenance is None or metrics is None:
         raise RuntimeError("candidate evaluation completed without candidate state")
-    candidate_macro = macro_percent(candidate_scores)
     summary = {
         "mode": "candidate",
         "correctness": "passed",
@@ -790,11 +770,9 @@ def operation() -> tuple[float, dict[str, Any]]:
             "train": metrics["train_loss"],
             "validation": metrics["validation_loss"],
         },
-        "baseline": {**baseline_scores, "macro": baseline_macro},
-        "candidate": {**candidate_scores, "macro": candidate_macro},
-        "candidate_minus_baseline": candidate_macro - baseline_macro,
+        "candidate": {**scores, "macro": score},
     }
-    return candidate_macro, summary
+    return score, summary
 
 
 def main() -> None:
