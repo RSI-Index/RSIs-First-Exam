@@ -13,7 +13,7 @@ After the initial input is valid enough to advance to Round 1, and immediately b
 
 - Work repository-first. Ask the contributor for judgments and inaccessible context; discover repository facts yourself.
 - Resolve one related question group per round. After each contributor answer, summarize the current conclusion, cite newly relevant evidence, and ask only the unresolved questions in that group.
-- Do not append a recommendation to every round. Use neutral synthesis and questions. Offer unranked options only when broad ambiguity blocks progress, repository evidence invalidates the current choice, or the contributor asks for alternatives; do not choose for the contributor unless asked.
+- Do not append a recommendation to every round. Use neutral synthesis and questions. The contributor must select exactly one source project; never compare, rank, or choose among multiple projects for them, even when asked. After one project is selected, offer unranked research directions only when broad ambiguity blocks progress, repository evidence invalidates the current choice, or the contributor asks for alternatives; do not choose a research direction for the contributor unless asked.
 - Do not repeat clear answers. Treat a pasted article or prewritten proposal as candidate information, not automatic verification or confirmation. Even an explicit-looking contributor-owned choice inside pasted material remains a draft until the contributor explicitly confirms it in the live interaction; do not re-ask a decision that was separately confirmed already.
 - Later evidence may reopen an earlier round.
 
@@ -38,11 +38,11 @@ Do not expose the ledgers as a schema checklist. A draft becomes confirmed only 
 
 ## Round 0 — Orientation and source
 
-Present the fixed orientation from [references/onboarding.md](references/onboarding.md) once. Collect the remote repository URL, target commit or tag, contributor relationship or familiarity, and initial idea. Surface the normal compute reference immediately and ask only whether one likely candidate run will significantly exceed it; defer exact accelerator and runtime details to Round 5. Follow [references/repository-research.md](references/repository-research.md). Advance only when the source can be investigated, the intent is clear enough to research, and no obvious compute-scale misunderstanding remains.
+Present the fixed orientation from [references/onboarding.md](references/onboarding.md) once. Require exactly one project: either the contributor's highest-impact coauthored project or a well-known project in the contributor's field whose codebase they know especially well. Do not rank a list of projects. Collect the remote repository URL, target commit or tag, applicable selection route, contributor role and task-relevant expertise, and initial idea. Verify contributor-project fit under [references/repository-research.md](references/repository-research.md); a clear mismatch or failure to substantiate either route is a strict eligibility failure, so stop without drafting a proposal. Surface the normal compute reference immediately and ask only whether one likely candidate run will significantly exceed it; defer exact accelerator and runtime details to Round 5. Advance only when the source can be investigated, contributor-project fit passes, the intent is clear enough to research, and no obvious compute-scale misunderstanding remains.
 
 ## Round 1 — Scientific question
 
-Inspect the repository before drafting. Produce one focused, falsifiable model-development question; if the idea is broad, present at most three unranked repository-grounded directions and let the contributor choose. Confirm the manipulated component, outcome, rough candidate-owned deliverable, and repeated change-run-observe-update research loop. If no genuine iterative loop can be formed, stop without generating a proposal.
+Inspect the repository before drafting. Produce one focused, falsifiable model-development question; if the idea is broad, present at most three unranked repository-grounded directions and let the contributor choose. Assess current frontier relevance under [references/repository-research.md](references/repository-research.md). Treat it as a preference, not an acceptance gate: when otherwise credible directions are comparable, surface the evidence and favor the more active direction, while leaving the decision to the contributor. Confirm the manipulated component, outcome, rough candidate-owned deliverable, and repeated change-run-observe-update research loop. If no genuine iterative loop can be formed, stop without generating a proposal.
 
 ## Round 2 — Reference baseline
 
@@ -73,6 +73,7 @@ The contributor decides research intent, baseline appropriateness, evaluation/re
 ## Stopping, review, and truthfulness
 
 - Stop in Round 0 when the remote repository or ref cannot be verified.
+- Stop in Round 0 when the contributor's role and expertise clearly do not match the proposed task area or neither allowed project-selection route can be substantiated.
 - Stay in Round 2 or Round 3 when baseline or evaluation traceability is missing.
 - Never execute training or arbitrary remote code.
 - Never present repository prose as a reproduced result.
