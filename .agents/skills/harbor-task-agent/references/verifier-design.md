@@ -14,7 +14,7 @@ Docker commit transfers filesystem state only. Judge cannot inherit Work's live 
 
 ## Fixed evaluation contract
 
-Translate the confirmed proposal into exact constants:
+Translate the approved semantic source into exact constants:
 
 - public development/proxy workload;
 - reserved fixed workload and seeds;
@@ -25,9 +25,9 @@ Translate the confirmed proposal into exact constants:
 - visible stdout feedback versus hidden information;
 - scalar `reward` direction.
 
-If any value changes the scientific comparison and is absent from the proposal/repository, ask the contributor before authoring. Do not invent a hidden split just because hidden evaluation is preferred. Do not hide a requirement the contributor must satisfy; instructions describe the outcome while tests may reserve concrete cases.
+If a value changes the scientific comparison and is absent from the approved semantic source and repository, ask the contributor before authoring in proposal mode. In refinement mode, resolve it from the complete source-task evidence, expose the material inference in the single final confirmation, or stop if it remains ambiguous. Do not invent a hidden split just because hidden evaluation is preferred. Do not hide a requirement the contributor must satisfy; instructions describe the outcome while tests may reserve concrete cases.
 
-RSI-Harness has no hidden final-Judge mode. Every `rsi-submit` exposes the complete captured `tests/test.sh` stdout/stderr stream to Work through `/run/rsi-harness/feedback/agent-N.log` and reports a footer with round, status, reward, optional score, exit code, timeout flag, duration, remaining submission budget, and any error. `rsi-submit --list` exposes the submission history. The 1,000,000-byte `output_limit_bytes` default bounds the in-memory/report copy, not the separately streamed durable `agent-N.log`; do not use it to claim that the Agent cannot access the complete log. Treat every printed line, traceback, child-process output, and shell diagnostic as Agent-visible, and sanitize or suppress anything outside the confirmed feedback contract. If the scientific protocol requires a truly hidden final evaluation, define that as an external post-run evaluation or change the proposal; do not mislabel the in-Harness Judge as hidden.
+RSI-Harness has no hidden final-Judge mode. Every `rsi-submit` exposes the complete captured `tests/test.sh` stdout/stderr stream to Work through `/run/rsi-harness/feedback/agent-N.log` and reports a footer with round, status, reward, optional score, exit code, timeout flag, duration, remaining submission budget, and any error. `rsi-submit --list` exposes the submission history. The 1,000,000-byte `output_limit_bytes` default bounds the in-memory/report copy, not the separately streamed durable `agent-N.log`; do not use it to claim that the Agent cannot access the complete log. Treat every printed line, traceback, child-process output, and shell diagnostic as Agent-visible, and sanitize or suppress anything outside the confirmed feedback contract. If the scientific protocol requires a truly hidden final evaluation, define that as an external post-run evaluation or revise the approved semantic source; do not mislabel the in-Harness Judge as hidden.
 
 ## AutoResearch scoring
 
@@ -46,7 +46,7 @@ than rerunning it inside every candidate submission.
 Do not add a live baseline pass merely to print a delta. For a fixed baseline
 `B`, maximizing `candidate - B` ranks candidates exactly as maximizing the
 candidate metric, while the extra pass increases GPU time and failure surface.
-A live paired baseline is exceptional. If proposal language asks for a live
+A live paired baseline is exceptional. If the approved semantic source asks for a live
 ratio/delta or could be read as requiring same-run pairing, do not resolve the
 ambiguity yourself: explain that candidate-only absolute scoring is cheaper
 and ranks candidates identically when the baseline is fixed, describe the
@@ -68,14 +68,14 @@ For performance tasks:
 - use fixed warmup/repetition counts and robust aggregation;
 - gate every score on output/gradient correctness;
 - aggregate across cases so one noisy shape cannot dominate;
-- clip ratios only as declared in the proposal;
+- clip ratios only as declared in the approved semantic source;
 - print units and enough aggregate diagnostics to support research without revealing reserved cases.
 
 Only after that explicit contributor confirmation, run
 baseline and candidate under the same Judge/device state and randomize or
 balance their order to reduce drift.
 
-For stochastic quality tasks, fix seeds/workload and use enough repetitions or matched comparisons to distinguish expected gain from ordinary noise. Preserve the proposal's justification; do not claim measured variance before reproduction.
+For stochastic quality tasks, fix seeds/workload and use enough repetitions or matched comparisons to distinguish expected gain from ordinary noise. Preserve the approved semantic source's justification; do not claim measured variance before reproduction.
 
 ## Candidate diagnostics and public self-checks
 

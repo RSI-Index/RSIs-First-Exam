@@ -79,10 +79,13 @@ semantics, material inferences, and planned behavioral corrections. The user
 confirms or rejects that review but is not expected to supply proposal content.
 
 After confirmation, the Agent generates a new sibling directory named
-`<source-slug>-refined` by default. It never overwrites the source task unless
-the user explicitly authorizes that exact destination. Existing files and
-assets may be reused only after review; each is preserved, rewritten, or
-discarded according to the recovered task brief and current skill rules.
+`<source-slug>-refined` by default when that remains a valid Harbor slug. If it
+would exceed the three-token slug limit or collide, the Agent chooses a clear
+collision-free sibling slug within the limit and includes the exact choice in
+the confirmation. It never overwrites the source task unless the user explicitly
+authorizes that exact destination. Existing files and assets may be reused only
+after review; each is preserved, rewritten, or discarded according to the
+recovered task brief and current skill rules.
 
 The result must be a complete, self-contained RSI-Harness Harbor task, including
 a required `solution/solve.sh` that idempotently materializes the reference

@@ -1,11 +1,11 @@
 # Repository research
 
-Use repository evidence to translate the approved proposal into buildable inputs. This stage verifies facts; it does not reproduce the baseline or execute the project.
+Use repository evidence to translate the approved semantic source into buildable inputs. This stage verifies facts; it does not reproduce the baseline or execute the project.
 
 ## Remote-first order
 
-1. Normalize the official repository URL and reject mirrors unless the proposal explicitly uses one.
-2. Resolve the requested tag/branch/ref through the remote host and record the immutable 40-character commit SHA. The proposal's final SHA remains authoritative if a moving branch advances later.
+1. Normalize the official repository URL and reject mirrors unless the approved semantic source explicitly uses one.
+2. Resolve the requested tag/branch/ref through the remote host and record the immutable 40-character commit SHA. The approved semantic source's final SHA remains authoritative if a moving branch advances later.
 3. Inspect the tree and material files at that exact SHA through the forge API, raw immutable URLs, or remote Git object access.
 4. Use a temporary, no-checkout or blob-filtered clone only when remote file APIs cannot answer a material question. Never prefer a contributor's unrelated local checkout over the approved remote ref.
 5. Never run install hooks, imports, tests, training, project scripts, notebooks, or arbitrary commands from the remote repository during packaging research.
@@ -46,7 +46,7 @@ reported metric: <matched value and source; otherwise closest official value and
 reproduction status: not yet reproduced
 ```
 
-If the baseline exists only in an inaccessible private artifact, stop and ask for access or a contributor-provided task asset with provenance. Do not create a replacement baseline that changes the scientific comparison.
+If the baseline exists only in an inaccessible private artifact, do not create a replacement that changes the scientific comparison. In proposal mode, ask for access or a contributor-provided task asset with provenance. In refinement mode, use an already documented accessible delivery route or stop with the exact blocking gap.
 
 ## Reproducible packaging
 
@@ -69,7 +69,7 @@ If a build needs private credentials, do not put them in task files, build args,
 
 ## Evidence changes task semantics
 
-Ask the contributor only when evidence changes one of these decisions:
+In proposal mode, ask the contributor only when evidence changes one of these decisions:
 
 - which baseline is scientifically appropriate;
 - what workload/evaluator/metric is fixed;
@@ -79,3 +79,8 @@ Ask the contributor only when evidence changes one of these decisions:
 - whether the estimated complete run can fit the available compute.
 
 Resolve Docker syntax, installation order, source-copy layout, cache placement, and similar packaging mechanics yourself.
+
+In existing-task refinement mode, do not open separate questions for these
+decisions. Resolve them from the complete task and official evidence, include
+material conflict dispositions in the single final confirmation, and stop when
+multiple core interpretations remain equally plausible.

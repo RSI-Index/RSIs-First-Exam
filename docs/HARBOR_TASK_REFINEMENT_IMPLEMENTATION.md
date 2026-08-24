@@ -15,7 +15,9 @@
 - Do not call `proposal-agent` or create `proposal.md` in refinement mode.
 - Do not ask the user to complete proposal fields; use task files and official evidence.
 - Keep one compact pre-write confirmation of recovered semantics and material corrections.
-- Default output is a new `<source-slug>-refined` sibling; never overwrite implicitly.
+- Default output is a new `<source-slug>-refined` sibling when valid; otherwise
+  choose a clear collision-free sibling slug within the three-token limit.
+  Never overwrite implicitly.
 - Stop rather than invent a core research objective, baseline, fixed evaluation, action boundary, or buildable source identity.
 - Preserve all current proposal-mode behavior, validation layers, execution authorization gates, and the two-pass reviewer budget.
 - Keep `docs/superpowers/` untracked and out of every commit.
