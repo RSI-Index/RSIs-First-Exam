@@ -41,7 +41,7 @@ In either route, explain your relationship to the project and why your experienc
 
 ## Compute orientation
 
-One candidate experiment means taking one fixed idea and configuration from launch through any required training or optimization and evaluation until it produces a valid score. It should normally use no more than 8 H100-equivalent GPUs at peak and finish within 12 wall-clock hours. This reference applies to one experiment, not the full multi-experiment AutoResearch trajectory. At orientation, only determine whether a likely experiment will significantly exceed either threshold; collect exact accelerator and runtime estimates later. A large estimate is a resource-review flag, not by itself a scientific rejection.
+One candidate experiment means taking one fixed idea and configuration from launch through any required training or optimization and evaluation until it produces a valid score. It should normally use no more than 8 H100-equivalent GPUs at peak and finish within 12 wall-clock hours. This reference applies to one experiment, not the full multi-experiment AutoResearch trajectory. A large estimate will go through our internal human review.
 
 ## What to provide in Round 0
 
@@ -51,7 +51,6 @@ Provide:
 2. the exact commit or tag, if already known;
 3. whether this is your representative coauthored project or a well-known codebase in your domain expertise;
 4. why the underlying research area is foundational and frontier-relevant currently;
-5. one initial research question that the repository could support; and
-6. whether one candidate run is likely to significantly exceed the normal compute reference.
+5. one initial research question that the repository could support.
 
 The proposal agent should investigate repository facts and current frontier evidence itself. The contributor supplies expert judgment and explicit decisions.
