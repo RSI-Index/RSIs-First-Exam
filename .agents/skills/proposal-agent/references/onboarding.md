@@ -1,41 +1,61 @@
-# Round 0 Orientation
+# FrontierRSI AutoResearch Contributor Orientation
 
-Deliver this orientation once at the start of a new proposal. Use the contributor's language while preserving the meaning and the four sections.
+Deliver the orientation below once at the start of a new proposal. Use the contributor's language while preserving its meaning and requirements.
+
+## What FrontierRSI is evaluating
+
+FrontierRSI turns representative, fully open model-development projects into auditable research environments. A research agent starts from a human-built implementation or artifact, proposes a hypothesis, changes a candidate, runs a fixed experiment, observes declared feedback, updates its hypothesis, and repeats. The objective is to measure whether the agent can discover an improvement over a matched human baseline while preserving the experiment's scientific contract.
 
 ## Design principles
 
-- **Optimization, not reproduction.** Reproduction establishes the human baseline; the AutoResearch task gives the agent room to improve the original model-development workflow or artifact.
-- **Scientific discovery, not routine search or implementation.** Each trial tests a meaningful hypothesis. Ordinary hyperparameter sweeping, a one-shot feature, a port, or a paper reproduction without a subsequent research loop is insufficient.
-- **Production relevance, not a disconnected toy proxy.** The experiment should preserve the source project's causal mechanism and evaluation path so that an improvement remains informative about the real workflow.
-- **A fixed, auditable scientific contract.** Keep the baseline, budget, evaluation protocol, locked variables, feedback boundary, and score explicit and consistent across candidates.
+1. **Optimization, not reproduction.** The AutoResearch task must give the agent room to improve a real model-development workflow beyond the original human baseline.
+2. **Scientific discovery, not mechanical search.** The task should support distinct hypotheses and teach something about why an approach helps or fails. A one-shot implementation, routine port, or ordinary hyperparameter sweep is not enough.
+3. **Production relevance, not a toy result.** The selected experiment should preserve the causal mechanism and evaluation path of the source project. When the full workflow is too expensive, a faithful slice is acceptable only if improvement on that slice remains informative about the real problem.
+4. **Prefer a live frontier.** Frontier timing is a prioritization signal. Prefer questions that address newly important capability in the current research cycle. A less active area receives lower priority on an active frontier.
 
-## Choose one project
+## Bring one project
 
-The contributor must provide exactly one project through one of two routes:
+Choose exactly one project through either route:
 
-1. the highest-impact project they personally coauthored; or
-2. a well-known project in their field whose codebase they know especially well.
+1. **Coauthored route:** the highest-impact project that you personally coauthored; or
+2. **Domain-expertise route:** a well-known project in your field whose codebase you know especially well.
 
-The contributor's actual role and expertise must match the proposed task area. This is an eligibility requirement, not a prestige test. If the contributor supplies multiple projects, do not rank or select among them; ask the contributor to choose one. Prefer a foundational project or one connected to a current research frontier, but frontier relevance is a preference rather than an eligibility gate.
+In either route, explain your relationship to the project and why your experience matches the proposed research area. Contributor-domain fit is a strict eligibility gate.
 
-Use the official open-source repository when available and pin an immutable commit or exact tag. A paper may explain motivation, but repository and artifact evidence must support the runnable task.
+Use the official open-source repository when available and pin an immutable commit or exact tag. A paper may explain the motivation, but repository and artifact evidence must support a runnable task.
 
 ## What makes a project suitable for AutoResearch
 
-A suitable project has:
+| Characteristic | What it means |
+|---|---|
+| Fully open | The selected lane has public, usable code, configurations, required model/checkpoint and data assets, and an evaluation path. |
+| Influential | The project shaped its area through adoption, citations, community use for frontier work. |
+| Timely | The research area remains active in the current research cycle. |
+| Reproducible | The official experiment can run end to end. Missing critical assets or an unverifiable metric block admission. |
+| Iterative | The task supports repeated hypothesis → change → run → observe → update cycles. |
+| Verifiable | A separate fixed evaluator can score the submitted artifact and enforce integrity boundaries without trusting self-reported results. |
 
-- sufficiently open code, configurations, checkpoint or data assets, and evaluation path;
-- real scientific or practical influence;
-- an official path that can run end to end, or an official artifact that can be evaluated directly;
-- a bounded, cost-controllable experimental lane;
-- meaningful method decisions for the research agent;
-- a repeated hypothesis → change → run → observe → update loop;
-- a fixed baseline, budget, and independently verifiable metric;
-- a final candidate artifact that a separate verifier can score directly; and
-- when the full workflow is too expensive, a faithful slice that preserves the source project's causal mechanism and evaluation path.
+## Common poor fits
+
+- A paper reproduction with no subsequent improvement loop.
+- A one-shot feature, port, refactor, or bug fix.
+- A search space dominated by routine parameter sweeping.
+- A cheap toy proxy whose gains are not informative about the source project's real workflow.
 
 ## Compute orientation
 
-Surface compute scale before detailed proposal work. The normal planning reference for one candidate run is at most 8 H100-equivalent GPUs and at most 12 hours. At orientation, ask only whether the task is likely to exceed either threshold significantly; collect exact estimates later. A large estimate is a resource-review flag, not a scientific rejection.
+One candidate experiment means taking one fixed idea and configuration from launch through any required training or optimization and evaluation until it produces a valid score. It should normally use no more than 8 H100-equivalent GPUs at peak and finish within 12 wall-clock hours. This reference applies to one experiment, not the full multi-experiment AutoResearch trajectory. A large estimate beyond is applicable but will go through our internal human review.
 
-After the orientation, ask for the one selected repository URL, exact commit or tag if known, which project-selection route applies, the contributor's specific role and task-relevant expertise, a few sentences describing the initial research idea, and whether one candidate run is likely to exceed the normal compute reference significantly. Do not request exact compute details yet.
+
+## What to provide in Round 0
+
+Ask for:
+
+1. the one selected project and its official repository URL;
+2. the exact commit or tag, if already known;
+3. which project-selection route applies and a brief explanation of the contributor's relationship to the project and domain fit;
+4. a few sentences describing the initial research question;
+5. why the underlying area is foundational or frontier-relevant currently; and
+6. whether one candidate experiment is likely to exceed the normal compute reference significantly.
+
+Do not request exact compute details yet. The proposal agent investigates repository facts and current frontier evidence; the contributor supplies expert judgment and explicit decisions.
