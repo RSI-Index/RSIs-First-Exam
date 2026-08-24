@@ -41,10 +41,13 @@ overlapping rereads. Check all of the following together:
 
 - repository URL and exact SHA match the approved proposal;
 - baseline, workload, metric, direction, units, aggregation, and budget did not change;
-- Instruction names the baseline, reported result/status, and matched comparison;
+- Instruction names the baseline, reported result/status, and fixed comparison;
   README gives concise official evidence and labels protocol differences;
   `solution/solve.sh` materializes that same baseline; Judge scores that same
   baseline/no-op under the fixed protocol;
+- normal candidate submissions evaluate only the candidate and use its
+  absolute metric; a live baseline pass appears only when the confirmed reward
+  requires paired comparison and runtime-drift evidence justifies its cost;
 - public/hidden feedback boundary and leakage controls are implemented as confirmed;
 - starting artifacts, editable scope, prohibited actions, and deliverable align;
 - every Docker build/install/init operation that can mutate WORKDIR precedes
@@ -54,6 +57,19 @@ overlapping rereads. Check all of the following together:
 - Work/Judge resources, network/data policy, proxy needs, timeouts, and submissions match the final assumption review;
 - the effective WORKDIR and snapshot mode match the image, candidate is fully materialized on disk, and split-WORKDIR evaluation is designed for read-only reload;
 - complete Judge stdout/stderr and Harness footer visibility match the contributor-confirmed feedback contract;
+- candidate-owned artifact/configuration/checkpoint failures emit a stable,
+  actionable structure with specific code, absolute path, exact field and
+  condition where applicable, and safe expected/actual/hint values; broad
+  umbrella errors do not hide distinct repairs, while hidden evaluation data
+  and internals remain protected;
+- the candidate-failure scalar is explicitly derived from the declared score
+  domain and direction, and a validator/internal failure cannot reach that
+  reward path;
+- conditionally, a useful public candidate self-check is an exact read-only
+  absolute command baked into Environment, uses only public candidate
+  invariants, writes no reward, and matches the independent Judge gate's
+  diagnostic contract on generated non-hidden fixtures; simple tasks are not
+  required to have one;
 - every evaluator helper/input referenced under `/tests/...` is present in the generated task, with no undeclared external evaluator bundle or runner dependency;
 - evaluator control flow implements valid baseline scoring, declared candidate
   correctness failure, successful final reward, and no reward for

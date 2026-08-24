@@ -110,7 +110,7 @@ knowledge the iterations should produce.>
 | Baseline | <Official implementation, configuration, or released artifact> |
 | Reported result | <Officially reported value and units, closest official result with its protocol difference, or `Not reported for the fixed protocol`> |
 | Status | <Reported by source and not reproduced during task authoring> |
-| Comparison | <How the Judge scores baseline/no-op and candidate under the same fixed protocol> |
+| Comparison | <How a separate baseline/no-op submission and normal candidate submissions use the same fixed protocol; candidate submissions evaluate only the candidate unless an approved live-paired exception applies> |
 
 ## Research loop
 
@@ -134,7 +134,7 @@ knowledge the iterations should produce.>
 | Fixed workload | <Dataset/workload, evaluator, and per-submission budget> |
 | Reward | <Formula, aggregation, units, and direction> |
 | Scoreable candidate | <Required materialized artifact and correctness gate> |
-| Visible feedback | <Safe stdout/stderr aggregates and Harness footer> |
+| Visible feedback | <Safe stdout/stderr aggregates, actionable candidate-owned validation errors, and Harness footer> |
 | Hidden | <Cases, answers, per-example outcomes, or other reserved information> |
 
 Use `rsi-submit --list` to inspect prior submission summaries.
@@ -142,6 +142,7 @@ Use `rsi-submit --list` to inspect prior submission summaries.
 ## Submission checklist
 
 - <Candidate artifacts are complete and flushed under absolute paths.>
+- <When supplied, run the exact read-only public candidate self-check command; omit this bullet when no meaningful self-check exists.>
 - <No prohibited state or live process is required by Judge.>
 - <The next submission tests a stated hypothesis.>
 ```
@@ -239,6 +240,19 @@ logged samples are grouped by `doc_id` and consumed through one explicitly
 selected declared filter. Run the required single-task, multi-filter generator
 regression during Layer 2.
 
+## Conditional public candidate self-check
+
+For a nontrivial candidate artifact with useful public-only invariants, bake a
+read-only command such as `/usr/local/bin/validate-candidate --json` into the
+Environment and name that exact absolute command in `instruction.md`. It reads
+only candidate-owned files and public fixed configuration, uses no network or
+GPU, installs nothing, mutates nothing, and writes no reward. It emits the same
+stable candidate-diagnostic schema expected from Judge. The Judge keeps a
+separate authoritative implementation under `/tests` and reruns the checks;
+the public command is an Agent convenience, not a trust boundary. Omit this
+feature for simple source-only deliverables or when meaningful checks require
+hidden evaluation data.
+
 ## Task-owned evaluator reward ending
 
 The task-specific evaluator and every helper or data asset it references must be included under `tests/`. It performs real checks before this ending. Keep the reward in memory, stream only safe Agent-visible feedback to stdout/stderr, and write the only evaluator result file at the end:
@@ -259,6 +273,14 @@ with open("/logs/verifier/reward.json", "x", encoding="utf-8") as stream:
 
 Do not put a reward write in `finally`. A failed/incomplete evaluation must leave no reward file.
 
+Before the expensive hidden evaluation, candidate-owned validation failures
+should emit one structured `candidate_invalid` envelope with specific code,
+absolute path, field/condition, and safe expected/actual/hint values. Finalize
+the protocol's declared candidate-failure scalar only after the candidate gate
+completes and returns a valid candidate-invalid verdict. A validator crash or incomplete validation is
+infrastructure failure and leaves no reward. Do not hard-code `0.0` without
+checking the task's score domain and direction.
+
 ## `README.md`
 
 README is a concise maintainer guide, not an evidence dump. Use these sections:
@@ -270,7 +292,8 @@ README is a concise maintainer guide, not an evidence dump. Use these sections:
    copying revision or file-checksum inventories.
 3. **Environment and evaluation** — effective WORKDIR, baseline/candidate
    reload paths, Work/Judge GPUs, network boundary, reward, visible feedback,
-   timeouts, and the material shared Base/Judge limitation.
+   timeouts, any optional public candidate self-check, and the material shared
+   Base/Judge limitation.
 4. **Run and validate** — one exact run command, the static/compiler command,
    checks actually completed, and expensive execution checks still pending.
 

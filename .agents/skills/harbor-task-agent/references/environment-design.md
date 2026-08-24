@@ -72,6 +72,28 @@ Everything under `environment/` enters the Work build context and may be visible
 
 If a public asset is too large for `tests/`, it may be baked into Environment only when it is intentionally visible to Work and contains no hidden evaluation information. Task-owned `tests/` injection is limited to 100,000 entries and 1 GiB of regular-file bytes.
 
+## Optional candidate self-check
+
+When the deliverable is a nontrivial artifact such as a checkpoint, dataset,
+manifest, or multi-file configuration, and meaningful validation can be done
+without hidden evaluation inputs, prefer a lightweight read-only command such
+as `/usr/local/bin/validate-candidate --json`. Bake it and its public
+dependencies into Environment so Work can run it before `rsi-submit`.
+
+This command is optional and advisory. Do not add a dummy self-check to a
+simple source-only task, and do not move hidden tests, answers, Judge decisions,
+network access, GPU work, dependency installation, or expensive evaluation
+into it. It must inspect only candidate-owned artifacts and public fixed
+configuration, must not mutate the workspace, and must never write a Harbor
+reward.
+
+Judge must independently rerun the authoritative checks from its task-owned
+`/tests` implementation and must not trust a prior self-check result or import
+candidate-visible validation code as its authority. Keep the two paths aligned
+through one generation-time diagnostic contract and non-hidden regression
+fixtures; they need not be the same executable. This Agent-invoked self-check
+is separate from the post-handoff Layer 4 Environment preflight.
+
 Author a real `environment/Dockerfile` by default so the task directory contains its build recipe. A Dockerfile is optional only when the contributor explicitly supplies or approves the exact `[environment].docker_image` or Compose `image`. For that exception, confirm the image is accessible and review its effective WORKDIR, source/assets, dependencies, user, license, provenance, and empty Docker `Config.Volumes`. RSI-Harness rejects an image that declares any volume because its contents fall outside snapshot ownership. Checking image metadata is an image-preflight execution check, not something the static validator can prove. Never invent an image reference or add an empty Dockerfile merely to make compilation pass.
 
 ## RSI-Harness shape
@@ -124,6 +146,7 @@ Confirm:
   including its treatment of ignored and untracked files;
 - the effective WORKDIR exists and contains only public starting artifacts;
 - the Agent can run the public proxy/development commands without changing task definition;
+- any optional candidate self-check is read-only, public-only, documented by an exact absolute command, and independently rechecked by Judge;
 - candidate-owned paths are inside the Judge-visible WORKDIR;
 - the candidate is fully materialized on disk before submission and Judge reloads it without Work process state;
 - non-root Judge evaluation works with the WORKDIR mounted read-only;

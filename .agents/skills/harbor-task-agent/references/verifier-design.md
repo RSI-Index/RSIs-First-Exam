@@ -35,25 +35,96 @@ Use one finite scalar primary key named `reward` unless the confirmed protocol g
 
 A valid no-op/baseline candidate should receive its real continuous baseline score, commonly near a normalized 1.0, rather than Terminal-Bench's conventional zero. Correctness failure may receive a documented score such as 0.0 only when that is part of the fixed score definition. Missing/malformed reward means Verifier error, not a zero score.
 
+By default, a candidate submission evaluates only that candidate and uses its
+absolute fixed-protocol metric as reward. `solution/solve.sh` materializes the
+reference baseline so it can be scored in a separate no-op/baseline
+submission; it does not provide a measured score by itself. Use a matched
+official result or one separately authorized baseline run as reference. If
+neither exists, label the fixed-protocol baseline `not yet reproduced` rather
+than rerunning it inside every candidate submission.
+
+Do not add a live baseline pass merely to print a delta. For a fixed baseline
+`B`, maximizing `candidate - B` ranks candidates exactly as maximizing the
+candidate metric, while the extra pass increases GPU time and failure surface.
+A live paired baseline is exceptional: the confirmed proposal must define a
+paired ratio/delta and runtime drift must make an absolute candidate score
+insufficient, as in some hardware performance measurements. Confirm the extra
+compute and timeout before generating that design.
+
 Implement that distinction in control flow, not only in prose. If the confirmed
 protocol assigns a scalar to candidate-caused correctness failure, catch only
-the expected correctness outcome, print the permitted diagnostic, and finalize
+the expected correctness outcome, print the complete safe diagnostic, and finalize
 that declared scalar. Do not turn import errors, missing dependencies, CUDA
 failures, timeouts, incomplete cases, or other infrastructure faults into the
 same score.
 
 For performance tasks:
 
-- compare baseline and candidate under the same Judge process and device state;
 - synchronize the GPU around timings;
 - use fixed warmup/repetition counts and robust aggregation;
-- randomize or balance baseline/candidate order to reduce drift;
 - gate every score on output/gradient correctness;
 - aggregate across cases so one noisy shape cannot dominate;
 - clip ratios only as declared in the proposal;
 - print units and enough aggregate diagnostics to support research without revealing reserved cases.
 
+When the confirmed exceptional protocol uses a live paired comparator, run
+baseline and candidate under the same Judge/device state and randomize or
+balance their order to reduce drift.
+
 For stochastic quality tasks, fix seeds/workload and use enough repetitions or matched comparisons to distinguish expected gain from ordinary noise. Preserve the proposal's justification; do not claim measured variance before reproduction.
+
+## Candidate diagnostics and public self-checks
+
+Classify a failure by the information that proves it before formatting
+feedback. A failure in candidate-owned artifacts, configuration, or checkpoint
+structure is not hidden evaluation information. Report it completely enough
+for the Agent to repair without guessing.
+
+Use one stable structured envelope, for example `status =
+"candidate_invalid"` with a deterministic nonempty `errors` list. Each error
+must contain:
+
+- a stable, specific `code`;
+- the absolute candidate-owned `path`;
+- the exact `field` when the failure concerns structured data; and
+- the failed `condition` in plain language.
+
+Include safe `expected`, `actual`, and a short `hint` when they make the repair
+clear. Collect independent candidate errors in one pass when practical. Do not
+collapse distinct repairs into a broad bucket: `missing_artifact` names the
+missing absolute path; trainer state may distinguish `epoch_incomplete`,
+`eval_loss_missing`, and `loss_mismatch`; tokenizer/checkpoint checks may
+distinguish `missing_tokenizer_file`, `chat_template_mismatch`,
+`vocab_mismatch`, and `model_max_length_mismatch`. Adapt codes to the actual
+artifact rather than copying irrelevant examples.
+
+Complete does not mean unsafe. Do not print whole candidate files, raw
+tracebacks, secrets, hidden `/tests` paths or internals, hidden inputs or
+answers, per-example outcomes, or Judge decision details. Sanitize those
+categories while keeping candidate-owned diagnostics precise. A confirmed
+candidate-invalid outcome prints the safe structured envelope and, when the
+fixed protocol assigns such failures a score, finalizes the declared finite
+candidate-failure scalar. Derive that scalar from the score domain and
+direction; `0.0` is only a common maximization example, not a universal rule.
+An internal validator exception, dependency failure, timeout, or incomplete
+check is infrastructure failure and writes no reward.
+
+RSI-Harness treats any valid finite reward, including the declared
+candidate-failure scalar, as a completed submission. It consumes one
+submission but does not itself fail-close the research run. Missing or
+malformed reward instead produces a Verifier error. Design and document the
+candidate-invalid path with those semantics.
+
+For a complex artifact task, generate an optional public self-check when useful
+under the contract in
+[environment-design.md](environment-design.md#optional-candidate-self-check).
+Document its exact absolute command in the Agent instruction. Exercise the
+public and Judge implementations against the same non-hidden positive and
+negative fixtures during Layer 2, including the specific diagnostic codes and
+fields expected from each failure. Judge still reruns its independent
+task-owned gate and never trusts the self-check's earlier result. Omit the
+self-check when all meaningful validation requires hidden data or the
+deliverable is simple source code.
 
 ## `lm-evaluation-harness` result cardinality
 
@@ -114,7 +185,8 @@ through its actual control flow:
 
 1. valid baseline/no-op produces the declared continuous baseline score;
 2. a candidate-caused correctness failure produces the declared failure score,
-   if the protocol defines one;
+   if the protocol defines one, and its Agent-visible diagnostic is complete
+   for candidate-owned evidence without exposing hidden evidence;
 3. successful evaluation writes exactly one final reward; and
 4. infrastructure failure, crash, and incomplete evaluation write no reward.
 

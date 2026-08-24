@@ -88,6 +88,7 @@ Fix and record this interface:
 - exact source state and starting assets visible to Work;
 - candidate-owned paths and prohibited paths;
 - the fully materialized on-disk candidate and commands/interfaces Verifier may invoke after starting clean from the snapshot;
+- when nontrivial candidate artifacts admit useful public-only checks, the exact optional read-only candidate self-check command and the checks that remain Judge-only;
 - pinned runtime dependencies and immutable asset provenance;
 - Work GPU count, CPU, memory, storage estimate, shared memory, and build budget;
 - common `[environment.env]` values and any Judge-only `[verifier.env]` overrides;
@@ -122,7 +123,11 @@ The Verifier must:
 - emit one finite primary scalar named `reward`, with the direction declared in the README run command;
 - leave no reward file on timeout, crash, incomplete evaluation, or infrastructure failure;
 - give a valid continuously scored baseline/no-op result when the baseline itself is valid;
-- enforce correctness and task-specific anti-cheat controls before performance/quality scoring.
+- evaluate only the selected candidate during a normal candidate submission and use its absolute metric as reward; do not rerun the reference baseline merely to print a live delta;
+- enforce correctness and task-specific anti-cheat controls before performance/quality scoring;
+- report candidate-owned artifact, configuration, and checkpoint failures with complete structured diagnostics that identify the failing absolute path, field when applicable, and failed condition, plus safe expected/actual values and a repair hint when useful;
+- reserve vague or redacted diagnostics for hidden evaluation information and evaluator internals, not for errors in files the Agent owns; and
+- finalize the contributor-confirmed candidate-failure scalar for a validly detected candidate failure, chosen from the declared score domain and direction rather than hard-coding `0.0`; leave no reward for validator crashes or infrastructure failures.
 
 When the fixed evaluator uses Ray, vLLM data parallelism, multi-node vLLM, or
 another vLLM execution path that needs a routable host address, the task owns
@@ -164,9 +169,11 @@ Read [references/task-template.md](references/task-template.md) and [references/
 
 - task slug and `rsi/<slug>` package name;
 - repository identity and exact ref;
-- reference baseline, reported result and source status, whether it matches the Judge protocol, and how `solution/solve.sh` materializes it without training or evaluation;
+- reference baseline, reported result and source status, whether it matches the Judge protocol, and how `solution/solve.sh` materializes a separately scoreable baseline without training or evaluation;
 - starting state, editable scope, prohibited actions, and final deliverable;
-- fixed evaluation, correctness gate, scalar reward, direction, aggregation, units, and exactly visible feedback;
+- fixed evaluation, correctness gate, scalar reward, direction, aggregation, units, candidate-failure scalar, actionable candidate-owned diagnostics, and exactly visible feedback;
+- confirmation that candidate submissions score the candidate alone, or the explicit proposal requirement and runtime-drift evidence that justify an exceptional live paired baseline;
+- when useful for a complex deliverable, the exact optional public candidate self-check command and which checks remain Judge-only;
 - hidden/public inputs and leakage controls;
 - Work and Judge GPU counts and whether they can reuse the same caller pool;
 - Agent and Verifier network/data policy, including provider/proxy prerequisites;
