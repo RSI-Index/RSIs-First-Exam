@@ -39,11 +39,11 @@ TOKENIZERS_PARALLELISM = "false"
 VLLM_WORKER_MULTIPROC_METHOD = "spawn"
 
 [agent]
-timeout_sec = 216000
+timeout_sec = 86400
 network_mode = "no-network"
 
 [verifier]
-timeout_sec = 36000
+timeout_sec = 18000
 network_mode = "no-network"
 environment_mode = "shared"
 

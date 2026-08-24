@@ -311,7 +311,9 @@ def run_and_finalize(
                 {
                     "mode": "candidate",
                     "correctness": "failed",
+                    "stage": "candidate_validation",
                     "reason": error.code,
+                    "message": str(error),
                     "reward": reward,
                 },
                 sort_keys=True,

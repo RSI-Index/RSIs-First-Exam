@@ -441,6 +441,81 @@ class InferenceConfigurationTests(unittest.TestCase):
         path.write_text(json.dumps(value), encoding="utf-8")
 
 
+class OperationTests(unittest.TestCase):
+    SCORES = {
+        "AIME": 10.0,
+        "AMC": 20.0,
+        "Olympiad": 30.0,
+        "GSM8K": 40.0,
+        "MATH-500": 50.0,
+    }
+
+    def test_candidate_submission_scores_only_candidate(self) -> None:
+        provenance = {"long": 3, "short": 2, "retained": 4, "rewritten": 1}
+        metrics = {"train_loss": 0.2, "validation_loss": 0.3}
+        reward, summary, generated_paths = self._run_operation(
+            mode="candidate",
+            provenance=provenance,
+            metrics=metrics,
+        )
+
+        self.assertEqual(generated_paths, [Path("/candidate-checkpoint")])
+        self.assertEqual(reward, 30.0)
+        self.assertEqual(
+            summary,
+            {
+                "mode": "candidate",
+                "correctness": "passed",
+                "provenance": provenance,
+                "loss": {"train": 0.2, "validation": 0.3},
+                "candidate": {**self.SCORES, "macro": 30.0},
+            },
+        )
+
+    def test_baseline_submission_scores_only_baseline(self) -> None:
+        reward, summary, generated_paths = self._run_operation(
+            mode="baseline",
+            provenance=None,
+            metrics=None,
+        )
+
+        self.assertEqual(generated_paths, [Path("/baseline-checkpoint")])
+        self.assertEqual(reward, 30.0)
+        self.assertEqual(summary["mode"], "baseline")
+        self.assertEqual(summary["baseline"], {**self.SCORES, "macro": 30.0})
+
+    def _run_operation(
+        self,
+        *,
+        mode: str,
+        provenance: dict | None,
+        metrics: dict | None,
+    ) -> tuple[float, dict, list[Path]]:
+        generated_paths: list[Path] = []
+        generated = evaluate.GeneratedEvaluation(samples={}, gsm8k_percent=40.0)
+
+        def run_generation(path: Path) -> evaluate.GeneratedEvaluation:
+            generated_paths.append(path)
+            return generated
+
+        with (
+            patch.object(evaluate, "prepare_runtime_scratch"),
+            patch.object(evaluate, "resolve_mode", return_value=(mode, provenance, metrics)),
+            patch.object(evaluate, "run_generation", side_effect=run_generation),
+            patch.object(evaluate, "score_generated", return_value=self.SCORES, create=True),
+            patch.multiple(
+                evaluate,
+                BASE_MODEL=Path("/base-checkpoint"),
+                BASELINE_MODEL=Path("/baseline-checkpoint"),
+                JUDGE_MODEL=Path("/judge-checkpoint"),
+                CANDIDATE_CHECKPOINT=Path("/candidate-checkpoint"),
+            ),
+            patch.object(Path, "is_dir", return_value=True),
+        ):
+            reward, summary = evaluate.operation()
+        return reward, summary, generated_paths
+
+
 class RewardTests(unittest.TestCase):
     def test_macro_is_unweighted_percentage_mean(self) -> None:
         scores = {name: float(index * 10) for index, name in enumerate(TASK_NAMES, 1)}
@@ -466,7 +541,17 @@ class RewardTests(unittest.TestCase):
             reward = run_and_finalize(reject_candidate, reward_path, output)
             self.assertEqual(reward, 0.0)
             self.assertEqual(json.loads(reward_path.read_text()), {"reward": 0.0})
-            self.assertIn('"correctness": "failed"', output.getvalue())
+            self.assertEqual(
+                json.loads(output.getvalue()),
+                {
+                    "mode": "candidate",
+                    "correctness": "failed",
+                    "stage": "candidate_validation",
+                    "reason": "manifest_schema",
+                    "message": "candidate data is invalid",
+                    "reward": 0.0,
+                },
+            )
 
     def test_infrastructure_failure_leaves_no_reward(self) -> None:
         def infrastructure_failure() -> tuple[float, dict]:
