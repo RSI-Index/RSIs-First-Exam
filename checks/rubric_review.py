@@ -18,6 +18,7 @@ import json
 import os
 import re
 import sys
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import NamedTuple
 from urllib.parse import quote, unquote
@@ -39,6 +40,7 @@ MAX_REPOSITORY_FILES = 12
 MAX_REPOSITORY_FILE_BYTES = 128 * 1024
 MAX_REPOSITORY_TREE_PATHS = 200
 MAX_REPOSITORY_EVIDENCE_CHARS = 250_000
+WEB_SEARCH_TOOL = {"type": "web_search", "search_context_size": "high"}
 
 
 class RepositoryReference(NamedTuple):
@@ -378,12 +380,16 @@ def build_judge_input(
     proposal: str,
     repository_evidence: str,
     image_blocks: list[dict] | None = None,
+    *,
+    review_date: str | None = None,
 ) -> list[dict]:
     """Build one Responses API user message with clearly separated evidence."""
     evidence_payload = json.dumps(
         {
             "task_proposal": proposal,
             "repository_evidence": repository_evidence,
+            "review_date_utc": review_date
+            or datetime.now(timezone.utc).date().isoformat(),
         },
         ensure_ascii=False,
     )
@@ -429,6 +435,8 @@ def call_openai(instructions: str, user_input, *, client=None) -> str:
         reasoning={"effort": JUDGE_REASONING_EFFORT},
         instructions=instructions,
         input=user_input,
+        tools=[WEB_SEARCH_TOOL],
+        tool_choice="required",
         max_output_tokens=8192,
         store=False,
     )
@@ -452,6 +460,8 @@ async def async_call_openai(instructions: str, user_input, *, client=None) -> st
         reasoning={"effort": JUDGE_REASONING_EFFORT},
         instructions=instructions,
         input=user_input,
+        tools=[WEB_SEARCH_TOOL],
+        tool_choice="required",
         max_output_tokens=8192,
         store=False,
     )

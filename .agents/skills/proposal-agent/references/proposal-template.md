@@ -7,6 +7,7 @@ runtime, or final verifier behavior.
 
 | Section | Field | Proposal |
 | --- | --- | --- |
+| Contributor | Full name | [Contributor's full professional name; contributor provides, proposal agent verifies against public expertise evidence] |
 | Research Question | Repository URL | [Official source repository URL; contributor provides, proposal agent verifies] |
 | Research Question | Exact commit/tag | [Resolved immutable commit SHA; include the requested tag or branch only as additional provenance] |
 | Research Question | Scientific question | [Focused falsifiable model-development hypothesis; proposal agent drafts, contributor confirms] |
