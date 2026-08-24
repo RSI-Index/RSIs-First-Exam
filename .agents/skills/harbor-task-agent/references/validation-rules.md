@@ -46,8 +46,9 @@ overlapping rereads. Check all of the following together:
   `solution/solve.sh` materializes that same baseline; Judge scores that same
   baseline/no-op under the fixed protocol;
 - normal candidate submissions evaluate only the candidate and use its
-  absolute metric; a live baseline pass appears only when the confirmed reward
-  requires paired comparison and runtime-drift evidence justifies its cost;
+  absolute metric; a live baseline pass appears only after the contributor
+  explicitly chose it over the recommended candidate-only design after seeing
+  its compute and failure cost; proposal words such as `matched` are not enough;
 - public/hidden feedback boundary and leakage controls are implemented as confirmed;
 - starting artifacts, editable scope, prohibited actions, and deliverable align;
 - every Docker build/install/init operation that can mutate WORKDIR precedes

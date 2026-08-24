@@ -110,7 +110,7 @@ knowledge the iterations should produce.>
 | Baseline | <Official implementation, configuration, or released artifact> |
 | Reported result | <Officially reported value and units, closest official result with its protocol difference, or `Not reported for the fixed protocol`> |
 | Status | <Reported by source and not reproduced during task authoring> |
-| Comparison | <How a separate baseline/no-op submission and normal candidate submissions use the same fixed protocol; candidate submissions evaluate only the candidate unless an approved live-paired exception applies> |
+| Comparison | <How a separate baseline/no-op submission and normal candidate submissions use the same fixed protocol; candidate submissions evaluate only the candidate unless the contributor explicitly chose live pairing after reviewing its cost> |
 
 ## Research loop
 

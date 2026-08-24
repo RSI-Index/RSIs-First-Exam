@@ -124,6 +124,7 @@ The Verifier must:
 - leave no reward file on timeout, crash, incomplete evaluation, or infrastructure failure;
 - give a valid continuously scored baseline/no-op result when the baseline itself is valid;
 - evaluate only the selected candidate during a normal candidate submission and use its absolute metric as reward; do not rerun the reference baseline merely to print a live delta;
+- if the proposal requests or implies a live paired baseline, ratio, or delta, explain the extra compute and failure surface and ask the contributor to choose between candidate-only absolute scoring (recommended) and live paired scoring; do not infer permission from words such as `matched`, and use candidate-only unless the contributor explicitly confirms the latter;
 - enforce correctness and task-specific anti-cheat controls before performance/quality scoring;
 - report candidate-owned artifact, configuration, and checkpoint failures with complete structured diagnostics that identify the failing absolute path, field when applicable, and failed condition, plus safe expected/actual values and a repair hint when useful;
 - reserve vague or redacted diagnostics for hidden evaluation information and evaluator internals, not for errors in files the Agent owns; and
@@ -172,7 +173,7 @@ Read [references/task-template.md](references/task-template.md) and [references/
 - reference baseline, reported result and source status, whether it matches the Judge protocol, and how `solution/solve.sh` materializes a separately scoreable baseline without training or evaluation;
 - starting state, editable scope, prohibited actions, and final deliverable;
 - fixed evaluation, correctness gate, scalar reward, direction, aggregation, units, candidate-failure scalar, actionable candidate-owned diagnostics, and exactly visible feedback;
-- confirmation that candidate submissions score the candidate alone, or the explicit proposal requirement and runtime-drift evidence that justify an exceptional live paired baseline;
+- confirmation that candidate submissions score the candidate alone, or the contributor's explicit choice of an exceptional live paired baseline after reviewing its compute and failure cost;
 - when useful for a complex deliverable, the exact optional public candidate self-check command and which checks remain Judge-only;
 - hidden/public inputs and leakage controls;
 - Work and Judge GPU counts and whether they can reuse the same caller pool;

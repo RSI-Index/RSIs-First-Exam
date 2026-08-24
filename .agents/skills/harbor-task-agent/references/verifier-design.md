@@ -46,10 +46,14 @@ than rerunning it inside every candidate submission.
 Do not add a live baseline pass merely to print a delta. For a fixed baseline
 `B`, maximizing `candidate - B` ranks candidates exactly as maximizing the
 candidate metric, while the extra pass increases GPU time and failure surface.
-A live paired baseline is exceptional: the confirmed proposal must define a
-paired ratio/delta and runtime drift must make an absolute candidate score
-insufficient, as in some hardware performance measurements. Confirm the extra
-compute and timeout before generating that design.
+A live paired baseline is exceptional. If proposal language asks for a live
+ratio/delta or could be read as requiring same-run pairing, do not resolve the
+ambiguity yourself: explain that candidate-only absolute scoring is cheaper
+and ranks candidates identically when the baseline is fixed, describe the
+extra compute and failure surface of live pairing, and ask the contributor to
+choose. Words such as `matched` mean the same fixed protocol unless the
+contributor explicitly confirms live pairing. Without that confirmation,
+generate candidate-only scoring.
 
 Implement that distinction in control flow, not only in prose. If the confirmed
 protocol assigns a scalar to candidate-caused correctness failure, catch only
@@ -67,7 +71,7 @@ For performance tasks:
 - clip ratios only as declared in the proposal;
 - print units and enough aggregate diagnostics to support research without revealing reserved cases.
 
-When the confirmed exceptional protocol uses a live paired comparator, run
+Only after that explicit contributor confirmation, run
 baseline and candidate under the same Judge/device state and randomize or
 balance their order to reduce drift.
 
