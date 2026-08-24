@@ -1,31 +1,32 @@
 ---
 name: harbor-task-agent
-description: Use when converting an approved RSI-Index AutoResearch proposal into a self-contained RSI-Harness-compatible Harbor task.
+description: Use when an approved RSI-Index AutoResearch proposal must become an RSI-Harness-compatible Harbor task, or an existing Harbor task without a proposal needs standards-based refinement.
 ---
 
 # Harbor Task Agent
 
-Turn an approved AutoResearch proposal into a self-contained, runnable RSI-Harness task. Copying the generated task directory into an RSI-Harness workspace must be sufficient to build and run it, apart from RSI-Harness itself, the declared GPUs, provider credentials, and other operator inputs explicitly documented in the task. RSI-Harness is the authoritative runtime contract. Terminal-Bench conventions are only useful where this skill explicitly preserves or adapts them.
+Turn either an approved AutoResearch proposal or an existing Harbor task into a self-contained, runnable RSI-Harness task. Copying the generated task directory into an RSI-Harness workspace must be sufficient to build and run it, apart from RSI-Harness itself, the declared GPUs, provider credentials, and other operator inputs explicitly documented in the task. RSI-Harness is the authoritative runtime contract. Terminal-Bench conventions are only useful where this skill explicitly preserves or adapts them.
 
 ## Load references by stage
 
 Do not read every reference up front.
 
-1. Before inspecting a proposal or remote repository, read [references/repository-research.md](references/repository-research.md) completely.
-2. Before deciding the Base/Work environment, read [references/environment-design.md](references/environment-design.md) completely.
-3. After the Environment interface is fixed and before authoring the task-owned evaluation, read [references/verifier-design.md](references/verifier-design.md) completely.
-4. Before the final contributor assumption review, read [references/task-template.md](references/task-template.md) and [references/validation-rules.md](references/validation-rules.md) completely.
-5. After generation and validation, immediately before dispatching the independent reviewer, read [references/independent-review.md](references/independent-review.md) completely.
+1. Select the input mode from the supplied artifacts. For an existing task without an approved proposal, read [references/existing-task-refinement.md](references/existing-task-refinement.md) completely before inspecting the task. Skip it in proposal mode.
+2. Before inspecting an approved proposal, source task, or remote repository, read [references/repository-research.md](references/repository-research.md) completely.
+3. Before deciding the Base/Work environment, read [references/environment-design.md](references/environment-design.md) completely.
+4. After the Environment interface is fixed and before authoring the task-owned evaluation, read [references/verifier-design.md](references/verifier-design.md) completely.
+5. Before the final contributor assumption review, read [references/task-template.md](references/task-template.md) and [references/validation-rules.md](references/validation-rules.md) completely.
+6. After generation and validation, immediately before dispatching the independent reviewer, read [references/independent-review.md](references/independent-review.md) completely.
 
 The references are part of this portable skill. Do not require files from the repository that happens to contain the skill. RSI-Harness itself is optional for static authoring and required only for the authoritative compiler check.
 
 ## Non-negotiable behavior
 
-- Start from an approved proposal. If the scientific question, baseline, evaluation, action space, or compute decision is still draft, route it back to proposal work instead of silently defining it here.
+- Select exactly one semantic mode. Proposal mode starts from an approved proposal; if its scientific question, baseline, evaluation, action space, or compute decision remains draft, route it back to proposal work. Existing-task refinement mode starts from a Harbor task without an approved proposal and follows `existing-task-refinement.md`; it does not invoke proposal-agent or create a proposal artifact. If both inputs exist, the approved proposal controls semantics and the existing task is only an implementation reference.
 - Work remote-first. Verify the official repository and immutable commit from remote evidence; use a local checkout only when the contributor explicitly points to one or remote inspection is insufficient.
 - Never execute untrusted repository code, training, installation hooks, or task images merely to research or package the task.
 - Keep Environment, Verifier, and baseline Solution as separate decisions. Freeze the Environment-to-Verifier interface before writing Verifier logic.
-- Ask only for contributor-owned choices or inaccessible facts that can materially change the task. Explain operational questions in plain language; contributors need not know Harbor internals.
+- In proposal mode, ask only for contributor-owned choices or inaccessible facts that can materially change the task. In refinement mode, recover information from the task and official evidence, decide ordinary implementation details autonomously, ask no proposal-field questions, and stop on an unrecoverable core semantic gap. Explain operational questions in plain language; contributors need not know Harbor internals.
 - Do not write any task file until the contributor has confirmed one consolidated final assumption review.
 - Never overwrite an existing target. Immediately before every write, check the exact target path. If any target exists, obtain explicit permission for that exact directory or choose a new target, then check again.
 - Generate a Dockerfile-based, self-contained package by default. Use a prebuilt image only when the contributor explicitly supplies or approves that exact real image. Never invent an image registry, tag, digest, external evaluator bundle, runner, or asset location.
@@ -43,16 +44,21 @@ The references are part of this portable skill. Do not require files from the re
 
 Maintain four concise internal ledgers:
 
-1. verified proposal and repository evidence;
-2. contributor-confirmed decisions;
+1. verified semantic-source and repository evidence;
+2. contributor-confirmed proposal decisions or the recovered-task brief;
 3. implementation assumptions awaiting final confirmation; and
-4. blocking gaps.
+4. blocking gaps and material source-task conflicts.
 
 Do not turn these ledgers into a schema questionnaire. The contributor should see only the decisions that need attention and the final consolidated assumption review.
 
 ## Workflow
 
-### Stage 1 — Proposal preflight
+### Stage 1 — Semantic-source preflight
+
+Choose the applicable branch below. Both branches must produce one approved
+semantic source before Stage 2.
+
+#### Proposal mode
 
 Read the complete proposal and classify every statement as confirmed task semantics, repository evidence to verify, packaging assumption, or gap.
 
@@ -70,13 +76,17 @@ Do not require baseline reproduction, measured variance, verified runtime, or cl
 
 If a required author name/email, license permission, contributor-supplied prebuilt image or asset, registry access, runtime provider route, or other contributor-owned fact is missing, ask one small related question group. Otherwise continue without interaction. Do not manufacture a dependency on an external evaluator asset when the evaluator can be included under `tests/`.
 
+#### Existing-task refinement mode
+
+Read and follow [references/existing-task-refinement.md](references/existing-task-refinement.md). Inventory the complete source package, research its official sources, recover the internal task brief, resolve material conflicts, and identify blocking gaps. Do not call proposal-agent, generate `proposal.md`, or ask the user to complete missing proposal fields. The contributor-confirmed recovered-task brief becomes the approved semantic source for Stages 2–9.
+
 ### Stage 2 — Repository evidence
 
-Follow [references/repository-research.md](references/repository-research.md). Resolve moving refs to the proposal SHA, verify that material baseline, entrypoint, config, evaluator, and dependency paths exist at that SHA, and search official repository documentation, releases, model cards, papers, and author-published result artifacts for the reported baseline value.
+Follow [references/repository-research.md](references/repository-research.md). Resolve moving refs to the approved semantic source's immutable SHA, verify that material baseline, entrypoint, config, evaluator, and dependency paths exist at that SHA, and search official repository documentation, releases, model cards, papers, and author-published result artifacts for the reported baseline value.
 
 Investigate packaging facts yourself. Do not ask the contributor to locate ordinary files, commands, dependencies, or existing benchmark behavior that remote repository evidence can answer.
 
-If the repository contradicts the proposal in a way that changes the baseline or evaluation, show the evidence and ask the contributor. Packaging inconveniences that do not change task semantics are implementation decisions.
+In proposal mode, if the repository contradicts the proposal in a way that changes the baseline or evaluation, show the evidence and ask the contributor. In refinement mode, resolve contradictions under `existing-task-refinement.md`, include material dispositions in the single final review, and stop if core semantics remain ambiguous. Packaging inconveniences that do not change task semantics are implementation decisions in both modes.
 
 ### Stage 3 — Environment design
 
@@ -124,7 +134,7 @@ The Verifier must:
 - leave no reward file on timeout, crash, incomplete evaluation, or infrastructure failure;
 - give a valid continuously scored baseline/no-op result when the baseline itself is valid;
 - evaluate only the selected candidate during a normal candidate submission and use its absolute metric as reward; do not rerun the reference baseline merely to print a live delta;
-- if the proposal requests or implies a live paired baseline, ratio, or delta, explain the extra compute and failure surface and ask the contributor to choose between candidate-only absolute scoring (recommended) and live paired scoring; do not infer permission from words such as `matched`, and use candidate-only unless the contributor explicitly confirms the latter;
+- if the approved semantic source requests or implies a live paired baseline, ratio, or delta, explain the extra compute and failure surface in the applicable contributor confirmation and require an explicit choice between candidate-only absolute scoring (recommended) and live paired scoring; do not infer permission from words such as `matched`, and use candidate-only unless the contributor explicitly confirms the latter;
 - enforce correctness and task-specific anti-cheat controls before performance/quality scoring;
 - report candidate-owned artifact, configuration, and checkpoint failures with complete structured diagnostics that identify the failing absolute path, field when applicable, and failed condition, plus safe expected/actual values and a repair hint when useful;
 - reserve vague or redacted diagnostics for hidden evaluation information and evaluator internals, not for errors in files the Agent owns; and
@@ -138,7 +148,7 @@ spawning Ray/vLLM. Never bake an IP into task configuration or fall back to an
 unspecified address; address-discovery failure is infrastructure failure with
 no reward. Do not make this a Harness-global requirement for unrelated tasks.
 
-Every submission exposes the complete `tests/test.sh` stdout/stderr stream to Work at `/run/rsi-harness/feedback/agent-N.log`, plus a footer containing round, status, reward, optional score, exit code, timeout flag, duration, remaining submission budget, and any error. `rsi-submit --list` exposes submission history. Therefore stdout/stderr is the intentional Agent-visible feedback channel and must contain only the confirmed safe feedback—never hidden cases, gold answers, secrets, or undeclared per-example details. Do not confuse the bounded in-memory/report `output_limit_bytes` field with this separately captured durable file: the feedback log is the complete stream. There is no feedback-hidden final Judge phase inside RSI-Harness, so never promise one; if a proposal requires hidden final evaluation, distinguish an external final evaluation from the in-Harness development Judge and obtain contributor confirmation.
+Every submission exposes the complete `tests/test.sh` stdout/stderr stream to Work at `/run/rsi-harness/feedback/agent-N.log`, plus a footer containing round, status, reward, optional score, exit code, timeout flag, duration, remaining submission budget, and any error. `rsi-submit --list` exposes submission history. Therefore stdout/stderr is the intentional Agent-visible feedback channel and must contain only the confirmed safe feedback—never hidden cases, gold answers, secrets, or undeclared per-example details. Do not confuse the bounded in-memory/report `output_limit_bytes` field with this separately captured durable file: the feedback log is the complete stream. There is no feedback-hidden final Judge phase inside RSI-Harness, so never promise one; if the approved semantic source requires hidden final evaluation, distinguish an external final evaluation from the in-Harness development Judge and obtain contributor confirmation.
 
 Treat candidate code and all Work-modified system state as untrusted. State the shared-environment isolation limitation honestly; do not claim the protection of an independent verifier image.
 
@@ -190,9 +200,11 @@ Call out conservative assumptions as assumptions, not facts. Ask the contributor
 
 This is a contributor decision review, not an implementation audit. Keep it compact and explain only choices or assumptions that could materially change the task. Keep file inventories, evaluator internals, process/thread cleanup details, line-level evidence, and validation-test matrices out of the contributor review unless the contributor must decide among alternatives because of them.
 
+In refinement mode this is the only contributor question before generation. Also include the recovered research semantics, material source-task conflicts and planned corrections, the exact collision-free sibling destination, and confirmation that the source task remains unchanged. The contributor confirms or rejects the recovered design but is not expected to supply proposal content.
+
 ### Stage 7 — Generate the package
 
-After explicit confirmation, choose one destination, defaulting to `<slug>/` beside the proposal unless the contributor specified another location. Recheck existence immediately before writing.
+After explicit confirmation, choose one destination. Proposal mode defaults to `<slug>/` beside the proposal unless the contributor specified another location. Refinement mode defaults to a new sibling `<source-slug>-refined` when valid; if that would exceed the three-token slug limit or collide, choose a clear collision-free sibling slug within the limit and disclose it in Stage 6. Recheck existence immediately before writing.
 
 Generate the contract in [references/task-template.md](references/task-template.md):
 
@@ -213,11 +225,11 @@ Generate the contract in [references/task-template.md](references/task-template.
 
 Every task text file must contain the exact Harbor canary string in a comment. Keep all paths in `instruction.md` absolute. Use ML taxonomy `Training`, `Inference`, `Evaluation`, or `Kernels`. Do not add Terminal-Bench's standard timeout suffix, separate-verifier files, CTRF artifacts, or a full “optimal” solution. Every literal `/tests/...` reference must resolve to a file or directory included in the generated task. Do not reference undeclared `/tests/private`, an out-of-package evaluator bundle, or a synthetic runner.
 
-`solution/solve.sh` is required. It idempotently materializes the proposal's reference baseline in the candidate-owned workspace, using starting assets already present in the Environment. It does not train, evaluate, access `/tests`, submit, or write reward. RSI-Harness does not execute it; `tests/test.sh` remains the only scoring path. For a no-op baseline, the script restores or clears candidate-owned state so the Judge takes its declared baseline path.
+`solution/solve.sh` is required. It idempotently materializes the approved semantic source's reference baseline in the candidate-owned workspace, using starting assets already present in the Environment. It does not train, evaluate, access `/tests`, submit, or write reward. RSI-Harness does not execute it; `tests/test.sh` remains the only scoring path. For a no-op baseline, the script restores or clears candidate-owned state so the Judge takes its declared baseline path.
 
 ### Stage 8 — Validate (Layers 1–2)
 
-Complete Layers 1–2 in [references/validation-rules.md](references/validation-rules.md): the static validator, the authoritative compiler when its checkout is available, and one Generator final review. Do not split proposal fidelity, evaluator control flow, and starting-state closure into repeated rereads; cover them together in that final review.
+Complete Layers 1–2 in [references/validation-rules.md](references/validation-rules.md): the static validator, the authoritative compiler when its checkout is available, and one Generator final review. Do not split semantic-source fidelity, evaluator control flow, and starting-state closure into repeated rereads; cover them together in that final review.
 
 Choose one validation command. If no known RSI-Harness checkout is available,
 run the included standard-library validator and report the compiler as pending:
@@ -238,7 +250,7 @@ python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task \
 
 Fix every error. Review warnings against task evidence; fix them or document why they are intentional. Reread the actual generated files once and verify the destination did not change. Compilation without Docker/GPU execution is valid evidence only for the compiler portion; it never justifies missing build files, evaluator assets, or runtime commands.
 
-Use the single Layer 2 review checklist for proposal fidelity, reward control
+Use the single Layer 2 review checklist for semantic-source fidelity, reward control
 flow, starting-state closure, and truthful pending checks. Do not repeat those
 as separate audits. Do not perform Layers 4–5 during Stage 8.
 
@@ -248,7 +260,7 @@ Read [references/independent-review.md](references/independent-review.md). The r
 
 Use this fixed review budget:
 
-1. Dispatch one fresh Agent that did not generate or edit the task for the full initial review. Give it the approved proposal, contributor-confirmed assumptions, generated task, repository evidence, known RSI-Harness checkout or documentation, and exact validation results. Do not prime it with the generator's preferred conclusion or ask it to modify files.
+1. Dispatch one fresh Agent that did not generate or edit the task for the full initial review. In proposal mode, give it the approved proposal; in refinement mode, give it the original task, recovered-task brief, and confirmation summary. In both modes also provide the generated task, repository evidence, known RSI-Harness checkout or documentation, and exact validation results. Do not prime it with the generator's preferred conclusion or ask it to modify files.
 2. If the initial decision has a fixable `BLOCKER` or `MAJOR`, make correction round one and rerun every affected validation. Resume the same reviewer for one targeted re-review when possible. If that Agent is unavailable, use a fresh reviewer but provide the first report, correction dispositions, touched paths, and updated validation evidence so the pass remains a re-review rather than a new open-ended audit.
 3. The re-review is the second and final independent review. If it reports a fixable `BLOCKER` or `MAJOR`, make correction round two and rerun affected validation, then stop. Do not dispatch a third reviewer. If the final correction cannot be completed or essential evidence remains unavailable, stop as `BLOCKED`.
 
