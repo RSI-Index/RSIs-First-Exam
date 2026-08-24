@@ -33,13 +33,18 @@ python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task \
 
 The validator invokes `HarborTaskCompiler.compile(...)` with the reward, direction, and maximum-submission settings parsed from README. Compilation reads the task but does not build Docker, allocate GPUs, use network, run solution/tests, or mutate the task.
 
-Do not replace the static layer with compilation. Harbor's parser may accept unknown metadata, and the compiler intentionally does not lint canaries, dependency pins, Dockerfile hygiene, reward lifecycle, or proposal semantics.
+Do not replace the static layer with compilation. Harbor's parser may accept unknown metadata, and the compiler intentionally does not lint canaries, dependency pins, Dockerfile hygiene, reward lifecycle, or semantic-source fidelity.
 Do not also run the static-only command first; that would duplicate Layer 1.
 
 After compilation, perform one Generator final review rather than several
 overlapping rereads. Check all of the following together:
 
-- repository URL and exact SHA match the approved proposal;
+- repository URL and exact SHA match the approved semantic source;
+- conditionally in refinement mode, the source task remains unchanged, the
+  refined task matches the contributor-confirmed recovered-task brief, every
+  material conflict has an evidence-backed disposition, and no unsupported
+  metric, runtime, provenance, hidden behavior, or other task semantics were
+  introduced;
 - baseline, workload, metric, direction, units, aggregation, and budget did not change;
 - Instruction names the baseline, reported result/status, and fixed comparison;
   README gives concise official evidence and labels protocol differences;
@@ -48,7 +53,8 @@ overlapping rereads. Check all of the following together:
 - normal candidate submissions evaluate only the candidate and use its
   absolute metric; a live baseline pass appears only after the contributor
   explicitly chose it over the recommended candidate-only design after seeing
-  its compute and failure cost; proposal words such as `matched` are not enough;
+  its compute and failure cost; semantic-source words such as `matched` are not
+  enough;
 - public/hidden feedback boundary and leakage controls are implemented as confirmed;
 - starting artifacts, editable scope, prohibited actions, and deliverable align;
 - every Docker build/install/init operation that can mutate WORKDIR precedes
@@ -228,4 +234,4 @@ Agent timeout >= all Work research/training
 
 `agent.timeout_sec` is wall-clock. It continues while Work is paused and the synchronous `rsi-submit` waits for Judge. `verifier.timeout_sec` starts only for `/tests/test.sh`; snapshot/creation/injection/cleanup happen outside it. A 12-hour Work training phase followed by a 12-hour Judge evaluation consumes roughly 24 hours of Agent budget for that cycle.
 
-If proposal compute exceeds its normal planning reference, preserve the contributor's estimate and flag resource review; do not silently cap the task.
+If the approved semantic source's compute exceeds its normal planning reference, preserve the recorded estimate and flag resource review; do not silently cap the task.
