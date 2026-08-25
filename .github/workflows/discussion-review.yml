@@ -29,13 +29,13 @@ jobs:
             -f id="${{ github.event.discussion.node_id }}" \
             -f content="EYES"
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
 
       # The proposal rubric is private: it is the standard proposals are judged
       # against, and publishing it invites proposals written to the checklist
       # rather than to the bar. It is fetched per run instead of living in the
       # public tree.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
           repository: Zhuofeng-Li/RSI-Index-Rubrics
           token: ${{ secrets.RUBRIC_REPO_TOKEN }}
@@ -91,12 +91,24 @@ jobs:
           Path("review_text.md").write_text(review, encoding="utf-8")
           PY
 
+      - name: Render canonical proposal review marker
+        id: marker
+        env:
+          DECISION: ${{ steps.review.outputs.decision }}
+          DISCUSSION_TITLE: ${{ github.event.discussion.title }}
+          DISCUSSION_BODY: ${{ github.event.discussion.body }}
+          DISCUSSION_NODE_ID: ${{ github.event.discussion.node_id }}
+        run: |
+          marker=$(python3 checks/proposal_review_marker.py)
+          printf 'marker=%s\n' "$marker" >> "$GITHUB_OUTPUT"
+
       - name: Format and post or update comment
         env:
           GH_TOKEN: ${{ secrets.DISCUSSION_TOKEN }}
           DISCUSSION_ID: ${{ github.event.discussion.node_id }}
           DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
           EVENT_ACTION: ${{ github.event.action }}
+          REVIEW_MARKER: ${{ steps.marker.outputs.marker }}
         run: |
           DECISION="${{ steps.review.outputs.decision }}"
 
@@ -114,11 +126,21 @@ jobs:
           esac
 
           REVIEW=$(cat review_text.md)
-          MARKER="<!-- rubric-review-bot -->"
+          BOT_MARKER="<!-- rubric-review-bot -->"
+
+          case "$DECISION" in
+            "Strong Accept"|"Accept")
+              NEXT_STEP="> 🤖 This automated recommendation is eligible for task dispatch. As the Discussion author, send \`/task\` to continue."
+              ;;
+            *)
+              NEXT_STEP="> 🤖 This is an automated recommendation for a human maintainer — not a final decision. Edit your proposal to trigger a fresh review. Judged against the private task proposal rubric; ask a maintainer if a point is unclear."
+              ;;
+          esac
 
           # Build comment body
           BODY=$(cat << COMMENT_EOF
-          ${MARKER}
+          ${BOT_MARKER}
+          ${REVIEW_MARKER}
           ## 📋 Task Proposal Rubric Review
 
           **Recommendation:** $BADGE
@@ -130,7 +152,7 @@ jobs:
 
           </details>
 
-          > 🤖 This is an automated recommendation for a human maintainer — not a final decision. Edit your proposal to trigger a fresh review. Judged against the private task proposal rubric; ask a maintainer if a point is unclear.
+          $NEXT_STEP
           COMMENT_EOF
           )
 
