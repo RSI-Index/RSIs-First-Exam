@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plan or explicitly execute a final authoring-time Environment preflight.
+"""Plan or explicitly execute a post-generation Environment preflight.
 
 The default mode is read-only. Execution builds or obtains the task image and
 starts one untouched, no-egress, no-GPU container on a private internal bridge
