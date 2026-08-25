@@ -16,13 +16,33 @@ Verifier entry interface: command/module/artifact to evaluate
 Work resources: GPUs, CPUs, memory, storage estimate, shm_size
 build budget: build_timeout_sec
 common/Judge env: [environment.env] plus [verifier.env] overrides
+effective phase users: root Work/Agent default; explicit override only when required
 Agent network: public, no-network, or exact allowlist
 runtime provider route: explicit API base/proxy requirement when non-public
 ```
 
-Use a non-root `/workspace` WORKDIR by default, but follow repository or image evidence when the real code directory is `/testbed`, `/repo`, `/app`, or another absolute path. RSI-Harness gives no special meaning to `/workspace`. A non-root directory must already exist in the clean image; RSI-Harness places it in an Engine-owned volume, keeps it across rounds, and mounts its Judge snapshot read-only. The WORKDIR must not overlap `/tests`, `/logs/verifier`, or `/run/rsi-harness/staging`.
+Use a split-WORKDIR path such as `/workspace` by default, but follow repository or image evidence when the real code directory is `/testbed`, `/repo`, `/app`, or another absolute path. RSI-Harness gives no special meaning to `/workspace`. A WORKDIR other than `/` must already exist in the clean image; RSI-Harness places it in an Engine-owned volume, keeps it across rounds, and mounts its Judge snapshot read-only. The WORKDIR must not overlap `/tests`, `/logs/verifier`, or `/run/rsi-harness/staging`.
 
 Use `/` only when full-filesystem visibility is necessary. It selects full-rootfs snapshots, so large changes anywhere in the container increase submission snapshot time and Docker storage. Record that operational cost in README and the contributor review.
+
+## Phase identity and authority
+
+RSI-Harness's standard Work/Agent identity is root. Preserve that default unless
+the approved workflow or source environment requires another identity; do not
+add `[agent].user` merely as generic anti-cheat hardening. Set a phase user only
+as a deliberate runtime choice. When overridden, the image must contain the
+selected identity, its HOME and every parent of WORKDIR must exist, and it must
+be able to write the candidate surface and run Solution.
+
+Design integrity for a root-capable Work phase. Ownership, modes, Docker
+`USER`, and root-owned paths inside the shared Environment are not Verifier
+authority against the Agent. Keep reference manifests, fixed configs, baseline
+selectors, scorer constants, and validation policy under Judge-only `/tests`,
+or compare any required Environment copy against task-owned authority before
+using it. A manifest or sidecar next to a candidate-owned artifact is candidate
+input, never trusted authority merely because it existed in the initial image.
+An optional non-root override may reduce accidental mutation but does not turn
+the shared Base into an independent trust domain.
 
 ## Source state
 
@@ -69,6 +89,12 @@ Everything under `environment/` enters the Work build context and may be visible
 - Do not pin apt package versions. Run apt update in the install layer, use `--no-install-recommends`, and remove `/var/lib/apt/lists/*` in that layer.
 - Bake all Verifier tooling into the shared Environment. `tests/test.sh` must not install it later.
 - Do not use bare `nproc`; set task-bounded parallelism explicitly.
+
+Create large immutable asset trees with their intended ownership and modes.
+Avoid a later recursive `chown -R` or `chmod -R` over `/opt`, `/data`, model
+caches, or comparable large roots: it can duplicate large layers and silently
+change the Agent-visible authority boundary. Prefer ownership at copy/download
+time or a read-only fail-closed permission scan that does not rewrite contents.
 
 If a public asset is too large for `tests/`, it may be baked into Environment only when it is intentionally visible to Work and contains no hidden evaluation information. Task-owned `tests/` injection is limited to 100,000 entries and 1 GiB of regular-file bytes.
 
@@ -122,7 +148,7 @@ CPU, memory, storage, shared memory, build timeout, Compose user, and common ser
 
 Docker commit and managed WORKDIR snapshots capture filesystem state, not running processes, open buffers, GPU memory, Unix sockets, or in-memory model servers. The Agent must fully write and close candidate-owned code, prompts, configs, indexes, and checkpoints before submission. Judge starts clean from the captured filesystem and must reload the candidate and, when needed, launch local serving inside its single `main` container.
 
-For a non-root WORKDIR, Judge sees that directory read-only. Confirm before Verifier design that candidate loading and evaluation do not attempt to compile extensions, populate caches, update checkpoints, create databases, or write scratch there. Redirect unavoidable disposable library/runtime scratch outside the WORKDIR; never use it as a feedback, result, cross-round state, or hidden-data channel. If evaluation genuinely needs to mutate the candidate tree, choose `/` deliberately or redesign the interface and confirm the trade-off.
+For split WORKDIR, Judge sees that directory read-only. Confirm before Verifier design that candidate loading and evaluation do not attempt to compile extensions, populate caches, update checkpoints, create databases, or write scratch there. Redirect unavoidable disposable library/runtime scratch outside the WORKDIR; never use it as a feedback, result, cross-round state, or hidden-data channel. If evaluation genuinely needs to mutate the candidate tree, choose `/` deliberately or redesign the interface and confirm the trade-off.
 
 ## Network boundary
 
@@ -149,10 +175,15 @@ Confirm:
 - any optional candidate self-check is read-only, public-only, documented by an exact absolute command, and independently rechecked by Judge;
 - candidate-owned paths are inside the Judge-visible WORKDIR;
 - the candidate is fully materialized on disk before submission and Judge reloads it without Work process state;
-- non-root Judge evaluation works with the WORKDIR mounted read-only;
+- Judge reload and evaluation work with the WORKDIR mounted read-only;
 - Verifier dependencies are present before runtime;
 - a contributor-supplied prebuilt image, when used, is real, accessible, and declares no Docker volumes;
 - common resources/env and Judge-only overrides match the confirmed execution plan;
+- the standard root phase behavior or any deliberate user override matches the
+  task; an overridden identity can access HOME, WORKDIR, Solution, public
+  assets, and every privilege-dropped launcher;
+- evaluator authority lives under `/tests` or independently validates every
+  required shared-Environment copy before use;
 - network and provider routing are operationally possible;
 - no hidden or solution material enters the build context or image history.
 

@@ -8,7 +8,12 @@ On `rsi-submit`, RSI-Harness pauses Work, snapshots Work state, creates Judge fr
 
 Work never receives the task's `tests/` source. Do not add `tests/Dockerfile` or `environment_mode = "separate"`; RSI-Harness rejects them.
 
-This is not an independent trusted verifier image. The Agent is root in Work and can modify system packages, shells, binaries, and libraries that Judge later inherits. Judge-only `/tests` and a read-only candidate WORKDIR materially help, but they do not make every shared runtime dependency trustworthy. State this limitation and use task-specific defenses.
+This is not an independent trusted verifier image. The standard Work/Agent
+identity is root and can modify system packages, shells, binaries, libraries,
+and Environment assets that Judge later inherits. An explicit non-root override
+may reduce accidental mutation but is not the default or an independent trust
+domain. Judge-only `/tests` and a read-only candidate WORKDIR materially help.
+State the remaining limitation and use task-specific defenses.
 
 Docker commit transfers filesystem state only. Judge cannot inherit Work's live model server, GPU memory, open files, or background processes. The scoreable candidate must be completely materialized and flushed before submission; Verifier starts clean and reloads it from disk. In split-WORKDIR mode, candidate loading must succeed while that directory is read-only. Put unavoidable disposable runtime/cache scratch outside it and never use scratch as a result, feedback, or cross-round state channel.
 
@@ -135,6 +140,36 @@ task-owned gate and never trusts the self-check's earlier result. Omit the
 self-check when all meaningful validation requires hidden data or the
 deliverable is simple source code.
 
+When a candidate-owned file is compared with hidden exclusions, answers, or
+reserved examples, the match location is hidden evidence. Report the
+candidate-owned file and the public rule it violated, but not the matching row,
+ID, hash, offset, reserved item, or nearest hidden content. A whole-file
+`data_boundary` diagnostic can be actionable without revealing which hidden
+record triggered it.
+
+## Child processes and isolated launchers
+
+Every inherited child stdout/stderr byte reaches the Agent-visible verifier
+log. Training frameworks, model servers, evaluation harnesses, compilers, and
+candidate subprocesses often print raw examples, paths, prompts, tracebacks, or
+Judge decisions. If a child's entire stream is not explicitly part of the safe
+feedback contract, redirect both stdout and stderr to `/dev/null`, an anonymous
+temporary file, or restricted Judge-private disposable scratch, then emit only
+the designed structured diagnostic or aggregate. Restrict and delete any named
+scratch; it is neither a result artifact nor a cross-round channel. A child
+failure must not cause the evaluator to echo the captured raw stream or
+exception text blindly.
+
+When using `python -I`, do not assume the script directory or sibling modules
+remain importable. Use an installed fixed package or a small reviewed launcher
+that inserts exactly one trusted module root before executing the entrypoint.
+Keep the launcher under `/tests` or verify its shared-Environment bytes against
+task-owned authority before use. If a subprocess drops
+UID/GID, exercise the real command shape during non-execution contracts and
+verify that every parent directory, interpreter, launcher, module, config, and
+public input is traversable/readable by that identity; keep hidden inputs
+unreadable unless the trusted subprocess genuinely requires them.
+
 ## `lm-evaluation-harness` result cardinality
 
 Apply this section when the fixed evaluator uses `lm-evaluation-harness`,
@@ -161,18 +196,18 @@ and the fixed workload is an incomplete/evaluator failure: emit no reward. A
 safe diagnostic names only the task, expected document count, effective
 document count, and declared filter count; do not print sample contents.
 
-During Layer 2, exercise this contract with a synthetic single-task,
-multi-filter result before accepting the generated evaluator. The positive
-case must represent 1,319 documents and two declared filters (2,638 sample
-rows), pass completeness, and yield exactly 1,319 rows for the selected filter.
-Negative cases must cover an effective-count mismatch, a missing filter for one
-document, a duplicate `(doc_id, filter)` pair, and an unknown selected filter.
-Keep this generator regression outside the delivered task unless the task
-already has an appropriate task-owned evaluator test suite.
+During Layer 2, exercise this contract with a small synthetic single-task,
+multi-filter result before accepting the generated evaluator. For expected
+document count `N` and declared filter count `F`, the positive case contains
+`N × F` sample rows, passes completeness, and yields exactly `N` rows for the
+selected filter. Negative cases cover an effective-count mismatch, a missing
+filter for one document, a duplicate `(doc_id, filter)` pair, and an unknown
+selected filter. Keep this generator regression outside the delivered task
+unless the task already has an appropriate task-owned evaluator test suite.
 
 ## Reward and output lifecycle
 
-`tests/test.sh` and helpers must use stdout/stderr for all contributor-visible feedback, knowing that Work receives the complete stream. They must not create task-authored temporary reports, pytest capture files, JSON intermediates, or side-channel reason files. A plain reference to `/tmp` is not itself a write; inspect actual control flow. Unavoidable disposable scratch created internally by a library is acceptable only outside a read-only WORKDIR, with no protected contents and no role in scoring persistence.
+`tests/test.sh` and helpers must use stdout/stderr for all contributor-visible feedback, knowing that Work receives the complete stream. They must not create task-authored result reports, pytest capture files, JSON control intermediates, or side-channel reason files. A plain reference to `/tmp` is not itself a write; inspect actual control flow. Disposable scratch used only to suppress unsafe child output or required internally by a library is acceptable outside a read-only WORKDIR when it is restricted, deleted, contains no result authority, and has no role in scoring persistence or cross-round state.
 
 The sole evaluator-authored result file is the final Harbor reward:
 
@@ -255,6 +290,9 @@ Choose controls matched to the task:
 - when task-specific defenses require them, compare prohibited source/config/dependency files to task-owned reference hashes under `tests/`;
 - keep baseline/reference code and hidden inputs only in `/tests` when they must be secret;
 - invoke candidate functionality in a subprocess with a minimal environment and explicit absolute commands where practical;
+- treat candidate-adjacent manifests, sidecars, configs, and baseline selectors
+  as untrusted input; compare them against task-owned `/tests` authority rather
+  than trusting co-location or Environment ownership;
 - avoid importing candidate-controlled test frameworks, plugins, startup hooks, `sitecustomize`, shell profiles, or working-directory modules into the evaluator process;
 - neutralize task-relevant environment variables and Python/plugin auto-loading;
 - validate outputs independently instead of trusting candidate-reported metrics;

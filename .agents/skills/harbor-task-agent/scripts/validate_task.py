@@ -699,6 +699,18 @@ class Validator:
                 "Docker VOLUME bypasses RSI-Harness snapshot ownership",
             )
         if re.search(
+            r"\b(?:chown|chmod)\b(?=[^;&\n]*(?:-R\b|--recursive\b))"
+            r"[^;&\n]*(?:/opt(?:/|\b)|/data(?:/|\b)|/models?(?:/|\b)|"
+            r"/checkpoints?(?:/|\b))",
+            logical,
+            re.IGNORECASE,
+        ):
+            self.warning(
+                "LARGE_TREE_PERMISSION_REWRITE",
+                path,
+                "avoid recursive chown/chmod over likely large immutable asset roots; create them with intended modes or validate permissions without rewriting their layers",
+            )
+        if re.search(
             r"^\s*(?:ENV|ARG)\s+VLLM_HOST_IP(?:\s|=)",
             logical,
             re.IGNORECASE | re.MULTILINE,
@@ -1139,6 +1151,12 @@ class Validator:
                 attempts, exclusive = self._python_verifier_writes(path, text)
                 reward_write_attempts += attempts
                 exclusive_reward_writes += exclusive
+                if self._python_inherits_child_output(text):
+                    self.warning(
+                        "VERIFIER_CHILD_OUTPUT_INHERITED",
+                        path,
+                        "a Python child process visibly inherits stdout or stderr; confirm its complete stream is safe or capture both streams in restricted disposable Judge scratch",
+                    )
             elif language == "shell":
                 for target in self._shell_write_targets(text):
                     if target == "/logs/verifier/reward.json":
@@ -1471,6 +1489,76 @@ class Validator:
                     f"Verifier Python must not write task-authored intermediate file {target}",
                 )
         return reward_write_attempts, exclusive_writes
+
+    @staticmethod
+    def _python_inherits_child_output(text: str) -> bool:
+        try:
+            tree = ast.parse(text)
+        except SyntaxError:
+            return False
+
+        subprocess_modules: set[str] = set()
+        os_modules: set[str] = set()
+        imported_calls: dict[str, str] = {}
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    local = alias.asname or alias.name
+                    if alias.name == "subprocess":
+                        subprocess_modules.add(local)
+                    elif alias.name == "os":
+                        os_modules.add(local)
+            elif isinstance(node, ast.ImportFrom) and node.module == "subprocess":
+                for alias in node.names:
+                    imported_calls[alias.asname or alias.name] = alias.name
+
+        def non_null_keyword(call: ast.Call, name: str) -> bool:
+            for keyword in call.keywords:
+                if keyword.arg != name:
+                    continue
+                return not (
+                    isinstance(keyword.value, ast.Constant)
+                    and keyword.value.value is None
+                )
+            return False
+
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            call_name: str | None = None
+            if isinstance(node.func, ast.Attribute) and isinstance(
+                node.func.value, ast.Name
+            ):
+                owner = node.func.value.id
+                if owner in subprocess_modules:
+                    call_name = node.func.attr
+                elif owner in os_modules and node.func.attr == "system":
+                    return True
+            elif isinstance(node.func, ast.Name):
+                call_name = imported_calls.get(node.func.id)
+            if call_name not in {"run", "Popen", "call", "check_call", "check_output"}:
+                continue
+            if call_name == "run":
+                capture = next(
+                    (
+                        keyword.value
+                        for keyword in node.keywords
+                        if keyword.arg == "capture_output"
+                    ),
+                    None,
+                )
+                if isinstance(capture, ast.Constant) and capture.value is True:
+                    continue
+            if call_name == "check_output":
+                if not non_null_keyword(node, "stderr"):
+                    return True
+                continue
+            if not (
+                non_null_keyword(node, "stdout")
+                and non_null_keyword(node, "stderr")
+            ):
+                return True
+        return False
 
     @classmethod
     def _python_write_call(

@@ -11,7 +11,7 @@ When no known Harness checkout is available, run:
 python3 <skill-dir>/scripts/validate_task.py /absolute/path/to/task
 ```
 
-It is read-only and uses the Python standard library. It checks required files and metadata, required Instruction sections, required executable baseline Solution, task identity/taxonomy, language-appropriate text canaries, absolute/effective WORKDIR declarations, major RSI-Harness unsupported fields, the supported Compose subset, obvious placeholder image references, dependency pins, suspicious Git-baseline/ignored-file scope closure, absolute instruction paths, missing task-owned `/tests/...` assets, Verifier network/install rules, common direct Python/shell intermediate writes, direct exclusive reward creation, README run options and a necessary timeout lower bound, and selected solution/test reference alignment. For common Ray/vLLM distributed launch patterns it also warns when no runtime `VLLM_HOST_IP` assignment is visible and rejects a statically configured or hard-coded IPv4. For `lm-evaluation-harness` it warns when logged-sample rows are used as a document-completeness count or when `n-samples` effective-count handling is not visible. This is conservative static evidence; it cannot prove address filtering, import order, subprocess propagation, failure cleanup, per-document filter grouping, or metric selection.
+It is read-only and uses the Python standard library. It checks required files and metadata, required Instruction sections, required executable baseline Solution, task identity/taxonomy, language-appropriate text canaries, absolute/effective WORKDIR declarations, major RSI-Harness unsupported fields, the supported Compose subset, obvious placeholder image references, dependency pins, suspicious Git-baseline/ignored-file scope closure, absolute instruction paths, missing task-owned `/tests/...` assets, Verifier network/install rules, common direct Python/shell intermediate writes, direct exclusive reward creation, README run options and a necessary timeout lower bound, and selected solution/test reference alignment. For common Ray/vLLM distributed launch patterns it also warns when no runtime `VLLM_HOST_IP` assignment is visible and rejects a statically configured or hard-coded IPv4. For `lm-evaluation-harness` it warns when logged-sample rows are used as a document-completeness count or when `n-samples` effective-count handling is not visible. It also warns when a Python Verifier subprocess visibly inherits stdout or stderr, or a Dockerfile recursively rewrites a likely large immutable asset root. These are review signals rather than proof of a defect: a deliberately safe child stream or small permission target may be valid. Static evidence cannot prove address filtering, import order, subprocess propagation, failure cleanup, per-document filter grouping, metric selection, or filesystem authority.
 
 `ERROR` must be fixed. A `WARNING` needs evidence-backed review; warnings do not automatically make a task invalid. Static pattern and AST checks are conservative and cannot prove Docker buildability, full reward control flow, evaluator correctness, anti-cheat security, statistical validity, or successful GPU execution.
 
@@ -61,8 +61,15 @@ overlapping rereads. Check all of the following together:
   same scope/integrity gate used for submissions, including ignored and
   untracked paths;
 - Work/Judge resources, network/data policy, proxy needs, timeouts, and submissions match the final assumption review;
+- standard root Work/Agent behavior is preserved unless the task deliberately
+  overrides it; any override is runtime-compatible, and no integrity claim
+  relies on Environment ownership resisting root Work;
 - the effective WORKDIR and snapshot mode match the image, candidate is fully materialized on disk, and split-WORKDIR evaluation is designed for read-only reload;
 - complete Judge stdout/stderr and Harness footer visibility match the contributor-confirmed feedback contract;
+- every evaluator child process either emits an entirely safe declared stream
+  or captures both stdout and stderr in restricted disposable Judge scratch;
+  failures cannot echo raw captured output, tracebacks, prompts, cases, or Judge
+  decisions;
 - candidate-owned artifact/configuration/checkpoint failures emit a stable,
   actionable structure with specific code, absolute path, exact field and
   condition where applicable, and safe expected/actual/hint values; broad
@@ -77,6 +84,11 @@ overlapping rereads. Check all of the following together:
   diagnostic contract on generated non-hidden fixtures; simple tasks are not
   required to have one;
 - every evaluator helper/input referenced under `/tests/...` is present in the generated task, with no undeclared external evaluator bundle or runner dependency;
+- task-owned `/tests` authority, rather than candidate-adjacent or merely
+  root-owned Environment manifests, sidecars, configs, or selectors, controls
+  fixed scope, baseline, and scoring; isolated or privilege-dropped Python
+  launchers can import their reviewed modules and traverse every required
+  public runtime path;
 - evaluator control flow implements valid baseline scoring, declared candidate
   correctness failure, successful final reward, and no reward for
   infrastructure/incomplete failure; and
@@ -90,6 +102,10 @@ overlapping rereads. Check all of the following together:
   filter is selected explicitly for consumption, and the synthetic
   single-task/multi-filter regression passes; and
 - no measured result, variance, runtime, or successful verification was invented.
+
+When hidden data participates in a candidate gate, inspect the failure envelope
+for reverse leakage: it may name the candidate-owned file and public condition,
+but not which hidden row, ID, hash, position, or content matched.
 
 The validator and compiler cannot prove this mapping because neither
 reinterprets scientific intent or executes the evaluator. Trace the evaluator

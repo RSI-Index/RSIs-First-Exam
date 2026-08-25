@@ -54,9 +54,24 @@ Review all of the following:
    tracked, untracked, ignored, generated, and type-changing paths, remains
    separate from the candidate allowlist, and cannot cause an untouched
    post-build workspace to fail the Verifier's pre-scoring scope/integrity gate.
+   Preserve the standard root Work/Agent behavior unless the task deliberately
+   requires another identity, and verify any override can access its runtime
+   paths. Authoritative manifests, fixed configs, scorer policy, and baseline
+   selectors live under `/tests` or are checked against `/tests` authority before
+   use; Environment ownership alone cannot protect them from root Work. Flag
+   recursive permission rewrites of large immutable asset trees as an image-size
+   and authority risk.
 8. **Evaluation and reward:** `tests/test.sh` invokes the real fixed evaluation, uses preinstalled tooling, and has no runtime fetch. Correctness gates precede scoring. A valid baseline/no-op remains separately scoreable, while normal candidate submissions evaluate only the candidate and use its absolute metric. Reject an automatic live baseline pass unless the contributor explicitly chose it after reviewing its compute and failure cost; semantic-source wording such as `matched`, `delta`, or `ratio` does not by itself authorize the Generator to make that choice. The primary finite `reward` follows the declared formula and direction and is written exactly once only after complete evaluation. When Ray/vLLM distributed execution needs a routable host address, inspect the actual startup path: it derives the Judge IPv4 at runtime before initialization, rejects zero/ambiguous/invalid results, propagates the value to children, contains no hard-coded address or `0.0.0.0` fallback, and treats bootstrap failure as infrastructure with no reward. When `lm-evaluation-harness` logs samples, verify document completeness comes from `n-samples[task].effective`; any sample processing groups unique `(doc_id, filter)` records, requires every declared filter per document, and consumes one explicit filter aligned with its metric. Missing or malformed result structure must be incomplete/infrastructure with no reward. Do not require either conditional framework check of unrelated evaluators.
 9. **Terminal outcomes:** trace baseline/no-op, declared candidate correctness failure, successful scoring, timeout, crash, dependency/infrastructure failure, and incomplete evaluation. Confirm each path produces the declared reward or no reward. The candidate-failure scalar must be the fixed protocol's declared outcome, chosen consistently from its score domain and direction rather than assumed to be universal zero; a valid finite reward is a completed Harness submission, while a missing or malformed reward is a Verifier error.
 10. **Feedback and integrity:** all Agent-visible feedback stays within the confirmed boundary. Candidate-owned artifact, configuration, and checkpoint failures identify the exact absolute path, field and failed condition with stable specific codes and safe repair details; distinct repairs are not hidden behind a broad bucket. Hidden cases, answers, per-example outcomes, Judge decisions, and evaluator internals remain protected. If a public candidate self-check exists, confirm that it is read-only, public-only, optional/advisory, documented by an exact command, and aligned through non-hidden fixtures while Judge independently reruns its own task-owned gate. Its absence is not a defect for a simple task or a check that inherently needs hidden data. Safeguards address the task's concrete leakage, hard-coding, fabrication, evaluator-tampering, and adaptive-overfitting paths without overstating isolation.
+    Trace child-process stdout and stderr: any stream not wholly safe is captured
+    in restricted disposable Judge scratch and never echoed on failure. If a
+    candidate file is checked against hidden material, diagnostics identify only
+    the candidate file and public rule, not the matching hidden row, ID, hash,
+    position, or content. For `python -I` or UID/GID dropping, inspect the actual
+    launcher/import/access path; a shared-Environment launcher is checked against
+    `/tests` authority and all required public parents are traversable by the
+    child identity.
 11. **Truthful handoff:** reported checks were actually run, pending execution checks remain labeled pending, officially reported results remain not yet reproduced where applicable, and no runtime, variance, security, or reproducibility claim exceeds the evidence.
 
 Do not reject a complete task merely because authorized Docker/GPU execution checks remain pending. Do reject a compile-only fixture, a task whose evaluator cannot run from the delivered package, or a task that changes the approved research semantics.

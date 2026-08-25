@@ -190,6 +190,15 @@ if the final tracked, staged, ordinary-untracked, or ignored-untracked state
 does not match the intended pristine baseline. Keep this starting-state
 contract separate from the paths the Agent is allowed to modify.
 
+Keep RSI-Harness's standard root Work/Agent identity unless the approved
+workflow requires an explicit phase-user override. Do not add a non-root user
+solely as generic anti-cheat hardening. Regardless of user selection, keep
+baseline/scorer/validation authority under Judge-only `/tests` or validate
+every required Environment copy against task-owned authority before use. Avoid
+recursively rewriting ownership or modes of a large `/opt`, `/data`, or
+model-cache tree after populating it; create it with the intended permissions
+or verify those permissions without rewriting the tree.
+
 ## Optional `environment/docker-compose.yaml`
 
 Create only when needed for `shm_size` or another supported main-service setting:
@@ -218,7 +227,22 @@ cd <confirmed-workdir>
 python /tests/evaluate.py
 ```
 
-Do not install dependencies, create a venv, fetch network resources, capture output in a file, use `/tmp` intermediates, or write `reward.txt`.
+Do not install dependencies, create a venv, fetch network resources, capture
+the wrapper's output in a file, use task-authored result intermediates, or write
+`reward.txt`. An evaluator may suppress unsafe raw child output in restricted
+Judge-private disposable scratch under the Verifier contract; that scratch is
+deleted and never becomes a result or feedback channel.
+
+### Conditional isolated or privilege-dropped Python
+
+When a trusted evaluator helper runs with `python -I`, use an installed package
+or a fixed launcher under `/tests`—or one whose bytes are checked against
+`/tests` authority—that adds only the reviewed module root;
+do not assume sibling imports work. When the helper also drops UID/GID, verify
+the interpreter, launcher, module tree, config, and every parent directory are
+readable/traversable by that identity. Keep hidden assets inaccessible unless
+the trusted helper must consume them. Exercise the actual launcher/import shape
+with non-hidden fixtures during Layer 2.
 
 ### Conditional Ray/vLLM network bootstrap
 
@@ -280,6 +304,13 @@ the protocol's declared candidate-failure scalar only after the candidate gate
 completes and returns a valid candidate-invalid verdict. A validator crash or incomplete validation is
 infrastructure failure and leaves no reward. Do not hard-code `0.0` without
 checking the task's score domain and direction.
+
+Do not let subprocesses inherit stdout/stderr when their complete output is not
+safe for Work. Capture both streams in restricted disposable Judge scratch and
+publish only the declared aggregates or structured candidate diagnostic. When
+the failing check compares a candidate file with hidden material, identify the
+candidate file and public boundary condition, not the matching hidden row, ID,
+hash, position, or content.
 
 ## `README.md`
 

@@ -129,6 +129,11 @@ generated, compiled, cache, log, and install products; keep the pristine
 baseline representation distinct from the candidate allowlist. Require the
 untouched post-build state to pass the same pre-scoring scope/integrity gate.
 
+Assume RSI-Harness's standard root Work/Agent identity unless the recovered
+workflow requires an override. Do not use Environment ownership as Verifier
+authority against root Work; keep authority under task-owned `/tests` or verify
+shared copies against it before use.
+
 For split WORKDIR, Judge reloads a read-only candidate snapshot. Only closed,
 flushed, complete files are deliverables; processes, GPU state, sockets, and
 caches are not.
@@ -151,6 +156,10 @@ failure scalar only for recognized candidate-caused failure. Crash, timeout,
 dependency, evaluator, infrastructure, and incomplete paths write no reward.
 Keep results in memory and exclusive-create `/logs/verifier/reward.json` once
 only after a complete successful outcome.
+
+Review every subprocess boundary: raw child stdout/stderr is Agent-visible
+unless explicitly captured, and isolated or privilege-dropped launchers must
+still import and access exactly their trusted runtime inputs.
 
 Apply every conditional framework rule in the Verifier reference that matches
 the evaluator, including Ray/vLLM runtime address discovery and lm-eval

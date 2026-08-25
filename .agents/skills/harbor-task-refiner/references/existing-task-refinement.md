@@ -23,6 +23,8 @@ Read the complete source package before designing changes:
 - `task.toml`, `instruction.md`, README, and any other top-level documentation;
 - all Environment files, including Dockerfile, Compose, setup helpers, and
   dependency declarations;
+- the effective Work/Judge users, HOME and WORKDIR ownership, candidate-writable
+  surface, and every root-owned or task-owned path used as evaluator authority;
 - all Solution files and the exact baseline state `solution/solve.sh` attempts
   to materialize;
 - `tests/test.sh`, evaluator code, helpers, inputs, and declared expected-output
@@ -55,6 +57,8 @@ the shared workflow. It must cover:
   exactly visible feedback;
 - the starting state, editable scope, prohibited actions, correctness and
   task-specific anti-cheat boundary, and Environment-to-Verifier interface;
+- every evaluator child-process output boundary and any isolated or
+  privilege-dropped launcher/import/access contract;
 - public and hidden inputs, network and external-service policy, additional-data
   policy, and leakage controls; and
 - Work/Judge resources, build budget, single-evaluation runtime, total Agent

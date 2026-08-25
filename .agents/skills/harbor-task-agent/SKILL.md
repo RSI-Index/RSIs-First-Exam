@@ -45,7 +45,7 @@ only for the authoritative compiler check.
 - Ask only for contributor-owned choices or inaccessible facts that can change
   task semantics. Investigate ordinary repository and packaging facts yourself.
 - Keep Environment, Verifier, and baseline Solution as separate decisions.
-  Freeze the Environment-to-Verifier interface before writing evaluation code.
+Freeze the Environment-to-Verifier interface before writing evaluation code.
 - Write no task file until the contributor confirms one consolidated final
   assumption review.
 - Immediately before every write, verify the exact target is absent. Never
@@ -122,6 +122,11 @@ generated, compiled, cache, log, and install products; keep the pristine
 baseline representation distinct from the candidate allowlist. Require the
 untouched post-build state to pass the same pre-scoring scope/integrity gate.
 
+Assume RSI-Harness's standard root Work/Agent identity unless the approved
+workflow requires an override. Do not use Environment ownership as Verifier
+authority against root Work; keep authority under task-owned `/tests` or verify
+shared copies against it before use.
+
 For split WORKDIR, Judge reloads a read-only candidate snapshot. Only closed,
 flushed, complete files are deliverables; processes, GPU state, sockets, and
 caches are not.
@@ -144,6 +149,10 @@ candidate-failure scalar only for recognized candidate-caused failure. Crash,
 timeout, dependency, evaluator, infrastructure, and incomplete paths write no
 reward. Keep results in memory and exclusive-create
 `/logs/verifier/reward.json` once only after complete success.
+
+Review every subprocess boundary: raw child stdout/stderr is Agent-visible
+unless explicitly captured, and isolated or privilege-dropped launchers must
+still import and access exactly their trusted runtime inputs.
 
 Apply every conditional framework rule in the Verifier reference that matches
 the evaluator, including Ray/vLLM runtime address discovery and lm-eval
