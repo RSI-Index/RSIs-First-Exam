@@ -1,5 +1,10 @@
 # Contributing an RSI task
 
+```bash
+git clone https://github.com/RSI-Index/RSI-Index-Public.git
+cd RSI-Index-Public
+```
+
 ## Contributors without GPUs
 1. Start with [proposal-agent](.agents/skills/proposal-agent/SKILL.md). It guides you through defining the project, baseline, evaluation, scope, and compute, then generates an **RSI task proposal**. **Review it before submitting.**
 2. Post it to [GitHub Discussions](https://github.com/RSI-Index/RSI-Index-Public/discussions). Revise it based on Discussion Agent feedback until it is accepted.
