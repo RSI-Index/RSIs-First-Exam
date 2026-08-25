@@ -1,0 +1,13 @@
+schema_version = 1
+
+[text]
+config = "base"
+head_zeroinit = false
+
+[model]
+temperature_init = 10.0
+
+[loss]
+name = "bidirectional_contrastive"
+label_smoothing = 0.0
+

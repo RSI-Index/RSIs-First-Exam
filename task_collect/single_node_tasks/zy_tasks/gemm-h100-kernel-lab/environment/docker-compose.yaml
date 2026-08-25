@@ -1,0 +1,20 @@
+services:
+  main:
+    # Local H100 compose helper; the launch script selects physical GPU 3.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              device_ids:
+                - "${HARBOR_GPU_DEVICE:-3}"
+              capabilities: [gpu]
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp=unconfined
+    environment:
+      NVIDIA_VISIBLE_DEVICES: "${HARBOR_GPU_DEVICE:-3}"
+      CUDA_VISIBLE_DEVICES: "0"
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+      GEMM_CUDA_ARCH: "90a"

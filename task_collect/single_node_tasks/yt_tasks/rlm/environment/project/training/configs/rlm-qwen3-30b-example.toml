@@ -1,0 +1,115 @@
+output_dir = "outputs/rlm-qwen3-30b-spam-train-trec-eval"
+max_steps = 200
+seq_len = 8192
+
+[model]
+name = "Qwen/Qwen3-30B-A3B-Instruct-2507"
+
+[wandb]
+project = "rlm-qwen3-30b"
+name = "qwen3-30b-spam-train-trec-eval"
+
+[deployment]
+gpus_per_node = 8
+num_train_gpus = 4
+num_infer_gpus = 4
+
+[trainer]
+
+[trainer.model]
+fused_lm_head_token_chunk_size = "auto"
+optimization_dtype = "bfloat16"
+reduce_dtype = "bfloat16"
+
+[trainer.model.ac]
+mode = "full"
+freq = 1
+
+[trainer.model.lora]
+rank = 32
+alpha = 64
+dropout = 0.0
+target_modules = [
+    "q_proj", "k_proj", "v_proj", "o_proj",
+    "gate_proj", "up_proj", "down_proj",
+]
+
+[trainer.ckpt]
+interval = 20
+keep_interval = 20
+
+[trainer.optim]
+lr = 5e-5
+
+[inference]
+gpu_memory_utilization = 0.80
+
+[inference.model]
+max_model_len = 16384
+enforce_eager = false
+
+[inference.parallel]
+tp = 2
+dp = 2
+
+[orchestrator]
+batch_size = 32
+rollouts_per_example = 2
+
+[[orchestrator.filters]]
+type = "repetition"
+enforce = true
+window = 3000
+prob_threshold = 0.99
+
+[[orchestrator.filters]]
+type = "zero_advantage"
+enforce = true
+
+[orchestrator.ckpt]
+interval = 20
+keep_interval = 20
+
+[orchestrator.train.sampling]
+max_completion_tokens = 4096
+extra_body = { enable_thinking = false }
+
+[[orchestrator.train.env]]
+id = "oolong"
+name = "oolong-spam-train"
+ratio = 1.0
+
+[orchestrator.train.env.args]
+dataset_name = "spam"
+min_ctx = 32768
+max_ctx = 65536
+exclude_numeric = true
+num_examples = -1
+max_iterations = 20
+sub_max_tokens = 4096
+min_iterations = 2
+min_subcall = 0
+
+[orchestrator.eval]
+interval = 20
+eval_base_model = true
+num_examples = 25
+rollouts_per_example = 1
+
+[orchestrator.eval.sampling]
+max_completion_tokens = 4096
+extra_body = { enable_thinking = false }
+
+[[orchestrator.eval.env]]
+id = "oolong"
+name = "oolong-trec-coarse-eval"
+num_examples = 25
+rollouts_per_example = 1
+
+[orchestrator.eval.env.args]
+dataset_name = "trec_coarse"
+min_ctx = 131072
+max_ctx = 131072
+num_examples = 25
+max_iterations = 20
+sub_max_tokens = 4096

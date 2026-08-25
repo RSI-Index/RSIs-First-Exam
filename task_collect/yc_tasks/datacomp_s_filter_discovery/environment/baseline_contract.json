@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "task_id": "datacomp_s_filter_discovery",
+  "status": "complete",
+  "calibration_profile": "repository_anchored_demo_v1",
+  "profile_scope": "complete_demo_contract",
+  "reference_run_id": "task6-parallel-ulimit-20260803T162507Z",
+  "reference_metric": 0.1731364262164997,
+  "candidate_threshold": 0.1731364262164997,
+  "evaluator_tolerance": 0.0,
+  "reference_checkpoint_sha256": "7aa36b8b26a5b65d5819aa31fd7a0cc7d5212c41c375b64ad36a27a7fd56322f",
+  "initialization_parameter_digest": "6b8942847069225a514add2a10b7e09b47ef4fe0a5ea2e7e47f462eca58c57a2",
+  "asset_manifest_sha256": "87159b8b402630428c29168c79f0c3f3a4d89834c85fc7cc01189e005037527c",
+  "runtime_image_id": "sha256:1e127cdf7fbdec6affda1606139f7803f87db0a805f2823c611873f78f36c9c0",
+  "fixed_training": {
+    "configured_training_pairs": 12800000,
+    "global_batch_size": 4096,
+    "model": "ViT-B-32",
+    "optimizer_updates": 3140,
+    "realized_training_pairs": 12861440,
+    "seed": 0,
+    "world_size": 4
+  },
+  "calibration_provenance": {
+    "reference_metric": {
+      "evidence_class": "locally_recomputed_released_control",
+      "source": "reproduction/records/evaluator_contract.json#semantic_equivalence.aggregates.Average",
+      "repository_anchor": 0.1731,
+      "fresh_training_baseline": false
+    },
+    "reference_checkpoint_sha256": {
+      "evidence_class": "locally_verified_artifact",
+      "source": "reproduction/records/evaluator_contract.json"
+    },
+    "runtime_image_id": {
+      "evidence_class": "locally_observed_container_image",
+      "source": "reproduction/records/runtime_lock.json"
+    },
+    "asset_manifest_sha256": {
+      "evidence_class": "locally_recorded_asset_lock",
+      "source": "reproduction/records/asset_lock.json"
+    },
+    "initialization_parameter_digest": {
+      "evidence_class": "engineering_contract_digest",
+      "basis": "canonical ViT-B-32 seed-0 initialization recipe"
+    },
+    "evaluator_tolerance": {
+      "evidence_class": "demo_policy",
+      "basis": "deterministic clean-evaluator comparison"
+    }
+  },
+  "note": "Complete demo calibration. The reference score is a released-checkpoint control rescore and is not represented as a freshly trained baseline."
+}

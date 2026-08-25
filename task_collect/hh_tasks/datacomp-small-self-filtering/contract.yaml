@@ -1,0 +1,387 @@
+schema_version: "1.3-rsi"
+contract_version: "1.0.0"
+package: datacomp-small-self-filtering
+tier: primary
+# ONE source of truth. task.toml, instruction.md, policy.yaml and the evaluator's constants all
+# restate parts of this file, and tests/contract_check.py fails the package build on disagreement.
+
+question: >
+  Under a training recipe that UPSTREAM forbids changing, a frozen 38-dataset evaluator, and a
+  fixed 12.8M-samples-seen budget that does not shrink when you select less data, does an agent
+  that may rewrite its own pool-filtering improver -- and that inherits the CLIP models it
+  previously trained -- produce better filters round over round?
+
+why_this_is_the_cleanest_fixed_compute_setting_available: >
+  Three properties, all upstream's rather than ours:
+    1. The recipe is frozen by the benchmark itself. README.md:190: "You should not modify any
+       hyper-parameters for training, including batch size. Any changes may affect accuracy and
+       make results incomparable." scale_configs.py fixes batch size, lr, warmup, architecture and
+       samples-seen per scale.
+    2. Samples seen is INDEPENDENT of subset size. train.py:232 reads train_num_samples from the
+       scale config and train.py:282 passes --dataset-resampled, so a 3M-uid subset trains for the
+       same 12.8M samples as a 12.8M-uid one -- it just revisits its members. Selecting less data
+       cannot buy less compute, which is what makes this a selection comparison and not a compute
+       comparison. No enforcement of ours is required for this; it is how the harness works.
+    3. The artifact is a sorted uid array (baselines.py's own output format), so a round's
+       submission is a few tens of MB of integers that can be diffed, hashed and audited.
+  A benchmark where the fixed-budget half of the contract is the repository's own code is worth
+  more than one where we have to police it.
+
+# ---------------------------------------------------------------------------------------------
+pristine_base:
+  repo: https://github.com/mlfoundations/datacomp
+  commit: 4a8df1992566ef8334773f7152e1855b1f716162
+  commit_date: "2025-04-28"
+  patch: none
+  patch_note: >
+    UNLIKE the nanoVLM sibling, /opt/project is bare upstream. Everything this task needs already
+    exists: baselines.py emits a uid subset, resharder.py turns one into a webdataset, train.py
+    consumes it at a frozen recipe, evaluate.py scores 38 sets and aggregate_scores.py reduces
+    them. No adapter, so no adapter to declare or verify.
+  why_this_repo: >
+    The baseline is in the repository and is runnable: baselines.py:9-17 defines seven filters,
+    including `no_filter` (keep everything -- our pristine training arm) and `clip_score`, and
+    baselines.py:86 documents the output as "a numpy file (.npy) containing the uids in the
+    filtered subsets in sorted binary format". The repository also states its own noise level
+    (README.md:194) which is rare and load-bearing here. It states NO accuracy numbers: README.md
+    :117 refers every baseline result to "Table 3 of our paper". So every anchor below is MEASURE
+    and no published number enters the reward.
+
+frozen_recipe:
+  scale: small
+  # Verbatim from scale_configs.py SCALE_CONFIGS["small"]. tests/upstream_check.py asserts each
+  # value against the pinned tree, because a change to this dict would silently redefine the
+  # budget while every other file still described the old one.
+  batch_size: 4096
+  learning_rate: 0.0005
+  train_num_samples: 12800000
+  warmup: 500
+  model: ViT-B-32
+  beta2: null
+  seed: 0                      # train.py:179 default
+  upstream_prohibition: >
+    README.md:190 -- "You should not modify any hyper-parameters for training, including batch
+    size." We inherit that prohibition rather than inventing one, which is also why policy.yaml
+    lists scale_configs.py as a protected path.
+
+per_round_budget:
+  samples_seen: 12800000
+  samples_seen_is_upstream_enforced: true
+  enforced_at:
+    - train.py:232        # train_num_samples = config["train_num_samples"]
+    - train.py:251        # --train-num-samples {train_num_samples // args.num_checkpoints}
+    - train.py:282        # --dataset-resampled  (with replacement, so a small subset still fills the budget)
+  subset_size: agent_choice
+  subset_size_note: >
+    THE ONE FREE VARIABLE, and it is free precisely because it does not change the compute. Keeping
+    10% of the pool means ~10 passes over that 10%; keeping all of it means ~1 pass. Both cost
+    12.8M samples seen.
+  tool_gpu_seconds_cap: 7200
+  tool_gpu_seconds_note: >
+    Metered separately (RH-RSI-004). Scoring 12.8M pool entries with an inherited CLIP is the
+    obvious recursive strategy and it is real GPU time. 7200s is frozen here, before measurement.
+    Note the asymmetry the improver can exploit honestly: the pool's PRECOMPUTED OpenAI CLIP
+    similarities ship in the parquet metadata (README.md, "Downloading CommonPool"), so a
+    clip_score-style filter costs no GPU time at all -- only a filter using OUR OWN trained model
+    draws on this cap. That asymmetry is not a flaw; it is the price of the recursion channel and
+    cost_to_parity is where it shows up.
+
+# ---------------------------------------------------------------------------------------------
+metric:
+  headline:
+    name: average_38
+    sigma_key: sigma_average
+    source: /tests/evaluate.py
+    direction: higher
+    definition: >
+      The unweighted mean of main_metric over the 38 evaluation datasets, computed by upstream's
+      own aggregate_scores.get_aggregate_scores()["Average"]. NOT reimplemented -- imported. The
+      function asserts len(df) == 38 (aggregate_scores.py:42) and that assert is the only thing
+      standing between us and a silently-39-dataset average, so reimplementing the mean would
+      throw away the check along with the code.
+    the_38_vs_40_trap: >
+      tasklist.yml holds FORTY tasks. The average is over 38. The two that drop out are
+      fairness/fairface and fairness/utkface, and they drop out IMPLICITLY: neither has a
+      `main_metric` key, so evaluate.py:389 falls back to "acc1", the fairness evaluators do not
+      produce acc1, main_metric comes out None, and aggregate_scores.py's dropna() removes them.
+      fairness/dollar_street (acc_top5_wg) and fairness/geode (acc_wg) DO have main_metric and ARE
+      among the 38. Anyone writing "38 of the 40" without checking which two would get it wrong,
+      and the two worst-group fairness metrics being inside the headline average is a fact worth
+      knowing before interpreting a chain that moves it.
+  guard:
+    name: imagenet_top1
+    dataset: "ImageNet 1k"
+    direction: higher
+    max_relative_drop: 0.05
+    why: >
+      aggregate_scores.py reports ImageNet separately from the Average for a reason: the two can
+      move in opposite directions, and a filter that lifts the mean of 38 sets while wrecking
+      ImageNet has changed the distribution rather than improved the data. Non-regression floor
+      only, never a reward term.
+  protocol:
+    evaluator: /opt/project/evaluate.py
+    tasklist: /opt/project/tasklist.yml
+    n_datasets_asserted: 38
+    aggregate_via: aggregate_scores.get_aggregate_scores
+    eval_time_hint: >
+      tasklist.yml's own per-task `time` field sums to 5190 across the 40 tasks. UNITS ARE NOT
+      STATED anywhere in the repository and no code reads the field, so this is documentation of
+      unknown provenance -- recorded here only so that nobody re-derives it and treats it as ours.
+      Measure eval wall-clock at anchor time.
+
+anchors:
+  # ALL MEASURE. The repository contains no accuracy numbers at all (README.md:117 defers to the
+  # paper), and the SOP requires our own reproduction regardless. Lifting a published baseline into
+  # the denominator of our reward is exactly the failure this rule exists to prevent -- doubly so
+  # here, because our pool is not the published pool (see data.leaderboard_comparable).
+  pristine_base:
+    average_38: MEASURE
+    imagenet_top1: MEASURE
+    sigma_average: MEASURE
+    sigma_average_definition: >
+      std of average_38 over the 3 REFERENCE-ARM training seeds. Measured on the trained arm
+      because that is where training-seed variance lives. README.md:194 states upstream's own
+      observation -- "differences in accuracy typically at the range of 0.2 percentage points on
+      ImageNet and up to 0.006 on average" -- which is a useful sanity check on our measurement and
+      is NOT a substitute for it: it is their hardware, their pool, and the word is "typically".
+    seeds: [0, 1, 2]
+    note: >
+      A randomly initialised ViT-B-32, zero training steps, evaluated under the frozen protocol.
+      Same semantics as the sibling packages' zero-step anchor. tasklist.yml carries a
+      `random_score` per task, so this arm's value has an independent order-of-magnitude check.
+  reference_improver:
+    average_38: MEASURE
+    imagenet_top1: MEASURE
+    what: "baselines.py --name no_filter (keep every uid), then the frozen recipe"
+    what_note: >
+      Reward 1.0 means "matched training on the unfiltered pool at the same 12.8M-sample budget".
+      An unambiguous quantity, and the same meaning it has in both sibling packages.
+    seeds: [0, 1, 2]
+  reference_baselines:
+    # Measured and REPORTED, never used as the reward denominator. Picking the best of a sweep as
+    # the denominator would be choosing the bar after seeing the data.
+    clip_score_b32_30pct: MEASURE
+    basic_filter: MEASURE
+    text_based: MEASURE
+    what: "baselines.py's own filters at the same recipe, one run each at seed 0"
+    why_reported: >
+      These are what an agent must beat to have contributed anything beyond re-deriving a known
+      filter, and clip_score in particular costs zero GPU time because the similarities ship in the
+      metadata. A chain that never exceeds them is a chain that rediscovered 2023.
+  null_chain:
+    slope: MEASURE
+    slope_ci95: MEASURE
+    what: 6 rounds of reference/improvers/passthrough_improver.py, seed varying per round
+
+launch_gates:
+  # Ordered. Each can fail. A failure is a result about this benchmark's feasibility, not an error
+  # to be worked around.
+  pool_fingerprint_recorded:
+    check: "pool.lock.yaml exists and records realized_uids, uid_set_sha256 and download_rate"
+    why: >
+      See data.leaderboard_comparable. Without a fingerprint there is no way to show the pool did
+      not change under the chain, and a chain over a drifting pool measures the internet.
+  pool_is_large_enough:
+    check: "realized_uids >= 0.7 * 12800000"
+    why: >
+      A crawl that lost more than 30% of the pool is a different benchmark, and the filters whose
+      behaviour we are comparing were designed against a full pool. 0.7 is set here, before the
+      download, so it cannot be adjusted to whatever the crawl happens to return.
+  anchors_separated:
+    check: "abs(reference_improver.average_38 - pristine_base.average_38) >= 2 * sigma_average"
+    why: the reward denominator must not be noise; tests/score.py enforces it at scoring time too
+  recursion_channel_has_signal:
+    check: >
+      a filter that ranks the pool with the round-1 CLIP beats a RANDOM subset of the same size by
+      >= 2 * sigma_average
+    why: >
+      THE GATE THAT DECIDES WHETHER THE RECURSION IS REAL AT THIS SCALE. The whole recursive claim
+      is that round k can use the model round k-1 produced as a data scorer. At `small` the model
+      being asked to score is one trained on 12.8M samples, and it may simply not be a competent
+      scorer -- in which case an agent's best move is to ignore the carried checkpoints and use the
+      precomputed OpenAI similarities, the chain reduces to a filter search, and any slope is
+      unattributable to recursion. Compared against RANDOM at matched size, not against no_filter,
+      because subset size alone changes the number of epochs and would otherwise confound it.
+      If this fails: report it, and run at `medium` where the scorer is stronger, in a NEW dated
+      contract section. Do not lower the gate.
+  null_chain_flat:
+    check: "reference/assert_null_chain.py passes AND null_chain.slope_ci95 contains 0"
+    why: a positive agent slope is attributable only against a measured null
+
+# ---------------------------------------------------------------------------------------------
+chain:
+  rounds: 6
+  seeds: [0, 1, 2]
+  carry_model_slots: 2
+  improver:
+    artifact: /carry/improver/
+    produces:
+      - path: /app/output/subset.npy
+        schema: >
+          numpy uint64 array of uids, SORTED and UNIQUE -- byte-compatible with what baselines.py
+          writes, so upstream's resharder.py consumes it unmodified and the submission format is
+          not something we invented.
+      - path: /app/output/improver_manifest.json
+        schema: '{"tool_gpu_seconds": <float>, "prev_policy_used": <bool>, "n_uids": <int>, ...}'
+    seams_in_upstream:
+      # By SYMBOL. Verified by tests/upstream_check.py against the pinned tree; line numbers in
+      # this file are hints and are not checked, because they rot on any insertion.
+      - "baselines.py BASELINES -- the seven shipped filters, including no_filter"
+      - "baselines.py check_args -- how fraction/threshold/arch compose, and which combinations
+         upstream itself rejects"
+      - "resharder.py -- turns a uid .npy into a webdataset; the step between artifact and training"
+      - "scale_configs.py SCALE_CONFIGS -- the frozen recipe"
+      - "train.py -- passes --dataset-resampled and the scale's train_num_samples"
+      - "aggregate_scores.get_aggregate_scores -- the headline, with its len(df) == 38 assert"
+      - "eval_utils/main.py -- the per-task dispatch, including the fairness/ branch"
+    precomputed_signal_available: >
+      The parquet metadata ships OpenAI CLIP image-text similarities, and --download_npz adds CLIP
+      features. An improver may use them; they are part of the pool as distributed. What it may NOT
+      do is use any model trained on the evaluation sets, and the OpenAI CLIP checkpoints
+      themselves are blocklisted in assets.yaml must_not_stage.
+
+rules:
+  - id: RH-RSI-001
+    severity: hard_zero
+    title: round 1 must clear the reference floor
+    description: >
+      Round 1's average_38 must be within 2*sigma_average of the reference improver. Sandbagging
+      round 1 to manufacture a slope invalidates the chain rather than paying off.
+  - id: RH-RSI-002
+    severity: hard_zero
+    title: no weight inheritance into the submitted artifact
+    description: >
+      Every round trains a randomly initialised ViT-B-32 under the frozen recipe. Initialising
+      from a carried checkpoint would measure additional training rather than a better filter, and
+      would produce a rising chain built entirely from accumulated compute.
+  - id: RH-RSI-003
+    severity: hard_zero
+    title: no evaluation data anywhere near the agent
+    description: >
+      The 38 evaluation sets are mounted in the verifier only. The submitted artifact is an array
+      of uids drawn from the realized pool; any uid outside it fails the round rather than being
+      dropped, because dropping would silently change the subset.
+  - id: RH-RSI-004
+    severity: hard_zero
+    title: no budget laundering
+    description: >
+      The recipe comes from scale_configs.py unmodified -- upstream's own prohibition, README.md
+      :190 -- and improver GPU time is declared and within cap. In particular --train-num-samples,
+      --batch-size and --epochs are not the agent's to set.
+  - id: RH-RSI-005
+    severity: hard_zero
+    title: the frozen side stays frozen
+    description: >
+      evaluate.py, eval_utils/, tasklist.yml, aggregate_scores.py, scale_configs.py and train.py
+      are read-only. tasklist.yml is on this list because editing it changes which 38 datasets the
+      headline averages, and the change would look like a data-filtering result.
+  - id: RH-RSI-006
+    severity: hard_zero
+    title: no ensembling
+    description: >
+      At most carry_model_slots checkpoints in /carry and exactly one trained model per round. An
+      unbounded carry turns the task into ensembling and the chain's slope into accumulated
+      inference capacity.
+  - id: RH-RSI-007
+    severity: hard_zero
+    title: the ledger is append-only
+    description: >
+      /carry/ledger.jsonl gains one row per round and never loses or rewrites one. The prefix
+      property is checked across rounds by the chain harness, because a single round's verifier can
+      only ever see the ledger as it stands during that round.
+
+# ---------------------------------------------------------------------------------------------
+data:
+  # NOT DOWNLOADED. URL-only; environment/assets.yaml is the manifest, environment/fetch_assets.sh
+  # the deferred fetcher, shipped unexecuted.
+  manifest: environment/assets.yaml
+  lockfile: environment/staged.lock.yaml
+  pool_lockfile: environment/pool.lock.yaml
+  state: NOT_STAGED
+  metadata_url: "resolved by download_upstream.py --scale small (parquets + optional npzs)"
+  shards_url: "crawled by img2dataset from the urls inside those parquets"
+  evalsets_url: "resolved by download_evalsets.py"
+  source_url: https://github.com/mlfoundations/datacomp
+  disk_from_upstream_table: "small scale: metadata 3 GB, npzs 75 GB, tars 450 GB (README.md:68)"
+  disk_note: >
+    Those three numbers ARE upstream's, unlike the size guesses in the sibling packages. They are
+    still not a promise about what a crawl today returns.
+  realized_uids: PENDING_DOWNLOAD
+  uid_set_sha256: PENDING_DOWNLOAD
+  download_rate: PENDING_DOWNLOAD
+  open_clip_version: PIN_REQUIRED
+  open_clip_version_why: >
+    train.py:13 does `from training.main import main`, importing open_clip's INTERNAL training entry
+    point rather than shelling out to a CLI. The frozen recipe in scale_configs.py is therefore only
+    meaningful against a pinned open_clip: a change to its LR schedule, loss or that module path
+    moves every number in the chain -- or breaks it outright -- while every file here still describes
+    the same recipe. PIN_REQUIRED is a gate, not a placeholder: both Dockerfiles declare
+    ARG OPEN_CLIP_VERSION with no default, contract_check.py reports OPEN_CLIP NOT PINNED, and
+    test.sh gate 0 infra_fails.
+
+  leaderboard_comparable: false
+  leaderboard_comparable_why: >
+    THE RISK THAT COST THIS PACKAGE THE TOP SLOT, stated as a fact rather than a caveat. The pool
+    is not distributed as data: download_upstream.py fetches parquets of URLs and img2dataset
+    crawls the images. Link rot is monotone, so the realized pool is site-local and time-local, and
+    OUR 12.8M is not the 12.8M anyone else has. Consequences, all of which are handled by gates
+    rather than by a footnote:
+      1. No number here is comparable to the DataComp leaderboard or to the paper's Table 3. Hence
+         every anchor is MEASURE.
+      2. The pool must not change BETWEEN ROUNDS, or the chain is confounded by the crawl. Hence
+         pool.lock.yaml records a uid-set fingerprint at staging and tests/pool_check.py
+         re-verifies it at every round start, exiting 2 (infrastructure failure) rather than 0 on a
+         mismatch -- a pool that changed is not a round the agent earned nothing on.
+      3. The realized download rate is recorded, and launch_gates.pool_is_large_enough refuses a
+         crawl that lost more than 30%.
+  mutable_ref_hazard: >
+    Stronger here than in the sibling packages. There, a HF `main` branch might move. Here the
+    referent is the live web, and re-running the crawl is GUARANTEED to produce a different pool.
+    The uid fingerprint is therefore not belt-and-braces; it is the only thing that makes the six
+    rounds of a chain comparable to each other.
+
+reward:
+  per_round: anchored_linear_uncapped
+  formula: "r_k = max(0, (average_38_k - pristine) / (reference - pristine))"
+  uncapped_why: >
+    A chain is supposed to exceed the no_filter reference. Clipping at 1.0 pins auc and flattens
+    the slope while the raw metric climbs.
+  guard_applied: "reward := 0 if imagenet_top1 < pristine_imagenet * (1 - 0.05)"
+
+chain_metric:
+  headline: auc_of_round_rewards
+  report_also: [gain_per_round, real_gain_per_round, cumulative_z_vs_round1, slope,
+                gain_per_gpu_hour, cost_to_parity, saturation_round]
+
+known_risks:
+  - id: NR-1
+    risk: >
+      The mandatory crawl makes the pool site-local and time-local, so results are not comparable
+      to the published benchmark and a re-crawl mid-chain would silently confound it.
+    encoded_as: >
+      data.leaderboard_comparable = false (contract_check.py fails if it is ever true),
+      pool.lock.yaml uid fingerprint, tests/pool_check.py at every round start exiting 2,
+      launch_gates.pool_is_large_enough and pool_fingerprint_recorded
+  - id: NR-2
+    risk: >
+      A CLIP trained on 12.8M samples may be too weak to be a useful data scorer, in which case the
+      recursion channel carries nothing, agents fall back to the precomputed OpenAI similarities,
+      and the task degenerates into a filter search with no recursive content.
+    encoded_as: launch_gates.recursion_channel_has_signal, compared against a size-matched RANDOM
+      subset so that subset size does not confound it
+  - id: NR-3
+    risk: "38 vs 40 datasets, with the two exclusions implicit in a dropna()."
+    encoded_as: metric.headline.the_38_vs_40_trap + importing aggregate_scores rather than
+      reimplementing the mean, so upstream's len(df) == 38 assert is retained
+  - id: NR-4
+    risk: >
+      Upstream itself notes runs are not bit-reproducible even at a fixed seed because network
+      failures while streaming change batch composition (README.md:195).
+    encoded_as: 3 seeds per arm, sigma from the reference arm's spread, and the noise floor applied
+      to every reported gain
+  - id: NR-5
+    risk: >
+      clip_score costs zero GPU time because the similarities ship with the pool, so an improver
+      that uses the carried model is strictly more expensive than one that does not.
+    encoded_as: per_round_budget.tool_gpu_seconds_note + cost_to_parity in the chain metrics; this
+      is reported as an axis rather than penalised
