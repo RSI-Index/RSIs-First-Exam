@@ -46,7 +46,10 @@ reported metric: <matched value and source; otherwise closest official value and
 reproduction status: not yet reproduced
 ```
 
-If the baseline exists only in an inaccessible private artifact, do not create a replacement that changes the scientific comparison. In proposal mode, ask for access or a contributor-provided task asset with provenance. In refinement mode, use an already documented accessible delivery route or stop with the exact blocking gap.
+If the baseline exists only in an inaccessible private artifact, do not create
+a replacement that changes the scientific comparison. Ask for access or a
+contributor-provided task asset with confirmed provenance; otherwise stop with
+the exact blocking gap.
 
 ## Reproducible packaging
 
@@ -67,9 +70,9 @@ repositories commonly stop serving old point versions. Clean apt lists instead.
 
 If a build needs private credentials, do not put them in task files, build args, URLs, or image layers. Ask for a contributor-approved delivery method or exact prebuilt image. If no safe delivery path exists, stop.
 
-## Evidence changes task semantics
+## Evidence changes approved semantics
 
-In proposal mode, ask the contributor only when evidence changes one of these decisions:
+Ask the contributor only when evidence changes one of these decisions:
 
 - which baseline is scientifically appropriate;
 - what workload/evaluator/metric is fixed;
@@ -78,9 +81,5 @@ In proposal mode, ask the contributor only when evidence changes one of these de
 - whether runtime network or an external service is scientifically necessary;
 - whether the estimated complete run can fit the available compute.
 
-Resolve Docker syntax, installation order, source-copy layout, cache placement, and similar packaging mechanics yourself.
-
-In existing-task refinement mode, do not open separate questions for these
-decisions. Resolve them from the complete task and official evidence, include
-material conflict dispositions in the single final confirmation, and stop when
-multiple core interpretations remain equally plausible.
+Resolve Docker syntax, installation order, source-copy layout, cache placement,
+and similar packaging mechanics yourself.

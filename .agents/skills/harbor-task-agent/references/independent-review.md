@@ -8,11 +8,8 @@ This is a bounded release review, not an open-ended formal-verification or adver
 
 Require these inputs before reviewing:
 
-- in proposal mode, the approved proposal and contributor-confirmed final assumptions;
-- in refinement mode, the original task, recovered-task brief, contributor
-  confirmation summary, exact refined task directory, and evidence that the
-  source task remains unchanged;
-- the exact generated or refined task directory;
+- the approved proposal and contributor-confirmed final assumptions;
+- the exact generated task directory;
 - the repository evidence record and immutable ref;
 - the RSI-Harness checkout or documentation used for compatibility decisions, when available;
 - the generator's static-validator and compiler commands and complete results.
@@ -30,11 +27,17 @@ The re-review is the final independent pass. Return its decision and stop. The g
 
 ## Independent checks
 
-Inspect the actual approved semantic source, task files, evidence, and relevant RSI-Harness contract. Rerun the included static validator and the read-only Harness compiler when their prerequisites are available. Do not run stateful or expensive execution checks unless separately authorized. In refinement mode, compare source and refined tasks without reopening proposal rounds or asking the contributor for new task content.
+Inspect the approved proposal, task files, evidence, and relevant RSI-Harness
+contract. Rerun the included static validator and the read-only Harness compiler
+when their prerequisites are available. Do not run stateful or expensive
+execution checks.
 
 Review all of the following:
 
-1. **Semantic fidelity:** repository and ref, baseline, scientific loop, starting state, deliverable, editable scope, prohibited actions, fixed evaluation, reward direction, feedback boundary, resources, network, data, and confirmed decisions are preserved without invented facts. In refinement mode, verify that the recovered-task brief is supported by the original task and official evidence, each material conflict has an evidence-backed disposition, the refined task implements that brief, and the source task remains unchanged.
+1. **Semantic fidelity:** repository and ref, baseline, scientific loop,
+   starting state, deliverable, editable scope, prohibited actions, fixed
+   evaluation, reward direction, feedback boundary, resources, network, data,
+   and every confirmed proposal decision are preserved without invented facts.
 2. **Baseline chain:** the approved semantic source's baseline, Instruction reported result/status, `solution/solve.sh` materialized workspace state, and Judge baseline/no-op path describe the same reference baseline. README identifies the official source and any difference between the reported and Judge protocols. Solution only changes workspace files; it does not train, evaluate, access `/tests`, submit, or write reward.
 3. **Agent-facing instruction:** `instruction.md` is layered and scannable, contains Workspace, Reference baseline, Research loop, modification boundary, Evaluation and feedback, and submission checks, and does not burden the Agent with repository URLs, immutable refs, licenses, build provenance, or evaluator internals.
 4. **Human maintainer guide:** README is concise enough to read and covers baseline evidence, material protocol differences, environment/evaluation, run/validation, and known limitations without duplicating file inventories or low-level control flow.

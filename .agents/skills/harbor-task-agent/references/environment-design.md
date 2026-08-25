@@ -92,7 +92,7 @@ Judge must independently rerun the authoritative checks from its task-owned
 candidate-visible validation code as its authority. Keep the two paths aligned
 through one generation-time diagnostic contract and non-hidden regression
 fixtures; they need not be the same executable. This Agent-invoked self-check
-is separate from the post-handoff Layer 4 Environment preflight.
+is separate from stateful post-handoff execution validation.
 
 Author a real `environment/Dockerfile` by default so the task directory contains its build recipe. A Dockerfile is optional only when the contributor explicitly supplies or approves the exact `[environment].docker_image` or Compose `image`. For that exception, confirm the image is accessible and review its effective WORKDIR, source/assets, dependencies, user, license, provenance, and empty Docker `Config.Volumes`. RSI-Harness rejects an image that declares any volume because its contents fall outside snapshot ownership. Checking image metadata is an image-preflight execution check, not something the static validator can prove. Never invent an image reference or add an empty Dockerfile merely to make compilation pass.
 

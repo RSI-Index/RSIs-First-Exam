@@ -1,6 +1,6 @@
 # Validation rules
 
-Post-generation validation has five layers. Passing an earlier layer never
+Post-generation validation has three layers. Passing an earlier layer never
 proves a later one.
 
 ## Layer 1 — Included static validator
@@ -40,11 +40,9 @@ After compilation, perform one Generator final review rather than several
 overlapping rereads. Check all of the following together:
 
 - repository URL and exact SHA match the approved semantic source;
-- conditionally in refinement mode, the source task remains unchanged, the
-  refined task matches the contributor-confirmed recovered-task brief, every
-  material conflict has an evidence-backed disposition, and no unsupported
-  metric, runtime, provenance, hidden behavior, or other task semantics were
-  introduced;
+- the generated task matches the contributor-confirmed proposal and no
+  unsupported metric, runtime, provenance, hidden behavior, or other task
+  semantics were introduced;
 - baseline, workload, metric, direction, units, aggregation, and budget did not change;
 - Instruction names the baseline, reported result/status, and fixed comparison;
   README gives concise official evidence and labels protocol differences;
@@ -106,65 +104,11 @@ targeted re-review, no third review, and no more than two Generator correction
 rounds. Execution-only uncertainty belongs in Layers 4–5 unless the reviewer
 can cite a concrete delivered defect and reachable consequence.
 
-## Layer 4 — Authorized Environment preflight
-
-This layer is stateful and potentially expensive. It occurs only after
-the bounded independent review and task handoff. Never run it automatically
-or in the same response that first presents its requirements.
-
-For Environment preflight, first run the skill-owned planner without
-`--execute`:
-
-```bash
-python3 <skill-dir>/scripts/preflight_task.py /absolute/path/to/task \
-  --required-free-gb <conservative Agent estimate>
-```
-
-Explain the reported build/pull network endpoints, unresolved dynamic package
-repositories, Docker data root and free-space requirement, image/container
-names, expected duration, GPU requirement, retained state, and cleanup impact.
-Stop and wait for explicit contributor authorization. Only in a later response
-may the stateful mode run:
-
-```bash
-python3 <skill-dir>/scripts/preflight_task.py /absolute/path/to/task \
-  --required-free-gb <same approved estimate> \
-  --execute --acknowledge-authorized
-```
-
-This creates an untouched, no-GPU inspection container on a new private Docker
-`--internal` bridge and mounts the task's tests read-only. That topology matches
-the no-network Judge property relevant to container-local IPv4 discovery: the
-container has a dynamic private address but no external route. It never runs
-`tests/test.sh`, Solution, training, evaluation, submission, or reward writing.
-The Agent then performs only the task-specific read-only diagnostics needed to
-establish the starting-state gate and, when the Verifier uses distributed
-Ray/vLLM, confirms that runtime address resolution returns one valid non-
-loopback IPv4 without initializing the framework. Container/image/network
-cleanup is another state-changing action and requires authorization.
-
-Layer 4 combines Docker build or approved-image retrieval, image metadata
-preflight, fresh untouched container creation, and the no-Agent
-starting-state/scope gate. Report those outcomes together; do not duplicate
-them as separate layers. It does not establish a baseline score or scientific
-runtime result.
-
-## Layer 5 — Separately authorized full execution
-
-Authorize and report each requested check independently:
-
-1. Baseline/no-op submission: valid continuous baseline score, safe feedback, no leaked cases.
-2. Required external/manual baseline Solution materializer: restores the declared baseline workspace without training/evaluation, never presumed full score or Harness-executed.
-3. Negative controls: prohibited edits, evaluator tampering, hard-coded cases, fabricated outputs, dependency/path changes, missing/incomplete evaluation.
-4. Repeated deterministic/reliability runs and variance characterization.
-5. Real GPU full evaluation within Verifier timeout and resource limits.
-6. Real multi-round Agent run with submission budget, timeout, GPU release/reuse, feedback, and retained workspace.
-
-Do not label a task “runtime-verified” solely because it passed Layers 1–4.
 After Layer 3, a complete self-contained package may be reported as “statically
 valid, Harness-compilable, and independently reviewed; execution checks
-pending.” Missing Docker/build definitions, evaluator assets, or real runtime
-commands make the package incomplete rather than a valid compile-only fixture.
+pending.” Do not build or run the package in this skill. Missing Docker/build
+definitions, evaluator assets, or real runtime commands make the package
+incomplete rather than a valid compile-only fixture.
 
 ## Terminal-Bench rule disposition
 
