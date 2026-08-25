@@ -19,6 +19,7 @@ jobs:
       - name: React with eyes
         env:
           GH_TOKEN: ${{ secrets.DISCUSSION_TOKEN }}
+          DISCUSSION_NODE_ID: ${{ github.event.discussion.node_id }}
         run: |
           gh api graphql \
             -f query='mutation($id: ID!, $content: ReactionContent!) {
@@ -26,10 +27,12 @@ jobs:
                 reaction { content }
               }
             }' \
-            -f id="${{ github.event.discussion.node_id }}" \
+            -f id="$DISCUSSION_NODE_ID" \
             -f content="EYES"
 
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          persist-credentials: false
 
       # The proposal rubric is private: it is the standard proposals are judged
       # against, and publishing it invites proposals written to the checklist
@@ -40,9 +43,10 @@ jobs:
           repository: Zhuofeng-Li/RSI-Index-Rubrics
           token: ${{ secrets.RUBRIC_REPO_TOKEN }}
           path: private-rubrics
+          persist-credentials: false
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v4
+        uses: astral-sh/setup-uv@38f3f104447c67c051c4a08e39b64a148898af3a
 
       - name: Write proposal to file
         env:
@@ -109,9 +113,10 @@ jobs:
           DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
           EVENT_ACTION: ${{ github.event.action }}
           REVIEW_MARKER: ${{ steps.marker.outputs.marker }}
+          DECISION: ${{ steps.review.outputs.decision }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
         run: |
-          DECISION="${{ steps.review.outputs.decision }}"
-
           # Decision badge
           case "$DECISION" in
             "Strong Accept") BADGE="🟢 **Strong Accept**" ;;
@@ -169,8 +174,8 @@ jobs:
                   }
                 }
               }' \
-              -f owner="${{ github.repository_owner }}" \
-              -f repo="${{ github.event.repository.name }}" \
+              -f owner="$REPOSITORY_OWNER" \
+              -f repo="$REPOSITORY_NAME" \
               -F number="$DISCUSSION_NUMBER" \
               --paginate --slurp \
               --jq '[.[].data.repository.discussion.comments.nodes[] | select(.body | contains("<!-- rubric-review-bot -->")) | .id] | .[0] // empty')
