@@ -12,11 +12,14 @@ add high-level feedback with `/task <feedback>`, then use `/task confirm` to
 confirm the request. A request is eligible only when the commenter is the
 Discussion author and the Discussion has an accepted current Proposal.
 
-Public ingress validates that eligibility before it creates the private
-dispatch. The dispatch contains identifiers rather than Discussion or comment
-content. The workflow has read-only Public contents permission; the scoped
-GitHub App token is created only after the gate passes and is used solely to
-deliver the request to the private worker.
+Public ingress is a non-authoritative cost gate, not the eligibility decision.
+It checks only the event action, canonical Public repository and category,
+author-ID relationship, required identifiers, and `/task` command shape before
+creating an identifier-only private dispatch. It does not fetch or decide the
+current Proposal, approval, or command authority. The workflow has read-only
+Public contents permission; the scoped GitHub App token is created only after
+this gate passes and is used solely to deliver the request to the private
+worker.
 
 ## Configuration
 
@@ -33,10 +36,13 @@ workflow does not need a general-purpose token or write access to Public.
 ## Private worker and outcomes
 
 The private worker owns request State, task generation, review, publishing,
-and Discussion replies. On a successful final result it creates a private
-repository and grants the Discussion author Write permission. Contributors
-perform full execution validation locally; Public ingress does not perform or
-claim that validation.
+and Discussion replies. It authoritatively re-fetches the Discussion and
+command comment and reauthorizes the request: it verifies the approval marker
+and approving account, Proposal hash and currentness, category and Discussion
+author, and the unedited command. On a successful final result it creates a
+private repository and grants the Discussion author Write permission.
+Contributors perform full execution validation locally; Public ingress does
+not perform or claim that validation.
 
 ## Skill boundary and history
 

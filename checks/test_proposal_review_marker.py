@@ -2,6 +2,7 @@ import pytest
 
 from proposal_review_marker import (
     ReviewMarker,
+    canonical_proposal_bytes,
     canonical_proposal_hash,
     parse_review_marker,
     render_review_marker,
@@ -13,6 +14,18 @@ def test_hash_is_stable_and_body_sensitive():
     assert canonical_proposal_hash("T", "B") != canonical_proposal_hash("T", "B ")
 
 
+def test_canonical_hash_uses_literal_unicode_json_and_fixed_digest():
+    # This fixture's digest was independently calculated for the literal UTF-8
+    # bytes of {"body":"café ☃","title":"提案"}.
+    expected_bytes = '{"body":"café ☃","title":"提案"}'.encode("utf-8")
+
+    assert canonical_proposal_bytes("提案", "café ☃") == expected_bytes
+    assert b"\\u" not in canonical_proposal_bytes("提案", "café ☃")
+    assert canonical_proposal_hash("提案", "café ☃") == (
+        "c1616bf2b924838fecfe134fed6ead5e8d34665e0c78746e5ca3784ad173d9b5"
+    )
+
+
 def test_accept_marker_round_trips_unicode():
     marker = render_review_marker(
         decision="Accept",
@@ -20,6 +33,8 @@ def test_accept_marker_round_trips_unicode():
         discussion_node_id="D_kw中文",
     )
 
+    assert "D_kw中文" in marker
+    assert "\\u" not in marker
     assert parse_review_marker(marker) == ReviewMarker(
         schema=1,
         decision="Accept",
