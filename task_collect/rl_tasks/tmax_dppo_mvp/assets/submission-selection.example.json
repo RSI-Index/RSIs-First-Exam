@@ -1,0 +1,15 @@
+{
+  "attempt_id": "rl-001-example",
+  "status": "selected",
+  "run_kind": "full_budget",
+  "training_trajectories": 51200,
+  "optimizer_updates": 200,
+  "gpu_count": 64,
+  "checkpoint": "/app/output/submission/model",
+  "control_record_sha256": "REPLACE_WITH_TASK_CONTROL_SHA256",
+  "source_sha256": "REPLACE_WITH_SHA256",
+  "training_data_sha256": "REPLACE_WITH_SHA256",
+  "training_prompt_sha256": "REPLACE_WITH_SHA256",
+  "training_reward_sha256": "REPLACE_WITH_SHA256",
+  "rl_recipe_sha256": "REPLACE_WITH_SHA256"
+}

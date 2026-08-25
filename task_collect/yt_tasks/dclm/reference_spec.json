@@ -1,0 +1,120 @@
+{
+  "name": "dclm-current-code-public-resource-reference-v1",
+  "scientific_source": {
+    "repository": "mlfoundations/dclm",
+    "commit": "361714bdd60bb9b7f4b2d8354cebbf0dec0c329e",
+    "open_lm_commit": "87955f56980d0481379a05f768f48c5d525e5fd5",
+    "open_lm_version": "0.0.33"
+  },
+  "runtime_environment": {
+    "training_sif_sha256": "2661caf758885a4ab5a9432bff2ea99c8a1b8d5e6fc211737f16262342a54fc2",
+    "evaluation_sif_sha256": "0349d92bf60319bb2e97d36cf94e92719ece01d0c6b5a8d2d9b5084f1d03c6ae",
+    "training_torch": "2.2.0",
+    "evaluation_torch": "2.3.1",
+    "cuda_runtime": "12.1",
+    "llm_foundry": "0.9.0",
+    "justext": "3.0.2",
+    "note": "The split training/data and evaluation images are an infrastructure adaptation: llm-foundry 0.9.0 requires a newer Torch/SentencePiece dependency set than the pinned OpenLM training stack. Both immutable SIF hashes are part of the run identity."
+  },
+  "input_pool": {
+    "repository_track": "400m-1x",
+    "file_count": 10306,
+    "total_bytes": 627500177069,
+    "repository_source_list_sha256": "158077ea183177110c174c26af4c7d7447d6df88c4efad326124c4fdd95fb977",
+    "local_objects_manifest_sha256": "abd681b72d48bf9086c05c3aec30e01e2812db2cc88e46a9f52023c3c1839dbe"
+  },
+  "pipeline": [
+    {
+      "stage": "refinedweb",
+      "implementation": "baselines.core.process_single_file",
+      "config": "baselines/baselines_configs/dclm_baseline_refinedweb.yaml",
+      "config_sha256": "4a757e2bf9f6a09e2331822dbc53d784dd85fbb6948e3ea91be27c4c199e125e",
+      "mapper_workers_per_file": 1,
+      "note": "Worker count and 128-way LSF file partitioning are hardware orchestration; document transforms are the pinned upstream functions."
+    },
+    {
+      "stage": "bff",
+      "implementation": "dedup/bff",
+      "total_shards": 10,
+      "expected_ngram_count_per_shard": 20000000000,
+      "fp_rate": 0.01,
+      "min_ngram_size": 20,
+      "max_ngram_size": 20,
+      "filtering_threshold": 0.8,
+      "remove_type": "old-both",
+      "annotate": false,
+      "note": "Ten shards and min-ngram 20 are identified by the repository's recorded 400M baseline dataset. The repository does not publish the historical expected-ngram-count; 20B is a frozen conservative current-run value. Annotate is false so the BFF implementation applies removals to text instead of only adding unused span metadata. Upstream BFF randomizes file order and Bloom hash seeds without a seed CLI; the produced stage is therefore frozen and hashed as the matched baseline/candidate input, but is not claimed to be byte-identical across independent rebuilds."
+    },
+    {
+      "stage": "quality_filter",
+      "implementation": "baselines.core.process_single_file",
+      "config": "baselines/baselines_configs/fasttext_filter.yaml",
+      "config_sha256": "7ffa02b754b796090f5e31aac465896ae0f8be50d25bbce43847cce386e3a008",
+      "threshold": 0.018112,
+      "model_sha256": "f8da53846636ce5ed2836f95e2fffada6aade035e2169af1d6c099bda2674915",
+      "mapper_workers_per_file": 1
+    },
+    {
+      "stage": "tokenize_shuffle",
+      "implementation": "rust_processing/tokshuf-rs",
+      "tokenizer": "EleutherAI/gpt-neox-20b",
+      "tokenizer_revision": "c292233c833e336628618a88a648727eb3dff0a7",
+      "tokenizer_json_sha256": "c24618a1b3e6a38167beff1c72cffd126c3a66254347304b50547d12c5f25624",
+      "rust_tokenizers_cache_manifest_sha256": "f49796d602cc714bedb8c756fb1c56fc88e9e7cc4fab22ec2a3f88e3b0c55259",
+      "seqlen": 2049,
+      "wds_chunk_size": 8192,
+      "num_local_cells": 512,
+      "seed": 1234,
+      "use_tiktoken": false
+    }
+  ],
+  "training": {
+    "scale": "411m_1x",
+    "config_sha256": "86aa905b600e3adaf9c474d4c98e7e9dabcb7568a018ce7b3f9663282119f381",
+    "parameters": 411616256,
+    "train_tokens": 8232325120,
+    "global_batch_size": 512,
+    "gradient_accumulation": 8,
+    "world_size": 16,
+    "per_rank_microbatch_sequences": 4,
+    "warmup_steps": 2000,
+    "learning_rate": 0.003,
+    "weight_decay": 0.033,
+    "cooldown_end_learning_rate": 0.00003,
+    "seed": 124,
+    "precision": "amp_bfloat16",
+    "attention": "auto",
+    "num_checkpoints_and_epochs": 5,
+    "multiple_data_passes": true,
+    "fsdp": true,
+    "qk_norm": true,
+    "z_loss": 0.0001,
+    "hardware_mapping": "2 nodes x 8 H100; 16 ranks. Scientific global batch and accumulation are unchanged."
+  },
+  "execution_gate": {
+    "qualification_steps": 100,
+    "qualification_tokens": 104857600,
+    "required_gpu_count_and_type": "16 x H100",
+    "maximum_memory_used_mib": 78000,
+    "maximum_projected_full_training_seconds": 19800,
+    "production_training_walltime_seconds": 21600,
+    "policy": "Submit the full 8.232B-token run only after the same 411m_1x configuration completes qualification without a fatal error and passes all recorded topology, batch, memory, and conservative throughput checks."
+  },
+  "evaluation": {
+    "config": "eval/heavy.yaml",
+    "config_sha256": "5f40485515069ff3c4603d83e59d160c825875db7eb9b59d318dae7745a3ba44",
+    "include_openlm_perplexity": true,
+    "include_heavy_downstream_perplexity": true,
+    "perplexity_asset_file_count": 58,
+    "perplexity_asset_total_bytes": 3418220062,
+    "perplexity_asset_manifest_sha256": "a03d31a957bb79f230d7b6663e6fa2974fba500991b4563a8eeae3558974ced8",
+    "primary_repository_aggregate": "Core"
+  },
+  "repository_historical_record": {
+    "purpose": "sanity comparison only, not the current reference result",
+    "dataset_record_sha256": "f9e697c305931bdfdacd08c064aa3fd745493040ad3733030d6a6842dbec7186",
+    "recorded_core": 0.15155521413994272,
+    "limitation": "Its dataset and checkpoint URLs are redacted private S3 locations and its data commit predates the pinned current checkout."
+  },
+  "fidelity_statement": "This run reproduces the pinned repository's publicly executable current baseline and freezes every locally necessary choice. It does not claim byte-identical reconstruction of the repository's inaccessible 2024 private S3 dataset/checkpoint. The separately downloaded 96-parquet released-DCLM smoke slice is excluded from this reference."
+}

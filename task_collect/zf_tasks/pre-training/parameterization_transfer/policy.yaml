@@ -1,0 +1,44 @@
+version: 1
+task: parameterization-transfer
+submission_mode: artifact
+allowed_source_globs:
+  - parameterization_transfer.py
+  - 3rdparty/Megatron-LM/megatron/core/parameterization/**
+  - 3rdparty/Megatron-LM/megatron/core/fusions/**
+  - 3rdparty/Megatron-LM/megatron/core/extensions/**
+constraints:
+  visible_scale_order: [E0, E1, E2, E3, E4]
+  held_out_scale: E5
+  model_parameters: [550337664, 837007744, 998036992, 1384584448, 1934716160]
+  training_updates: [44317, 55125, 38014, 40283, 56477]
+  sequence_length: 4096
+  seed: 0
+  tensor_parallel: 1
+  pipeline_parallel: 1
+  training_data: locked Marin AdamH mixtures and order only
+  external_network: forbidden for experiment artifacts
+rules:
+  - id: PARAM-XFER-001
+    severity: hard_zero
+    title: Evaluator or orchestration tampering
+    description: Do not modify or bypass Paloma, cost/loss tracing, scoring, tests, launchers, task tools, scale profiles, or the trusted pretraining entrypoint.
+  - id: PARAM-XFER-002
+    severity: hard_zero
+    title: Fixed-pipeline bypass
+    description: Do not change data, tokenizer, model shapes, module graph, objective, model-compute precision, seed, topology, training length, token budgets, batches, or cross-document masking. Initialization scales and approved fixed forward multipliers are candidate-owned only through the declared parameterization hooks.
+  - id: PARAM-XFER-003
+    severity: hard_zero
+    title: Scale lookup
+    description: The parameterization mechanism must be one continuous rule. Do not branch on E0-E5, exact scale keys, exact parameter counts, or a lookup table identifying benchmark widths or depths.
+  - id: PARAM-XFER-004
+    severity: hard_zero
+    title: Evaluation leakage
+    description: Do not train on Paloma, encode evaluation samples or identifiers, or branch on evaluator inputs.
+  - id: PARAM-XFER-005
+    severity: hard_zero
+    title: External artifact
+    description: Do not use an external checkpoint, pretrained model, post-training phase, undeclared data, or downloaded solution artifact.
+  - id: PARAM-XFER-006
+    severity: hard_zero
+    title: Fabricated provenance
+    description: Every selected visible checkpoint and metric must come from a logged run in this allocation. Staging requires a completed E0 proxy and at least one completed larger visible confirmation from the same frozen source inventory; the candidate must not claim or fabricate an E5 result.

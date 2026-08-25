@@ -1,0 +1,90 @@
+diff --git a/models/config.py b/models/config.py
+index 749c9c1..16da752 100644
+--- a/models/config.py
++++ b/models/config.py
+@@ -63,25 +63,25 @@ class TrainConfig:
+     batch_size: int = 2
+     gradient_accumulation_steps: int = 8
+     max_grad_norm: float = 1.0
+-    eval_in_epochs: bool = True
++    eval_in_epochs: bool = False   # RSI: intermediate eval also SAVES step_* checkpoints
+     eval_interval: int = 500
+     stats_log_interval: int = 100
+-    max_training_steps: int = 40000
++    max_training_steps: int = 3000  # RSI: the per-round artifact budget (contract.yaml)
+     max_images_per_example: int = 4
+     max_images_per_knapsack: int = 18
+     max_sample_length: int = 4096
+     compile: bool = False
+     resume_from_vlm_checkpoint: bool = False # Indicate if the training should be resumed from a checkpoint of the whole VLM or you want to start from scratch
+-    train_dataset_path: str = 'HuggingFaceM4/FineVision_concat_shuffled_2'
+-    train_dataset_name: tuple[str, ...] = ("default", ) #('allava_laion', 'allava_vflan', 'cambrian(filtered)_processed', 'LLaVA_Instruct_150K', 'mmevol', 'sharegpt4o', 'sharegpt4v(coco)', 'sharegpt4v(knowledge)', 'sharegpt4v(llava)', 'sharegpt4v(sam)') # 'vision_flan(filtered)', 'lvis_instruct4v',
+-    stream_dataset: bool = True
++    train_dataset_path: str = '/datasets/finevision_pool'  # RSI: staged prefix, read-only
++    train_dataset_name: tuple[str, ...] = ("shards", ) #('allava_laion', 'allava_vflan', 'cambrian(filtered)_processed', 'LLaVA_Instruct_150K', 'mmevol', 'sharegpt4o', 'sharegpt4v(coco)', 'sharegpt4v(knowledge)', 'sharegpt4v(llava)', 'sharegpt4v(sam)') # 'vision_flan(filtered)', 'lvis_instruct4v',
++    stream_dataset: bool = False    # RSI: no network egress in the training container
+     relevance_min_rating: int = 1
+     image_correspondence_min_rating: int = 1
+     visual_dependency_min_rating: int = 1
+     formatting_min_rating: int = 1
+     wandb_entity: str = "HuggingFace" # Indicate the entity to log to in wandb
+-    log_wandb: bool = True
+-    use_lmms_eval: bool = True # Use lmms-eval for evaluation
++    log_wandb: bool = False         # RSI: offline
++    use_lmms_eval: bool = False #   RSI: the scored benchmark is the verifier's job, not the round's # Use lmms-eval for evaluation
+     lmms_eval_tasks: str = 'mmstar,mmmu_val,ocrbench,textvqa_val,docvqa_val,scienceqa,mme,infovqa_val,chartqa' # Pass additional task as one string, seperated by commas without spaces (e.g. 'mmstar,mmmu,ocrbench')
+     lmms_eval_limit: float = None
+     lmms_eval_batch_size: int = 64
+diff --git a/train.py b/train.py
+index 0e2ed58..012eb7d 100644
+--- a/train.py
++++ b/train.py
+@@ -156,6 +156,13 @@ def get_dataloaders(train_cfg, vlm_cfg):
+     
+     train_ds = concatenate_datasets(combined_train_data)
+ 
++    # RSI ADAPTER (frozen). Stable pool row ids in PRE-SHUFFLE concatenated order: shard_0 rows
++    # first, then shard_1, and so on. The improver reproduces this index space by enumerating the
++    # shards in order, without having to replay shuffle(seed=0). The column travels with its row
++    # through the shuffle, the DDP shard and the val split, so a keep list applied later still
++    # refers to these ids.
++    train_ds = train_ds.add_column("rsi_idx", list(range(len(train_ds))))
++
+     if not train_cfg.stream_dataset:
+         train_ds = train_ds.shuffle(seed=0) # Shuffle the training dataset, so train and val get equal contributions from all concatenated datasets  
+ 
+@@ -175,6 +182,25 @@ def get_dataloaders(train_cfg, vlm_cfg):
+         val_ds = train_ds.select(range(val_size))
+         train_ds = train_ds.select(range(val_size, len(train_ds)))
+ 
++    # RSI ADAPTER (frozen). The round's selection, applied to TRAIN ONLY and AFTER the val split
++    # so that val is the same held-out slice in every round of every chain -- if selection ran
++    # first, each round would score its own val set and no cross-round comparison would hold.
++    # A missing or malformed keep list is a hard error: silently training on the whole pool would
++    # look like a completed round and read downstream as "selection had no effect".
++    if train_cfg.rsi_keep_list:
++        import json as _json
++        _spec = _json.loads(open(train_cfg.rsi_keep_list).read())
++        _keep = set(_spec["keep"])
++        _ids = train_ds["rsi_idx"]
++        _positions = [_p for _p, _i in enumerate(_ids) if _i in _keep]
++        if not _positions:
++            raise ValueError(
++                f"rsi_keep_list {train_cfg.rsi_keep_list} selected 0 of {len(_ids)} train rows; "
++                f"an empty curriculum trains silently and scores at the pristine base")
++        print(f"RSI keep list: {len(_positions)}/{len(_ids)} train rows "
++              f"({100.0*len(_positions)/len(_ids):.2f}%)")
++        train_ds = train_ds.select(_positions)
++
+     train_dataset = VQADataset(
+         train_ds,
+         tokenizer,
+@@ -645,6 +671,8 @@ def main():
+     parser.add_argument('--resume_from_vlm_checkpoint', type=bool, default=False, help='Resume training from VLM checkpoint specified by vlm_checkpoint_path (or default if not provided)')
+     parser.add_argument('--no_log_wandb', action='store_true', help='Do not log to wandb')
+     parser.add_argument('--train_dataset_path', type=str, help='Train dataset path')
++    parser.add_argument('--rsi_keep_list', type=str, default=None, help='RSI: path to keep_list.json (pool row ids to train on)')
++    parser.add_argument('--max_training_steps', type=int, help='RSI: per-round optimizer-step budget')
+     parser.add_argument('--relevance_min_rating', type=int, help='Minimum relevance rating of images per sample')
+     parser.add_argument('--image_correspondence_min_rating', type=int, help='Minimum image correspondence rating of images per sample')
+     parser.add_argument('--visual_dependency_min_rating', type=int, help='Minimum visual dependency rating of images per sample')
