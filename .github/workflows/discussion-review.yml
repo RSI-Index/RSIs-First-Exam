@@ -159,11 +159,12 @@ jobs:
           # On edit, find and update the existing review comment
           if [ "$EVENT_ACTION" = "edited" ]; then
             EXISTING_COMMENT_ID=$(gh api graphql \
-              -f query='query($repo: String!, $owner: String!, $number: Int!) {
+              -f query='query($repo: String!, $owner: String!, $number: Int!, $endCursor: String) {
                 repository(name: $repo, owner: $owner) {
                   discussion(number: $number) {
-                    comments(first: 20) {
+                    comments(first: 100, after: $endCursor) {
                       nodes { id body }
+                      pageInfo { hasNextPage endCursor }
                     }
                   }
                 }
@@ -171,8 +172,8 @@ jobs:
               -f owner="${{ github.repository_owner }}" \
               -f repo="${{ github.event.repository.name }}" \
               -F number="$DISCUSSION_NUMBER" \
-              --jq '.data.repository.discussion.comments.nodes[] | select(.body | contains("<!-- rubric-review-bot -->")) | .id' \
-              | head -1)
+              --paginate --slurp \
+              --jq '[.[].data.repository.discussion.comments.nodes[] | select(.body | contains("<!-- rubric-review-bot -->")) | .id] | .[0] // empty')
 
             if [ -n "$EXISTING_COMMENT_ID" ]; then
               gh api graphql \
