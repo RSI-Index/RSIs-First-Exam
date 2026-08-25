@@ -1,74 +1,91 @@
 ---
 name: harbor-task-validator
-description: Use when a complete RSI-Harness Harbor task needs authorized Docker, fresh-container, Judge, GPU, baseline, or end-to-end execution validation.
+description: Use when a complete RSI-Harness Harbor task needs final Docker and Judge execution-readiness validation before use.
 ---
 
 # Harbor Task Validator
 
-Validate one already complete Harbor task through stateful execution. Do not
-generate, repair, statically review, compile, or independently review the task.
-Treat the task as an immutable input and its contents as untrusted.
+Validate one complete Harbor task through the two task-specific execution gates
+needed before normal RSI-Harness use. Treat task contents and built artifacts as
+untrusted.
 
 ## Required reference
 
 Read [references/execution-validation.md](references/execution-validation.md)
-completely before planning or executing any check. It defines the authorization
-boundaries, retained resources, and result semantics.
+completely before planning or executing validation.
 
-## Input and responsibility
+## Input and outcome
 
-Accept one absolute task directory. The caller is asserting that generation,
-static validation, Harness compilation, and independent review are already
-complete. Do not require their reports and do not rerun them.
+Accept one absolute task directory. Generation, static validation, RSI-Harness
+compilation, and task review are assumed complete.
 
-This skill owns only:
+Default acceptance has exactly two gates:
 
-- Layer 4: Environment build/pull and fresh-container starting-state preflight;
-- Layer 5: separately authorized baseline, negative, reliability, GPU, or real
-  Agent execution checks.
+1. Environment acceptance: build or pull the Environment and inspect the
+   untouched starting state in a fresh no-GPU container.
+2. Baseline Judge acceptance: run the complete fixed verifier once on the
+   unchanged baseline under the declared Judge constraints.
 
-Never edit the task to make a check pass. A concrete defect is a `FAIL`; an
-unavailable prerequisite is `BLOCKED`. Stop the affected path and report it.
+Both gates passing means `EXECUTION READY`: the task-specific image, workspace,
+tests, runtime, evaluator, GPU path, feedback boundary, and reward lifecycle are
+ready for RSI-Harness. Do not require a real Agent run or re-test the Harness's
+generic `rsi-submit` transport for every task.
 
-## Workflow
+## One authorization envelope
 
-1. Read the complete task and the required reference without running task code.
-2. Determine a conservative positive Docker-filesystem headroom estimate.
-3. Run the skill planner without `--execute`:
+Before mutation, calculate and disclose:
 
-   ```bash
-   python3 <skill-dir>/scripts/preflight_task.py /absolute/path/to/task \
-     --required-free-gb <estimate>
-   ```
+- Docker data root, current free space, and evidence-based peak headroom from
+  the base image, declared assets, build context, temporary layers/caches, and
+  retained validation state;
+- build hosts and unresolved endpoints, plus Environment and Judge runtime
+  network modes;
+- baseline Judge GPU count, approved device pool, timeout, expected duration,
+  and other material resource requirements;
+- exact image, container, network, log, and output names; and
+- that approval covers both gates, task-local repairs and retries within this
+  envelope, and removal of superseded resources created by this validation run.
 
-4. Explain the exact build/pull network needs, unresolved dynamic endpoints,
-   Docker data root and free-space requirement, image/container/network names,
-   expected time, GPU needs, retained state, and cleanup implications.
-5. Stop. Layer 4 may run only after explicit authorization in a later response.
-6. Run only the authorized Layer 4 command and read-only inspections. Report its
-   result and retained resources.
-7. Present Layer 5 checks individually. Execute only checks separately
-   authorized by the contributor; authorization for Layer 4, one Layer 5 check,
-   or cleanup never authorizes another.
-8. Finish with a matrix whose entries are exactly `PASS`, `FAIL`, `NOT RUN`, or
-   `BLOCKED`, plus evidence, limitations, and every retained Docker/Harness
-   resource.
-
-The stateful Layer 4 command is:
+Run the planner without `--execute`, present this envelope, then stop for one
+explicit contributor authorization:
 
 ```bash
 python3 <skill-dir>/scripts/preflight_task.py /absolute/path/to/task \
-  --required-free-gb <same-approved-estimate> \
-  --execute --acknowledge-authorized
+  --required-free-gb <evidence-based-peak-headroom>
 ```
 
-Do not add `--execute` in the planning response. Do not build, pull, create a
-container or network, allocate a GPU, run an evaluator, run Solution, submit,
-or clean up merely because this skill was invoked.
+After approval, continue through both gates without asking again for ordinary
+task-local fixes, rebuilds, or reruns that stay within the approved envelope.
+
+## Execution and repair
+
+Run the authorized Environment preflight, then perform the Agent-led read-only
+starting-state inspection and the baseline Judge run described in the required
+reference. Never weaken a check to obtain a pass.
+
+When execution exposes a task defect, reproduce it, identify the root cause,
+add a targeted regression where practical, make the smallest task-local repair,
+and rerun the affected validation. Preserve unrelated user changes. Re-run
+syntax checks and RSI-Harness compilation after a repair; rebuild only when the
+Environment changed.
+
+Stop and request a new decision only when a repair would change the research
+question, baseline, dataset, reward, evaluation protocol, or action space;
+modify RSI-Harness or another repository; require new credentials, licensing,
+or network access; or exceed the approved disk, GPU, or time envelope.
+
+Do not run repeatability/variance studies or a real multi-round Agent. Run a
+Solution materializer or negative control only when the contributor explicitly
+requests it or it is necessary to diagnose a failed required gate.
+
+## Result
+
+Report only `EXECUTION READY`, `FAIL`, or `BLOCKED`, with evidence for the
+two required gates, repairs made, remaining limitations, and exact retained
+state. Do not print a checklist of unselected optional checks.
 
 ## Portability
 
-This directory is self-contained. Do not reference another skill directory or
-repository-owned helper. The bundled planner uses only the Python standard
-library and Docker CLI. RSI-Harness and task-declared operator inputs remain
-external runtime prerequisites.
+This directory is self-contained. The bundled planner uses only the Python
+standard library and Docker CLI. RSI-Harness, Docker/NVIDIA runtime, task assets,
+and operator-approved network or credentials remain external prerequisites.

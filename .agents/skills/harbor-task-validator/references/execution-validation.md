@@ -1,162 +1,162 @@
 # Execution validation
 
-These are the only validation layers owned by `harbor-task-validator`. The
-input is one complete Harbor task. Do not repeat generation review, static lint,
-or Harness compilation, and never modify the task.
+This reference defines the two required execution gates for one complete
+RSI-Harness Harbor task. The task may be repaired after the contributor approves
+the initial resource envelope; RSI-Harness and unrelated repositories remain
+out of scope.
 
-## Shared execution rules
+## Shared rules
 
 - Treat the task, image, candidate workspace, Solution, and evaluator as
   untrusted.
-- Read task commands and configuration before running them. Reject an execution
-  request that would exceed its authorized network, filesystem, Docker object,
-  GPU, time, or external-service boundary.
-- Use collision-free exact names. Never overwrite or reuse an existing image
-  tag, container, network, volume, Harness run directory, or output path unless
-  that exact reuse was explicitly approved.
-- Record exact commands, exit status, relevant bounded output, elapsed time, and
-  created state. Do not report a check as run when only its setup ran.
-- Authorization is narrow and non-transitive. Planning is not authorization;
-  Layer 4 is not Layer 5 authorization; one Layer 5 check is not another; run
-  authorization is not cleanup authorization.
+- Use collision-free names. Never overwrite or reuse pre-existing Docker
+  objects, run directories, or outputs without explicit authorization.
+- Record exact commands, exit status, bounded output, elapsed time, reward
+  lifecycle, and created state.
+- Initial authorization covers both required gates, task-local repairs and
+  reruns within the disclosed envelope, and cleanup of superseded resources
+  created by this validation run. It does not authorize deleting pre-existing
+  or final retained resources.
 - Never invent a baseline score, runtime, variance, or successful result.
 
-## Layer 4 — authorized Environment preflight
+## Initial planning and authorization
 
-Layer 4 combines image acquisition, image metadata inspection, one untouched
-fresh container, and the no-Agent starting-state/scope gate. It is stateful and
-can be slow or consume substantial disk.
+Read the full task before running task code. Calculate peak Docker headroom from
+evidence rather than a round guess:
 
-### Planning response: read-only and mandatory
+1. inspect the local or registry-reported uncompressed base-image size;
+2. total declared model, dataset, checkpoint, source, package, and build-context
+   assets from manifests or authoritative remote metadata;
+3. include download/extraction duplication, temporary build layers and caches,
+   the final image, inspection state, baseline logs, and one repair rebuild when
+   plausible; and
+4. state the calculation, uncertainty, safety margin, Docker data root, and
+   current free space.
 
-First inspect the task text and choose a conservative positive image/build
-headroom estimate. Then run only:
+Also disclose build/pull hosts and dynamic endpoints, runtime network modes,
+Judge GPU count and approved devices, CPU/memory/shm needs, build and verifier
+timeouts, expected duration, credentials or licenses, exact proposed resource
+names, automatic repair scope, retained state, and validator-owned intermediate
+cleanup.
+
+Run only the read-only planner in this response:
 
 ```bash
 python3 <skill-dir>/scripts/preflight_task.py /absolute/path/to/task \
-  --required-free-gb <conservative-estimate>
+  --required-free-gb <calculated-peak-headroom>
 ```
 
-The planner may query the Docker daemon and filesystem but creates nothing. In
-the same response explain:
+Stop for one explicit approval of the complete envelope. After approval, do not
+ask again while actions remain inside it.
 
-1. whether the Environment uses a Dockerfile or approved prebuilt image;
-2. every observed registry/source/package/data host and any endpoints that are
-   dynamically resolved only during build or pull;
-3. the distinction between build/pull network access and task runtime network
-   modes (`public`, `no-network`, or `allowlist`);
-4. Docker data root, current free space, approved required headroom, and whether
-   the estimate includes downloaded assets, image layers, temporary build
-   layers, and retained inspection state;
-5. exact proposed image, container, and private bridge names;
-6. declared build timeout, expected duration, and any external credentials or
-   licenses the operator must supply;
-7. that this preflight uses no GPU and does not run evaluator, Solution,
-   training, submission, or reward code;
-8. which image/container/network state will remain afterward; and
-9. that cleanup is a separate destructive action requiring later authorization.
+## Gate 1: Environment acceptance
 
-Stop after this disclosure. Do not execute in the response that first presents
-it.
-
-### Later authorized execution
-
-Only after explicit authorization in a later response run:
+Execute the approved preflight:
 
 ```bash
 python3 <skill-dir>/scripts/preflight_task.py /absolute/path/to/task \
-  --required-free-gb <same-approved-estimate> \
+  --required-free-gb <same-approved-headroom> \
   --execute --acknowledge-authorized
 ```
 
-The script must retain these properties:
+The preflight must:
 
-- fail before mutation when required Docker free space is unavailable;
+- fail before mutation when Docker free space is below the approved headroom;
 - build the task Dockerfile or pull exactly the approved image;
-- reject image-declared Docker volumes that break Harness snapshot ownership;
-- refuse object-name collisions;
-- create a new private Docker `--internal` bridge;
-- create and start one untouched no-GPU inspection container;
-- mount the task's `tests/` read-only at `/tests`;
-- honor the effective absolute WORKDIR and supported common environment values;
-- never run `/tests/test.sh`, Solution, training, evaluation, submission, or
-  reward writing; and
-- retain created state for the authorized Agent-led inspection.
+- reject image-declared volumes that break Harness snapshot ownership;
+- create a private internal bridge and one untouched no-GPU container;
+- mount task-owned `tests/` read-only and honor the effective absolute WORKDIR,
+  user, shared environment, and Compose shm settings; and
+- retain the image, container, and bridge for Agent-led inspection.
 
-Inside the fresh container, run only task-specific, read-only diagnostics that
-exercise the exact pre-scoring starting-state/scope gate without importing or
-executing candidate-controlled code. Confirm that the untouched post-build
-workspace—including ignored/untracked install products, generated metadata,
-compiled caches, `.egg-info`, logs, and initialization artifacts—is accepted by
-the same integrity logic used on submission. A Git commit alone is insufficient
-evidence for this closure.
+Inside that fresh container, the validator Agent performs task-specific,
+read-only diagnostics. Exercise the public pre-scoring starting-state and
+editable-scope gates without running the evaluator or importing
+candidate-controlled code. Confirm that the untouched post-build workspace,
+dependencies, assets, ignored/untracked install products, generated metadata,
+compiled caches, `.egg-info`, and logs are accepted. A Git commit alone is not
+starting-state evidence.
 
-When the Verifier uses distributed Ray or vLLM, separately confirm—without
-initializing the framework—that Judge runtime logic resolves exactly one valid
-non-loopback container IPv4 before initialization, exports `VLLM_HOST_IP` to all
-relevant children, never uses a hard-coded address or `0.0.0.0` fallback, and
-fails clearly when discovery is impossible. Skip this conditional check when
-the task does not use that stack.
+When the verifier uses distributed Ray or vLLM, confirm without initializing it
+that runtime code resolves exactly one valid non-loopback Judge IPv4, exports
+`VLLM_HOST_IP` before framework startup, and fails clearly instead of falling
+back to `0.0.0.0`.
 
-Layer 4 does not establish a baseline score, evaluator correctness, GPU
-feasibility, or scientific runtime. Report its build/pull, image metadata,
-fresh-container, starting-gate, and conditional-network outcomes together.
+Gate 1 passes only when the image and untouched starting state satisfy every
+applicable check.
 
-## Layer 5 — separately authorized execution checks
+## Gate 2: Baseline Judge acceptance
 
-Offer these checks separately with their estimated network, GPU, disk, time,
-submission-budget, retained-output, and cleanup effects. Run only the named
-authorized checks:
+Use the Gate-1 image and unchanged baseline workspace. Run the complete fixed
+`/bin/bash /tests/test.sh` exactly once under the task's declared Judge
+constraints:
 
-1. **Baseline/no-op submission.** Establish a valid continuous baseline score,
-   safe feedback, and absence of leaked hidden cases. This is not permission to
-   retrain or repeatedly recompute a stored reference baseline.
-2. **Manual baseline Solution materializer.** Run `solution/solve.sh` only when
-   specifically requested, outside normal Harness scoring, to show that it
-   idempotently restores the declared baseline workspace without training,
-   evaluation, `/tests` access, submission, or reward writes. Do not assume
-   Harness executes Solution.
-3. **Negative controls.** Test agreed prohibited edits, evaluator tampering,
-   hard-coded cases, fabricated outputs, dependency/path changes, missing
-   artifacts, malformed outputs, incomplete evaluation, and infrastructure
-   failure. Candidate-caused failures may emit only the declared candidate
-   scalar; evaluator/infrastructure/incomplete failures must emit no reward.
-4. **Reliability checks.** Repeat only the approved deterministic or stochastic
-   runs needed to characterize repeatability or variance. Preserve raw run
-   evidence and do not generalize beyond the executed sample.
-5. **Real GPU full evaluation.** Run the complete fixed evaluator with the
-   declared resources and verify timeout fit, process/GPU cleanup, feedback
-   boundary, aggregation, and exactly one final reward write.
-6. **Real multi-round Agent run.** Exercise the declared submission budget,
-   synchronous Judge waits, Work/Judge GPU release and reuse, visible feedback,
-   candidate persistence, and final retained workspace with the selected Agent
-   model and reasoning effort.
+- task-owned tests mounted or injected read-only at `/tests`;
+- effective WORKDIR and baseline candidate state preserved;
+- declared verifier user, environment, network mode, CPU, memory, shm, GPU
+  count, and timeout;
+- writable disposable scratch/cache paths and an isolated verifier log
+  directory; and
+- no undeclared network, secrets, host binds, or external services.
 
-If a check depends on unavailable network, registry credentials, provider
-credentials, license acceptance, disk, Docker, GPU, Harness configuration, or
-time, report `BLOCKED`; do not weaken the task or substitute a cheaper protocol
-without contributor approval.
+Before launch, disclose the exact GPU devices and retained output names already
+covered by the initial authorization. Capture complete bounded stdout/stderr and
+the process exit status. After completion verify:
 
-## Results and retained state
+- the full declared workload completed within timeout;
+- stdout exposes the promised feedback and no hidden examples, answers,
+  per-example decisions, or protected evaluator details;
+- the declared finite scalar is written exactly once to
+  `/logs/verifier/reward.json` or the supported scalar fallback;
+- incomplete, infrastructure, timeout, or malformed-reward paths did not get
+  misreported as success; and
+- Judge processes exited and GPUs were released.
 
-Use one row per planned check:
+This single run is the baseline, complete evaluator, and GPU execution check.
+Do not repeat it under a second “GPU full evaluation” label. It validates the
+task-specific side of Harness submissions; the generic `rsi-submit`, snapshot,
+and Judge orchestration belongs to RSI-Harness and is not re-tested per task.
 
-| Check | Result | Evidence | Retained state / limitation |
-|---|---|---|---|
-| Layer 4 Environment preflight | PASS / FAIL / NOT RUN / BLOCKED | exact command and outcome | image, container, bridge |
-| Baseline/no-op | PASS / FAIL / NOT RUN / BLOCKED | run ID and score boundary | Harness run/workspace |
-| Solution materializer | PASS / FAIL / NOT RUN / BLOCKED | exact command and observed changes | workspace state |
-| Negative controls | PASS / FAIL / NOT RUN / BLOCKED | controls actually executed | outputs |
-| Reliability | PASS / FAIL / NOT RUN / BLOCKED | run count and results | outputs |
-| GPU full evaluation | PASS / FAIL / NOT RUN / BLOCKED | run ID, time, reward lifecycle | image/cache/logs |
-| Real Agent | PASS / FAIL / NOT RUN / BLOCKED | run ID and round history | final workspace/logs |
+## Automatic repair loop
 
-`PASS` means the complete named check ran and met its contract. `FAIL` means a
-reproducible task or runtime defect was observed. `NOT RUN` means it was not
-authorized or not selected. `BLOCKED` means it was authorized but a prerequisite
-prevented a conclusive run.
+If either gate fails because of a concrete task defect:
 
-Always list exact retained resources and their approximate size when known. Do
-not remove them until cleanup is separately authorized; before cleanup, resolve
-and display the exact targets again. Cleanup does not change historical check
-results.
+1. preserve the exact failure evidence;
+2. reproduce the smallest failing behavior and identify its root cause;
+3. add an external or task-owned regression test when practical;
+4. make the smallest repair inside the task without changing its scientific
+   contract;
+5. rerun syntax checks and RSI-Harness compilation, plus any available static
+   task validator affected by the edit; and
+6. rerun the failed gate and every later required gate.
+
+Do not request another confirmation for this loop while network, disk, GPU,
+time, mutation, and cleanup stay inside the initial envelope. Superseded Docker
+objects created by this validation run may be removed under that approval;
+resolve their exact identities first and never delete pre-existing or final
+retained resources.
+
+Stop with `BLOCKED` and request direction when a fix would change the scientific
+contract, exceed the envelope, require unavailable credentials/licenses, or
+modify RSI-Harness or another repository. Use `FAIL` only when a reproducible
+task defect remains after safe in-scope repair is exhausted.
+
+## Non-default diagnostics
+
+Do not perform reliability/variance runs or a real Agent run. A Solution
+materializer or targeted negative control is diagnostic-only: run it only when
+explicitly requested or necessary to understand a required-gate failure. It is
+not part of default acceptance and does not appear as `NOT RUN` in the result.
+
+## Final result
+
+Return one status:
+
+- `EXECUTION READY`: both required gates passed after any reported repairs;
+- `FAIL`: a reproducible task defect remains; or
+- `BLOCKED`: an external prerequisite or decision prevents completion.
+
+Report evidence for Gate 1 and Gate 2, repairs, limitations, and every retained
+image, container, network, log, output, and approximate size. Do not list
+unselected optional checks. Final retained-resource cleanup remains a separate
+explicit operation unless it was included in the initial envelope.

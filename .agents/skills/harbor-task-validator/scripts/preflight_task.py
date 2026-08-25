@@ -119,12 +119,15 @@ def detected_build_network(environment_dir: Path) -> tuple[list[str], list[str]]
     hosts: set[str] = set()
     notes: set[str] = set()
     combined: list[str] = []
+    dockerfiles: list[str] = []
     for path in text_files(environment_dir):
         try:
             text = path.read_text(encoding="utf-8")
         except (OSError, UnicodeDecodeError):
             continue
         combined.append(text)
+        if path.name == "Dockerfile":
+            dockerfiles.append(text)
         for match in re.finditer(r"(?:https?|git)://[^\s'\"\\]+", text):
             host = urlsplit(match.group(0)).hostname
             if host:
@@ -133,7 +136,12 @@ def detected_build_network(environment_dir: Path) -> tuple[list[str], list[str]]
             hosts.add(host.lower())
 
     body = "\n".join(combined)
-    for image in re.findall(r"^\s*FROM\s+(?:--\S+\s+)?([^\s]+)", body, re.MULTILINE | re.IGNORECASE):
+    dockerfile_body = "\n".join(dockerfiles)
+    for image in re.findall(
+        r"^\s*FROM\s+(?:--\S+\s+)?([^\s]+)",
+        dockerfile_body,
+        re.MULTILINE | re.IGNORECASE,
+    ):
         image = image.split("@", 1)[0]
         first = image.split("/", 1)[0]
         hosts.add(first.lower() if "." in first or ":" in first else "registry-1.docker.io")
@@ -208,6 +216,43 @@ def network_exists(name: str) -> bool:
     ).returncode == 0
 
 
+def baseline_judge_requirements(config: dict) -> tuple[int, float | None, str]:
+    metadata = config.get("metadata", {})
+    rsi_harness = (
+        metadata.get("rsi_harness", {}) if isinstance(metadata, dict) else {}
+    )
+    namespaced = (
+        rsi_harness.get("verifier", {}) if isinstance(rsi_harness, dict) else {}
+    )
+    raw_gpus = namespaced.get("gpus", 0) if isinstance(namespaced, dict) else 0
+    if isinstance(raw_gpus, bool) or not isinstance(raw_gpus, int) or raw_gpus < 0:
+        raise PreflightError(
+            "[metadata.rsi_harness.verifier].gpus must be a non-negative integer"
+        )
+
+    verifier = config.get("verifier", {})
+    verifier = verifier if isinstance(verifier, dict) else {}
+    raw_timeout = verifier.get("timeout_sec")
+    if raw_timeout is None:
+        timeout = None
+    elif (
+        isinstance(raw_timeout, bool)
+        or not isinstance(raw_timeout, (int, float))
+        or raw_timeout <= 0
+    ):
+        raise PreflightError("[verifier].timeout_sec must be positive")
+    else:
+        timeout = float(raw_timeout)
+
+    environment = config["environment"]
+    raw_network = verifier.get(
+        "network_mode", environment.get("network_mode", "public")
+    )
+    if raw_network not in {"public", "no-network", "allowlist"}:
+        raise PreflightError("Verifier runtime network mode is unsupported")
+    return raw_gpus, timeout, str(raw_network)
+
+
 def print_plan(
     *,
     task_dir: Path,
@@ -222,13 +267,19 @@ def print_plan(
     notes: list[str],
     workdir: str,
     build_timeout: float,
+    judge_gpus: int,
+    judge_timeout: float | None,
+    judge_network: str,
 ) -> None:
     print("Environment preflight plan")
     print(f"Task: {task_dir}")
     print(f"Environment source: {source}")
     print(f"Docker data root: {docker_root}")
     print(f"Free space: {free_bytes / GIB:.1f} GiB")
-    print(f"Required headroom: {required_bytes / GIB:.1f} GiB (Agent estimate)")
+    print(
+        f"Required headroom: {required_bytes / GIB:.1f} GiB "
+        "(evidence-based Agent estimate)"
+    )
     print(f"Disk status: {'sufficient' if free_bytes >= required_bytes else 'INSUFFICIENT'}")
     print(f"Build/pull network hosts observed: {', '.join(hosts) if hosts else 'none detected'}")
     for note in notes:
@@ -243,13 +294,31 @@ def print_plan(
         "Inspection container: private internal bridge (no external route), "
         "GPUs=none, task tests mounted read-only"
     )
-    print("Will not run tests/test.sh, Solution, training, evaluation, submission, or reward writing")
+    print(f"Baseline Judge GPUs: {judge_gpus}")
+    timeout_text = (
+        "Harness default"
+        if judge_timeout is None
+        else f"{judge_timeout:g} seconds"
+    )
+    print(f"Baseline Judge timeout: {timeout_text}")
+    print(f"Baseline Judge runtime network: {judge_network}")
+    print(
+        "Will not run tests/test.sh, Solution, training, evaluation, submission, "
+        "or reward writing"
+    )
     print(
         "The created image, container, and internal bridge will be retained "
         "for inspection"
     )
-    print("Removing any of them is a separate state-changing action requiring authorization")
-    print("Execution requires a later explicit contributor authorization")
+    print(
+        "One approval covers both required stages and task-local repair/retry "
+        "within this envelope"
+    )
+    print(
+        "Automatic cleanup scope: superseded resources created by this "
+        "validation run only"
+    )
+    print("Initial execution requires explicit contributor authorization")
 
 
 def inspect_image(image: str) -> None:
@@ -417,6 +486,7 @@ def main() -> int:
     if source == "prebuilt image":
         notes.append("approved image registry access is required when the image is not local")
     timeout = float(environment.get("build_timeout_sec", 600))
+    judge_gpus, judge_timeout, judge_network = baseline_judge_requirements(config)
     print_plan(
         task_dir=task_dir,
         source=source,
@@ -430,6 +500,9 @@ def main() -> int:
         notes=notes,
         workdir=environment["workdir"],
         build_timeout=timeout,
+        judge_gpus=judge_gpus,
+        judge_timeout=judge_timeout,
+        judge_network=judge_network,
     )
 
     if not args.execute:
@@ -457,7 +530,8 @@ if __name__ == "__main__":
         print(f"preflight execution failed: {type(error).__name__}", file=sys.stderr)
         print(
             "An image, container, or internal bridge may have been retained; "
-            "inspect them before separately authorized cleanup.",
+            "resolve them exactly. The initial approval covers cleanup only "
+            "when they are superseded resources created by this validation run.",
             file=sys.stderr,
         )
         raise SystemExit(2)
