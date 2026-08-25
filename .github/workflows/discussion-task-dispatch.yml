@@ -1,0 +1,57 @@
+name: Dispatch Discussion task command
+
+on:
+  discussion_comment:
+    types: [created]
+
+permissions:
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout public default branch
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+
+      - name: Validate event
+        id: gate
+        run: python3 checks/discussion_task_dispatch.py "$GITHUB_EVENT_PATH" dispatch-payload.json
+
+      - name: Create dispatch App token
+        id: app-token
+        if: steps.gate.outputs.should_dispatch == 'true'
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          app-id: ${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}
+          owner: RSI-Index
+          repositories: RSI-Skills
+          permission-contents: write
+
+      - name: Build dispatch request
+        if: steps.gate.outputs.should_dispatch == 'true'
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.load(Path("dispatch-payload.json").open(encoding="utf-8"))
+          request = {
+              "event_type": "discussion_task_command",
+              "client_payload": payload,
+          }
+          with Path("repository-dispatch.json").open("w", encoding="utf-8") as output:
+              json.dump(request, output, sort_keys=True, separators=(",", ":"))
+          PY
+
+      - name: Dispatch privately
+        if: steps.gate.outputs.should_dispatch == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          gh api --method POST /repos/RSI-Index/RSI-Skills/dispatches \
+            --input repository-dispatch.json
