@@ -1,0 +1,25 @@
+Bootstrap: localimage
+From: @PYTHON_BASE_SIF@
+
+%files
+    project /opt/project
+    task-tools /task-tools
+    training-defaults /opt/training-defaults
+    training-data /app/training/data
+
+%post
+    mkdir -p /app/project /app/output /app/training/prompt /app/training/reward
+    cp -a /opt/project/. /app/project/
+    cp /opt/project/training/open-instruct/scripts/train/debug/envs/swerl_vanillux_sandbox_system_prompt.txt /app/training/prompt/system.txt
+    cp /opt/training-defaults/reward/reward.py /app/training/reward/reward.py
+    cp /opt/training-defaults/recipe.json /app/training/recipe.json
+    chmod 0555 /task-tools/*.py /task-tools/*.sh
+
+%environment
+    export PYTHONUNBUFFERED=1
+    export WANDB_MODE=offline
+    export HF_HUB_OFFLINE=1
+    export TRANSFORMERS_OFFLINE=1
+
+%runscript
+    exec bash "$@"

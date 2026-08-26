@@ -1,0 +1,7 @@
+version: 1
+task: optimizer-update-geometry
+allowed_source_globs:
+  - examples/training/optimizer/runtime/optimizer_*.py
+  - 3rdparty/Megatron-LM/megatron/core/optimizer/**
+  - 3rdparty/Megatron-LM/megatron/core/fusions/**
+  - 3rdparty/Megatron-LM/megatron/core/extensions/**

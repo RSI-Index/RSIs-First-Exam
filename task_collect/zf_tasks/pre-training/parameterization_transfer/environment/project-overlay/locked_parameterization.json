@@ -1,0 +1,1 @@
+{"version": 1, "base_shape": {"layers": 12, "hidden_size": 1152}, "optimizer": {"adam_lr": 0.000304311605183897, "beta1": 0.9, "beta2": 0.9999, "epsilon": 3.988017477238883e-08, "weight_decay": 0.1, "clip": 0.1, "z_loss": 1e-7}, "transfer": {"candidate_lr_branch": "AdamH matrix group only", "proxy": "E0", "target_feedback": false}}
