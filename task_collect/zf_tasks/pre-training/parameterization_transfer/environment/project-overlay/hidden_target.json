@@ -1,0 +1,1 @@
+{"version": 1, "scale": "E5", "model": {"layers": 23, "hidden_size": 2304, "ffn_hidden_size": 9216, "parameters": 2544614912}, "training": {"tokens": 18617466880, "updates": 35510, "global_batch_size": 128, "micro_batch_size": 1, "sequence_length": 4096, "seed": 0}}

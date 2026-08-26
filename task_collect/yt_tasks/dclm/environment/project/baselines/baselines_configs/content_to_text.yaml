@@ -1,0 +1,5 @@
+- source: cc
+  steps:
+    - func: key_name_modifier
+      old_key: content
+      new_key: text

@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="720" viewBox="0 0 1000 720">
+<rect width="100%" height="100%" fill="white"/>
+<style>text{font-family:Arial,sans-serif;fill:#202124}.axis{stroke:#555;stroke-width:1}.grid{stroke:#ddd;stroke-width:1}.label{font-size:13px}.title{font-size:20px;font-weight:700}.subtitle{font-size:15px;font-weight:700}</style>
+<text x="500" y="30" text-anchor="middle" class="title">RLM Step 4 baseline reward curves</text>
+<text x="78" y="55" class="subtitle">Training reward: OOLONG spam rollouts</text>
+<text x="78" y="405" class="subtitle">Checkpoint eval reward: OOLONG trec_coarse, 25 rows</text>
+<line x1="78" y1="325.00" x2="965" y2="325.00" class="grid"/>
+<text x="66" y="329.00" text-anchor="end" class="label">0.00</text>
+<line x1="78" y1="261.25" x2="965" y2="261.25" class="grid"/>
+<text x="66" y="265.25" text-anchor="end" class="label">0.25</text>
+<line x1="78" y1="197.50" x2="965" y2="197.50" class="grid"/>
+<text x="66" y="201.50" text-anchor="end" class="label">0.50</text>
+<line x1="78" y1="133.75" x2="965" y2="133.75" class="grid"/>
+<text x="66" y="137.75" text-anchor="end" class="label">0.75</text>
+<line x1="78" y1="70.00" x2="965" y2="70.00" class="grid"/>
+<text x="66" y="74.00" text-anchor="end" class="label">1.00</text>
+<line x1="78" y1="70" x2="78" y2="325" class="axis"/>
+<line x1="78" y1="325" x2="965" y2="325" class="axis"/>
+<line x1="78" y1="675.00" x2="965" y2="675.00" class="grid"/>
+<text x="66" y="679.00" text-anchor="end" class="label">0.00</text>
+<line x1="78" y1="611.25" x2="965" y2="611.25" class="grid"/>
+<text x="66" y="615.25" text-anchor="end" class="label">0.25</text>
+<line x1="78" y1="547.50" x2="965" y2="547.50" class="grid"/>
+<text x="66" y="551.50" text-anchor="end" class="label">0.50</text>
+<line x1="78" y1="483.75" x2="965" y2="483.75" class="grid"/>
+<text x="66" y="487.75" text-anchor="end" class="label">0.75</text>
+<line x1="78" y1="420.00" x2="965" y2="420.00" class="grid"/>
+<text x="66" y="424.00" text-anchor="end" class="label">1.00</text>
+<line x1="78" y1="420" x2="78" y2="675" class="axis"/>
+<line x1="78" y1="675" x2="965" y2="675" class="axis"/>
+<text x="78.00" y="347" text-anchor="middle" class="label">1</text>
+<text x="213.31" y="347" text-anchor="middle" class="label">10</text>
+<text x="363.64" y="347" text-anchor="middle" class="label">20</text>
+<text x="513.98" y="347" text-anchor="middle" class="label">30</text>
+<text x="664.32" y="347" text-anchor="middle" class="label">40</text>
+<text x="814.66" y="347" text-anchor="middle" class="label">50</text>
+<text x="965.00" y="347" text-anchor="middle" class="label">60</text>
+<line x1="78.00" y1="70" x2="78.00" y2="325" stroke="#bbb" stroke-dasharray="4 4"/>
+<text x="78.00" y="697" text-anchor="middle" class="label">20</text>
+<line x1="521.50" y1="70" x2="521.50" y2="325" stroke="#bbb" stroke-dasharray="4 4"/>
+<text x="521.50" y="697" text-anchor="middle" class="label">40</text>
+<line x1="965.00" y1="70" x2="965.00" y2="325" stroke="#bbb" stroke-dasharray="4 4"/>
+<text x="965.00" y="697" text-anchor="middle" class="label">60</text>
+<polyline points="78.00,138.31 93.03,176.26 108.07,138.01 123.10,156.52 138.14,133.75 153.17,138.01 168.20,147.42 183.24,177.89 198.27,184.75 213.31,161.06 228.34,163.51 243.37,125.26 258.41,156.52 273.44,133.75 288.47,163.51 303.51,119.04 318.54,145.89 333.58,146.50 348.61,183.83 363.64,182.33 378.68,112.51 393.71,151.96 408.75,133.75 423.78,133.75 438.81,154.99 453.85,186.87 468.88,161.06 483.92,138.01 498.95,170.19 513.98,173.22 529.02,224.81 544.05,112.51 559.08,138.01 574.12,158.28 589.15,174.73 604.19,125.26 619.22,149.69 634.25,167.74 649.29,146.50 664.32,197.50 679.36,179.29 694.39,133.75 709.42,133.75 724.46,173.58 739.49,172.97 754.53,167.74 769.56,173.58 784.59,156.52 799.63,189.01 814.66,161.06 829.69,197.50 844.73,173.58 859.76,114.14 874.80,217.11 889.83,142.85 904.86,148.46 919.90,176.26 934.93,146.50 949.97,163.51 965.00,125.79" fill="none" stroke="#9aa0a6" stroke-width="1.5"/>
+<polyline points="78.00,138.31 93.03,157.29 108.07,150.86 123.10,152.28 138.14,148.57 153.17,148.51 168.20,142.74 183.24,150.72 198.27,156.36 213.31,161.83 228.34,166.93 243.37,162.49 258.41,158.22 273.44,148.02 288.47,148.51 303.51,139.61 318.54,143.74 333.58,141.74 348.61,151.75 363.64,155.52 378.68,154.21 393.71,155.43 408.75,152.88 423.78,142.86 438.81,137.39 453.85,152.26 468.88,154.08 483.92,154.94 498.95,162.22 513.98,165.87 529.02,173.46 544.05,163.75 559.08,163.75 574.12,161.37 589.15,161.67 604.19,141.76 619.22,149.19 634.25,155.14 649.29,152.78 664.32,157.34 679.36,168.14 694.39,164.96 709.42,158.16 724.46,163.57 739.49,158.67 754.53,156.36 769.56,164.32 784.59,168.88 799.63,171.96 814.66,169.58 829.69,175.53 844.73,175.53 859.76,167.06 874.80,172.68 889.83,169.04 904.86,159.23 919.90,159.77 934.93,166.24 949.97,155.52 965.00,152.10" fill="none" stroke="#e8710a" stroke-width="3.0"/>
+<text x="805" y="90" class="label" fill="#e8710a">orange: trailing 5-step mean</text>
+<polyline points="78.00,583.02 521.50,583.20 965.00,583.18" fill="none" stroke="#1a73e8" stroke-width="3.0"/>
+<circle cx="78.00" cy="583.02" r="6" fill="#1a73e8"/>
+<text x="78.00" y="571.02" text-anchor="middle" class="label">0.360713</text>
+<circle cx="521.50" cy="583.20" r="6" fill="#1a73e8"/>
+<text x="521.50" y="571.20" text-anchor="middle" class="label">0.360000</text>
+<circle cx="965.00" cy="583.18" r="6" fill="#1a73e8"/>
+<text x="965.00" y="571.18" text-anchor="middle" class="label">0.360078</text>
+<text x="500.0" y="367" text-anchor="middle" class="label">Updates completed</text>
+<text x="500.0" y="717" text-anchor="middle" class="label">Checkpoint step</text>
+</svg>

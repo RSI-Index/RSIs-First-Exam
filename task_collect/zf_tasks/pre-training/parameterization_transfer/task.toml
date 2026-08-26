@@ -1,0 +1,90 @@
+schema_version = "1.3"
+source = "NVIDIA-NeMo/Megatron-Bridge@accefd7b3a448ab45b015edc04c9d3b70f7cb3b7"
+artifacts = [
+  "/app/project",
+  { source = "/app/output", exclude = [
+    "*/cache", "*/cache/*",
+    "*/tensorboard", "*/tensorboard/*",
+    "*/wandb", "*/wandb/*",
+    "attempts/*/checkpoints", "attempts/*/checkpoints/*",
+    "source-worktrees", "source-worktrees/*",
+  ] },
+]
+
+[task]
+name = "more-task/parameterization-transfer"
+description = "Invent one scale-general initialization, forward-scaling, and matrix-LR parameterization whose E0-tuned base learning rate transfers with low regret across a locked 550M-to-2.545B ladder."
+authors = [{ name = "More Task" }]
+keywords = ["parameterization", "learning-rate-transfer", "scaling-ladder", "paloma", "mup", "megatron-bridge"]
+
+[metadata]
+difficulty = "hard"
+category = "model_development"
+upstream_commit = "accefd7b3a448ab45b015edc04c9d3b70f7cb3b7"
+mcore_commit = "58bf14e9e68915a5e0c7d70451620e6e713c07d5"
+license = "Apache-2.0"
+
+[metadata.optimization]
+metric = "transfer regret against each method's own target-scale base-LR oracle"
+direction = "lower"
+submission_mode = "artifact"
+scope = "one E0-tuned base LR plus one frozen scale-general initialization, forward-scaling, and AdamH-matrix LR rule; model, data, auxiliary Adam group, batch trajectory, horizon, and evaluator are frozen"
+
+[metadata.baseline]
+method = "locked Marin AdamH recipes with Llama-3-scaled RoPE"
+manifest = "/task-data/scale_baselines.json"
+scale_order = ["E0", "E1", "E2", "E3", "E4", "E5"]
+minimum_scale_parameters = 550337664
+maximum_scale_parameters = 2544614912
+training_sequence_length = 4096
+seed = 0
+aggregate_paloma_gain_minimum = 1.002
+endpoint_micro_noninferiority = 1.005
+intermediate_micro_noninferiority = 1.01
+macro_noninferiority = 1.01
+minimum_improved_scales = 4
+
+[metadata.run_contract]
+asset_root = "/proj/datasets/interns/yuetai/agent_envs/more_task"
+base_runtime_image = "images/megatron-bridge-llama14b-accefd7b3a44-dbd0f1abbad5.sif"
+paloma_data = "data/paloma-rev-65cd6fc"
+outer_allocation_gpus = 256
+outer_allocation_nodes = 32
+gpus_per_node = 8
+scale_gpus = [8, 8, 8, 32, 32, 128]
+tensor_parallel = 1
+pipeline_parallel = 1
+training_context = 4096
+evaluation_context = "Paloma at 4096 tokens plus token-normalized training-loss/cost traces"
+transport = "NCCL IB/RDMA device bind enabled"
+web_search = "disabled"
+
+[agent]
+network_mode = "public"
+timeout_sec = 244800
+
+[environment]
+network_mode = "public"
+docker_image = "/proj/datasets/interns/yuetai/agent_envs/more_task/images/parameterization-transfer-environment-accefd7b3a44-r2.sif"
+build_timeout_sec = 10800
+cpus = 32
+memory_mb = 262144
+storage_mb = 204800
+gpus = 256
+
+[environment.env]
+WANDB_MODE = "offline"
+HF_HUB_OFFLINE = "1"
+TRANSFORMERS_OFFLINE = "1"
+PARAMETERIZATION_ASSET_ROOT = "/proj/datasets/interns/yuetai/agent_envs/more_task"
+PARAMETERIZATION_PROJECT = "/app/project"
+PARAMETERIZATION_OUTPUT_ROOT = "/app/output"
+PARAMETERIZATION_SCALING_BASELINES = "/task-data/scale_baselines.json"
+
+[verifier]
+timeout_sec = 14400
+environment_mode = "shared"
+network_mode = "public"
+
+[verifier.env]
+PARAMETERIZATION_SMOKE_VERIFIER = "0"

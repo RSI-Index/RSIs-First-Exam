@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "task_id": "bigvision_lit_coco_alignment",
+  "source_code": {
+    "repository": "https://github.com/google-research/big_vision.git",
+    "commit": "8921d5141504390a8a4f7b2dacb3b3c042237290"
+  },
+  "tfds": {
+    "coco_captions": {
+      "builder": "coco_captions:1.1.0",
+      "acquisition": "official TFDS automatic download"
+    },
+    "imagenet2012": {
+      "builder": "imagenet2012:5.1.0",
+      "acquisition": "official TFDS manual download",
+      "required_archives": ["ILSVRC2012_img_train.tar", "ILSVRC2012_img_val.tar"],
+      "note": "ImageNet account and license acceptance are required; no public mirror is substituted."
+    }
+  },
+  "public_objects": [
+    {
+      "path": "initializers/vit_b16_augreg.npz",
+      "url": "https://storage.googleapis.com/vit_models/augreg/B_16-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.0-sd_0.0.npz",
+      "size": 410448610,
+      "md5_base64": "3uLqCLj0SKDPkNVmBJHjbg==",
+      "generation": "1623768577720681",
+      "role": "frozen image-tower initializer"
+    },
+    {
+      "path": "initializers/bert_base/bert_config.json",
+      "url": "https://storage.googleapis.com/vit_models/lit/bert/uncased_L-12_H-768_A-12/bert_config.json",
+      "size": 313,
+      "md5_base64": "dNT5b9q92GXL2+kFzUbB8Q==",
+      "generation": "1655471634436783",
+      "role": "text initializer"
+    },
+    {
+      "path": "initializers/bert_base/bert_model.ckpt.data-00000-of-00001",
+      "url": "https://storage.googleapis.com/vit_models/lit/bert/uncased_L-12_H-768_A-12/bert_model.ckpt.data-00000-of-00001",
+      "size": 440425712,
+      "md5_base64": "V/gCXm8OftnPL7n6b+0PeQ==",
+      "generation": "1655471634247648",
+      "role": "text initializer"
+    },
+    {
+      "path": "initializers/bert_base/bert_model.ckpt.index",
+      "url": "https://storage.googleapis.com/vit_models/lit/bert/uncased_L-12_H-768_A-12/bert_model.ckpt.index",
+      "size": 8528,
+      "md5_base64": "xbmTMBkAEGfJmhHQwTPO3Q==",
+      "generation": "1655471628848088",
+      "role": "text initializer"
+    },
+    {
+      "path": "initializers/bert_base/bert_model.ckpt.meta",
+      "url": "https://storage.googleapis.com/vit_models/lit/bert/uncased_L-12_H-768_A-12/bert_model.ckpt.meta",
+      "size": 904243,
+      "md5_base64": "GuUAB4IUz9nbS0UBSCD8gA==",
+      "generation": "1655471628478499",
+      "role": "text initializer"
+    },
+    {
+      "path": "initializers/bert_base/vocab.txt",
+      "url": "https://storage.googleapis.com/vit_models/lit/bert/uncased_L-12_H-768_A-12/vocab.txt",
+      "size": 231508,
+      "md5_base64": "ZIANXYUozjRCVtrxFdSWXg==",
+      "generation": "1655471628686504",
+      "role": "tokenizer vocabulary"
+    },
+    {
+      "path": "verifier/checkpoints/coco_B16B_checkpoint.npz",
+      "url": "https://storage.googleapis.com/vit_models/lit/big_vision/coco_B16B/checkpoint.npz",
+      "size": 1657308740,
+      "md5_base64": "pSg1DZ3HOTiZ8fyyUPopRA==",
+      "generation": "1656196667822420",
+      "role": "verifier-only released-checkpoint control"
+    }
+  ]
+}

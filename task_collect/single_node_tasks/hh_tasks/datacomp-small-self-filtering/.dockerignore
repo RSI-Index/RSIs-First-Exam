@@ -1,0 +1,17 @@
+# Both images build from the PACKAGE ROOT (that is what keeps a single policy.yaml on disk), so
+# everything not excluded here is one careless `COPY . /app` away from being inside an image.
+#
+# reference/ holds the anchor improver that the reward is divided by. tests/contract_check.py fails
+# the build if this entry is missing, if a Dockerfile COPYs from reference/, or if any Dockerfile does
+# a whole-context copy -- an exclusion nobody checks is an exclusion that gets deleted in a refactor.
+reference/
+
+# Chain outputs and staged-asset records never belong in an image.
+_harness_test/
+chains/
+environment/staged.lock.yaml
+environment/pool.lock.yaml
+
+__pycache__/
+*.pyc
+.git/

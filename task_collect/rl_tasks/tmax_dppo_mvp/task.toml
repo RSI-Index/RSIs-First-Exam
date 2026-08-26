@@ -1,0 +1,102 @@
+schema_version = "1.3"
+source = "hamishivi/tmax@7387d2f9142397a458dc39f0827a2ab0b4c03cda"
+artifacts = [
+  "/app/project",
+  "/app/training",
+  { source = "/app/output", exclude = ["*/wandb", "*/wandb/*", "*/ray", "*/ray/*", "*/vllm-cache", "*/vllm-cache/*", "*/podman", "*/podman/*"] },
+]
+
+[task]
+name = "scale-autoresearch/tmax-adaptive-training-9b"
+description = "Adaptively improve TMAX Qwen3.5-9B by researching training algorithms, data strategy, training prompts, and training rewards while final evaluation stays frozen."
+authors = [{ name = "Scale AutoResearch" }]
+keywords = ["tmax", "dppo", "terminal-agent", "reinforcement-learning", "open-instruct", "harbor"]
+
+[metadata]
+difficulty = "hard"
+category = "model_development"
+upstream_commit = "7387d2f9142397a458dc39f0827a2ab0b4c03cda"
+license = "Apache-2.0"
+task_status = "autoresearch_qualification"
+
+[metadata.optimization]
+metric = "mean original programmatic-verifier reward on a sealed Terminal-Bench 2.0 subset"
+direction = "higher"
+submission_mode = "artifact"
+scope = "Training algorithm and recipe; public training-data filtering, weighting, curricula, mixtures, transformations, and bounded synthetic augmentation; training-only prompts; training-only reward shaping. The 9B base model, 200-update final budget, topology, and complete final evaluator are frozen."
+
+[metadata.science]
+headline = "Find which training method best turns sparse terminal feedback into a capable 9B terminal agent."
+guiding_question = "Which combination of optimization, public-data curriculum, training prompt, and training reward gives the best frozen-evaluator terminal success?"
+
+[metadata.fidelity]
+reference = "pinned hamishivi/tmax repository only"
+baseline = "official released allenai/tmax-9b step_200 checkpoint; no baseline retraining"
+non_repository_inputs = "immutable asset staging, scheduler translation, preloaded OCI images, async task tools, hidden-task split, clean verifier, and reward mapping are benchmark infrastructure"
+
+[metadata.baseline]
+method = "official released allenai/tmax-9b step_200 checkpoint"
+score_status = "pending"
+artifact = "allenai/tmax-9b@step_200"
+training_reproduction = "not_required"
+optimizer_updates = 200
+evaluation_status = "pending_clean_matched_evaluation"
+
+[metadata.run_contract]
+full_run_gpus = 64
+gpu_type = "H100"
+agent_trajectories = 1
+candidate_web_search = "disabled"
+attempt_updates = "agent_selected_1_to_200"
+final_optimizer_updates = 200
+final_training_trajectories = 51200
+fixed_trajectories_per_update = 256
+scientific_budget = "agent-planned attempts within the trusted research deadline; selectable run exactly 51200 terminal trajectories / 200 updates; 256 trajectories per update; 64 environment steps per trajectory"
+topology_mapping = "official 8-node x 8-H100 Ray allocation; 8 learner actors per learner node and 48 vLLM engines with TP=1"
+measured_steady_update_seconds = 248
+async_poll_seconds = 1800
+task_tool = "/task-tools/tmax_task_tool.py"
+async_adapter = "/task-tools/tmax_async_run.py"
+
+[agent]
+network_mode = "public"
+
+[environment]
+docker_image = "/proj/datasets/interns/yuetai/agent_envs/scale_autoresearch_tasks/others/rsi_tasks/assets/images/tmax-autoresearch-environment-7387d2f-r1.sif"
+network_mode = "public"
+build_timeout_sec = 10800
+cpus = 128
+memory_mb = 1048576
+storage_mb = 1024000
+gpus = 64
+gpu_types = ["H100"]
+
+[environment.env]
+WANDB_MODE = "offline"
+HF_HUB_OFFLINE = "1"
+TRANSFORMERS_OFFLINE = "1"
+SLURM_NNODES = "8"
+TMAX_DATASET = "/datasets/tmax/train"
+TMAX_MODEL = "/models/Qwen3.5-9B"
+
+[verifier]
+timeout_sec = 21600
+environment_mode = "separate"
+network_mode = "none"
+
+[verifier.environment]
+docker_image = "/proj/datasets/interns/yuetai/agent_envs/scale_autoresearch_tasks/others/rsi_tasks/assets/images/tmax-autoresearch-tests-7387d2f-r1.sif"
+network_mode = "none"
+build_timeout_sec = 10800
+cpus = 128
+memory_mb = 524288
+storage_mb = 1024000
+gpus = 8
+gpu_types = ["H100"]
+
+[verifier.environment.env]
+HF_HUB_OFFLINE = "1"
+TRANSFORMERS_OFFLINE = "1"
+TMAX_BASE_MODEL = "/models/Qwen3.5-9B"
+TMAX_HIDDEN_DATASET = "/datasets/tmax/eval/terminal-bench-2-hidden"
+TMAX_PRELOADED_IMAGE_STORE = "/datasets/tmax/eval/oci-images"

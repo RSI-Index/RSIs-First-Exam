@@ -1,0 +1,52 @@
+{
+  "manifest_version": 1,
+  "task_id": "bigvision_lit_coco_alignment",
+  "sources": [
+    {
+      "name": "big_vision_image_text_runtime",
+      "role": "runtime_source",
+      "repository": "https://github.com/google-research/big_vision",
+      "commit": "8921d5141504390a8a4f7b2dacb3b3c042237290",
+      "tree": "8f73654781bd99e0ee8ffc5f92d97ef566c4fd06",
+      "license_spdx": "Apache-2.0",
+      "files": [
+        {"path": "big_vision/configs/proj/image_text/lit_coco.py", "sha256": "96fa17d53a75dd4b08c45705cb617332ee19f092deabcc533ae437507b4f7688"},
+        {"path": "big_vision/trainers/proj/image_text/contrastive.py", "sha256": "b51bae56b3acf1431fcdcf543779c2f7fc199b601dd64f16444cb8832fc2ced5"},
+        {"path": "big_vision/evaluators/proj/image_text/retrieval.py", "sha256": "c1f7b93995025ba9613d8d52761915a7f747f3ea16d7a4b92fe0002e8b1de107"},
+        {"path": "big_vision/configs/proj/image_text/common.py", "sha256": "8009e908e74bc227ac6a1cb281d1ab03bd5b854f33bbd54a3e70436ca664c549"},
+        {"path": "big_vision/configs/common.py", "sha256": "a2b5a9089fa8e63698911f2db9950473dfd77383ba0b0db71eecd5f324c452be"},
+        {"path": "big_vision/requirements.txt", "sha256": "2128acdd0cd2f415e2666c2645ea3246d32b896ac92a683e75dd5d7f4e433b57"}
+      ]
+    },
+    {
+      "name": "big_vision_current_documentation",
+      "role": "selection_and_baseline_documentation_only",
+      "repository": "https://github.com/google-research/big_vision",
+      "commit": "0127fb6b337ee2a27bf4e54dea79cff176527356",
+      "tree": "5275b266c8768014cb9bb1cd000473f4f8d38a97",
+      "license_spdx": "Apache-2.0",
+      "files": [
+        {"path": "README.md", "sha256": "6772eeba75c265ade38fca5693d495862f881b21110b5547bd01ee735ae20da4"},
+        {"path": "big_vision/configs/proj/image_text/README_lit.md", "sha256": "56ad8039a5df806f10a9042681fe0be0feaf8d959abfc5e17bc3881973ba1bfb"}
+      ]
+    }
+  ],
+  "assets": {
+    "state": "task_owned_official_bootstrap",
+    "delivery_mode": "setup_then_content_addressed_read_only_mounts",
+    "setup_entrypoint": "setup/prepare_assets.sh",
+    "setup_source_lock": "setup/asset_sources.lock.json",
+    "harbor_runtime_acquisition": "forbidden",
+    "datasets": [
+      "coco_captions:train",
+      "coco_captions:verifier_split",
+      "imagenet2012:validation"
+    ],
+    "initializers": [
+      "gs://vit_models/augreg/B_16-i21k-300ep-lr_0.001-aug_medium1-wd_0.1-do_0.0-sd_0.0.npz",
+      "gs://vit_models/lit/bert/uncased_L-12_H-768_A-12"
+    ],
+    "released_baseline": "gs://vit_models/lit/big_vision/coco_B16B/checkpoint.npz",
+    "deployment": "Run the task-owned official setup on the destination cluster after supplying the two licensed ILSVRC2012 archives, then launch with run_harbor.sh."
+  }
+}
