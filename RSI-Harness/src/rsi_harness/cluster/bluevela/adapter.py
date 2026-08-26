@@ -102,13 +102,19 @@ def derive_resources(
         work_gpus = declared_work
 
     verifier_gpus = definition.verifier.gpu_count
-    total_gpus = work_gpus + verifier_gpus
-    if total_gpus > profile.resources.gpus_per_node:
+    phase_gpus = max(work_gpus, verifier_gpus)
+    if phase_gpus > profile.resources.gpus_per_node:
         raise SetupError(
-            "task GPU request exceeds cluster single-node capacity: "
-            f"{work_gpus}+{verifier_gpus}={total_gpus} > "
+            "task phase GPU request exceeds cluster single-node capacity: "
+            f"max({work_gpus}, {verifier_gpus})={phase_gpus} > "
             f"{profile.resources.gpus_per_node}"
         )
+    requested_gpus = work_gpus + verifier_gpus
+    total_gpus = (
+        requested_gpus
+        if requested_gpus <= profile.resources.gpus_per_node
+        else phase_gpus
+    )
 
     run_seconds = (
         definition.agent.timeout_seconds
@@ -525,12 +531,18 @@ class BlueVelaClusterAdapter(ClusterAdapter):
             for index in range(resources.total_gpus)
         )
         work = GPUAllocation(devices=devices[: resources.work_gpus])
-        verifier = GPUAllocation(devices=devices[resources.work_gpus :])
-        mode = (
-            JudgeGPUMode.DISJOINT
-            if verifier.devices
-            else JudgeGPUMode.FREEZE_ONLY
-        )
+        spares = devices[resources.work_gpus :]
+        if resources.verifier_gpus == 0:
+            verifier = GPUAllocation()
+            mode = JudgeGPUMode.FREEZE_ONLY
+        elif resources.verifier_gpus <= len(spares):
+            verifier = GPUAllocation(devices=spares[: resources.verifier_gpus])
+            mode = JudgeGPUMode.DISJOINT
+        else:
+            verifier = GPUAllocation(
+                devices=(spares + work.devices)[: resources.verifier_gpus]
+            )
+            mode = JudgeGPUMode.RELEASE_ALL
         workdir = (
             definition.workdir
             or definition.service.workdir

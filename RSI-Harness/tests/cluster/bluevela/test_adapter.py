@@ -7,7 +7,11 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from rsi_harness.cluster.base import ClusterRunRequest
-from rsi_harness.cluster.bluevela.adapter import BlueVelaClusterAdapter
+from rsi_harness.cluster.bluevela.adapter import (
+    BlueVelaClusterAdapter,
+    derive_resources,
+)
+from rsi_harness.cluster.bluevela.image import ImagePlan as SIFImagePlan
 from rsi_harness.cluster.bluevela.engine import load_engine_payload
 from rsi_harness.cluster.config import ClusterProfile, load_cluster_profile
 from rsi_harness.cluster.schedulers.lsf import (
@@ -19,6 +23,8 @@ from rsi_harness.models import (
     AgentAuthSource,
     CompileOptions,
     FrozenRewardMap,
+    GPURequirement,
+    JudgeGPUMode,
     SubmissionReport,
     SubmissionStatus,
 )
@@ -157,6 +163,40 @@ def test_dry_run_resolves_four_gpus_without_mutation(tmp_path: Path) -> None:
     assert "num=4:mode=exclusive_process" in dry_run["run_argv"]
     assert "select[tmp>=15360] span[hosts=1]" in dry_run["run_argv"]
     assert dry_run["agent_version"] == "0.149.0"
+
+
+def test_run_plan_overlaps_work_and_judge_when_single_node_requires_reuse(
+    tmp_path: Path,
+) -> None:
+    profile = _profile(tmp_path)
+    adapter = BlueVelaClusterAdapter(
+        profile,
+        scheduler=RecordingScheduler(),
+        agent_version_resolver=lambda _name: "0.149.0",
+    )
+    definition = adapter._compile(_request(tmp_path, dry_run=True))
+    definition = definition.model_copy(
+        update={
+            "gpu_requirement": GPURequirement(count=8),
+            "verifier": definition.verifier.model_copy(update={"gpu_count": 4}),
+        }
+    )
+    resources = derive_resources(definition, profile)
+    image = SIFImagePlan(
+        cache_key="0" * 64,
+        sif_path=(tmp_path / "task.sif").resolve(),
+        sha256_path=(tmp_path / "task.sif.sha256").resolve(),
+        cache_hit=False,
+    )
+
+    plan = adapter._run_plan(definition, image, resources, tmp_path / "run")
+
+    assert plan.gpu_plan.judge_mode is JudgeGPUMode.RELEASE_ALL
+    assert plan.gpu_plan.authorized_pool.uuids == tuple(
+        f"LSF-{index}" for index in range(8)
+    )
+    assert plan.gpu_plan.work.uuids == plan.gpu_plan.authorized_pool.uuids
+    assert plan.gpu_plan.judge.uuids == plan.gpu_plan.work.uuids[:4]
 
 
 def test_cache_miss_waits_for_build_then_run_and_records_manifest(
