@@ -36,6 +36,7 @@ def test_review_workflow_upserts_running_comment_before_private_work():
     progress = step_named("Post or update running review comment")
 
     assert progress["id"] == "progress"
+    assert progress["if"] == "steps.reaction-token.outcome == 'success'"
     assert progress["continue-on-error"] == "true"
     assert progress["env"] == {
         "GH_TOKEN": "${{ steps.reaction-token.outputs.token }}",
@@ -55,16 +56,37 @@ def test_review_workflow_upserts_running_comment_before_private_work():
 
 
 def test_review_workflow_replaces_progress_with_generic_failure_on_any_later_error():
+    steps = parsed_steps()
+    failure_token = step_named("Create failure comment Discussion App token")
     failure = step_named("Post or update failed review comment")
 
+    assert failure_token == {
+        "name": "Create failure comment Discussion App token",
+        "id": "failure-token",
+        "if": "always() && steps.publish-review.outcome != 'success'",
+        "continue-on-error": "true",
+        "uses": f"actions/create-github-app-token@{APP_TOKEN_SHA}",
+        "with": {
+            "client-id": "${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}",
+            "private-key": "${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}",
+            "owner": "RSI-Index",
+            "repositories": "RSI-Index-Public",
+            "permission-discussions": "write",
+        },
+    }
     assert failure["if"] == (
-        "always() && steps.progress.outcome == 'success' && "
-        "steps.publish-review.outcome != 'success'"
+        "always() && steps.publish-review.outcome != 'success' && "
+        "steps.failure-token.outcome == 'success'"
     )
-    assert failure["env"]["GH_TOKEN"] == "${{ steps.reaction-token.outputs.token }}"
+    assert failure["continue-on-error"] == "true"
+    assert failure["env"]["GH_TOKEN"] == "${{ steps.failure-token.outputs.token }}"
     assert failure["env"]["BOT_LOGIN"] == (
-        "${{ format('{0}[bot]', steps.reaction-token.outputs.app-slug) }}"
+        "${{ format('{0}[bot]', steps.failure-token.outputs.app-slug) }}"
     )
+    assert steps.index(failure_token) == (
+        steps.index(step_named("Format and post or update comment")) + 1
+    )
+    assert steps.index(failure) == steps.index(failure_token) + 1
     assert "Proposal review failed before completion" in failure["run"]
     assert "updateDiscussionComment" in failure["run"]
     assert "addDiscussionComment" in failure["run"]
@@ -164,6 +186,7 @@ def test_review_reactions_and_comments_use_just_in_time_scoped_app_tokens():
     assert steps["Create reaction Discussion App token"] == {
         "name": "Create reaction Discussion App token",
         "id": "reaction-token",
+        "continue-on-error": "true",
         "uses": f"actions/create-github-app-token@{APP_TOKEN_SHA}",
         "with": expected_with,
     }
@@ -176,6 +199,8 @@ def test_review_reactions_and_comments_use_just_in_time_scoped_app_tokens():
     assert steps["React with eyes"]["env"]["GH_TOKEN"] == (
         "${{ steps.reaction-token.outputs.token }}"
     )
+    assert steps["React with eyes"]["if"] == "steps.reaction-token.outcome == 'success'"
+    assert steps["React with eyes"]["continue-on-error"] == "true"
     assert steps["Format and post or update comment"]["env"]["GH_TOKEN"] == (
         "${{ steps.comment-token.outputs.token }}"
     )

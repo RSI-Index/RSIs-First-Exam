@@ -21,6 +21,7 @@ jobs:
     steps:
       - name: Create reaction Discussion App token
         id: reaction-token
+        continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
         with:
           client-id: ${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}
@@ -30,6 +31,8 @@ jobs:
           permission-discussions: write
 
       - name: React with eyes
+        if: steps.reaction-token.outcome == 'success'
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ steps.reaction-token.outputs.token }}
           DISCUSSION_NODE_ID: ${{ github.event.discussion.node_id }}
@@ -45,6 +48,7 @@ jobs:
 
       - name: Post or update running review comment
         id: progress
+        if: steps.reaction-token.outcome == 'success'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ steps.reaction-token.outputs.token }}
@@ -319,11 +323,24 @@ jobs:
             -f discussionId="$DISCUSSION_ID" \
             -f body="$BODY"
 
+      - name: Create failure comment Discussion App token
+        id: failure-token
+        if: always() && steps.publish-review.outcome != 'success'
+        continue-on-error: true
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          client-id: ${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}
+          owner: RSI-Index
+          repositories: RSI-Index-Public
+          permission-discussions: write
+
       - name: Post or update failed review comment
-        if: always() && steps.progress.outcome == 'success' && steps.publish-review.outcome != 'success'
+        if: always() && steps.publish-review.outcome != 'success' && steps.failure-token.outcome == 'success'
+        continue-on-error: true
         env:
-          GH_TOKEN: ${{ steps.reaction-token.outputs.token }}
-          BOT_LOGIN: ${{ format('{0}[bot]', steps.reaction-token.outputs.app-slug) }}
+          GH_TOKEN: ${{ steps.failure-token.outputs.token }}
+          BOT_LOGIN: ${{ format('{0}[bot]', steps.failure-token.outputs.app-slug) }}
           DISCUSSION_ID: ${{ github.event.discussion.node_id }}
           DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
           REPOSITORY_OWNER: ${{ github.repository_owner }}
