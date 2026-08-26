@@ -14,6 +14,74 @@ def parsed_steps() -> list[dict]:
     return workflow["jobs"]["review"]["steps"]
 
 
+def parsed_workflow() -> dict:
+    return yaml.load(WORKFLOW.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
+
+
+def step_named(name: str) -> dict:
+    return next(step for step in parsed_steps() if step.get("name") == name)
+
+
+def test_review_workflow_serializes_each_discussion_and_restarts_on_edit():
+    concurrency = parsed_workflow()["concurrency"]
+
+    assert concurrency == {
+        "group": "discussion-review-${{ github.event.discussion.node_id }}",
+        "cancel-in-progress": "true",
+    }
+
+
+def test_review_workflow_upserts_running_comment_before_private_work():
+    steps = parsed_steps()
+    progress = step_named("Post or update running review comment")
+
+    assert progress["id"] == "progress"
+    assert progress["continue-on-error"] == "true"
+    assert progress["env"] == {
+        "GH_TOKEN": "${{ steps.reaction-token.outputs.token }}",
+        "BOT_LOGIN": "${{ format('{0}[bot]', steps.reaction-token.outputs.app-slug) }}",
+        "DISCUSSION_ID": "${{ github.event.discussion.node_id }}",
+        "DISCUSSION_NUMBER": "${{ github.event.discussion.number }}",
+        "REPOSITORY_OWNER": "${{ github.repository_owner }}",
+        "REPOSITORY_NAME": "${{ github.event.repository.name }}",
+    }
+    assert steps.index(progress) == steps.index(step_named("React with eyes")) + 1
+    assert steps.index(progress) < steps.index(step_named("Create private Skills read token"))
+    assert "<!-- rubric-review-bot -->" in progress["run"]
+    assert "Proposal review is running" in progress["run"]
+    assert "updateDiscussionComment" in progress["run"]
+    assert "addDiscussionComment" in progress["run"]
+    assert "--paginate --slurp" in progress["run"]
+
+
+def test_review_workflow_replaces_progress_with_generic_failure_on_any_later_error():
+    failure = step_named("Post or update failed review comment")
+
+    assert failure["if"] == (
+        "always() && steps.progress.outcome == 'success' && "
+        "steps.publish-review.outcome != 'success'"
+    )
+    assert failure["env"]["GH_TOKEN"] == "${{ steps.reaction-token.outputs.token }}"
+    assert failure["env"]["BOT_LOGIN"] == (
+        "${{ format('{0}[bot]', steps.reaction-token.outputs.app-slug) }}"
+    )
+    assert "Proposal review failed before completion" in failure["run"]
+    assert "updateDiscussionComment" in failure["run"]
+    assert "addDiscussionComment" in failure["run"]
+    for private_text in ("RSI-Skills", "SKILL.md", "RUBRIC_FILE", "review.log"):
+        assert private_text not in failure["run"]
+
+
+def test_successful_review_always_updates_the_running_comment():
+    publish = step_named("Format and post or update comment")
+
+    assert publish["id"] == "publish-review"
+    assert "EVENT_ACTION" not in publish["env"]
+    assert 'if [ "$EVENT_ACTION" = "edited" ]' not in publish["run"]
+    assert "updateDiscussionComment" in publish["run"]
+    assert "addDiscussionComment" in publish["run"]
+
+
 def test_edit_lookup_paginates_all_discussion_comments_for_bot_marker():
     workflow = WORKFLOW.read_text(encoding="utf-8")
     lookup = workflow.split("EXISTING_COMMENT_ID=$(gh api graphql", 1)[1].split(

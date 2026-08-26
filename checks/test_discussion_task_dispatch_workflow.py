@@ -106,6 +106,44 @@ def test_dispatch_workflow_posts_a_parser_built_identifier_only_request():
     assert "--input repository-dispatch.json" in dispatch["run"]
 
 
+def test_authorized_task_command_gets_non_blocking_eyes_acknowledgement():
+    workflow, _ = load_workflow()
+    steps = workflow["jobs"]["dispatch"]["steps"]
+    named_steps = steps_by_name(workflow)
+    authorization = (
+        "steps.gate.outputs.candidate == 'true' && "
+        "(steps.gate.outputs.is_author == 'true' || "
+        "steps.owner-gate.outputs.is_owner == 'true')"
+    )
+    token = named_steps["Create acknowledgement App token"]
+    reaction = named_steps["Acknowledge accepted task command"]
+
+    assert token == {
+        "name": "Create acknowledgement App token",
+        "id": "ack-token",
+        "if": authorization,
+        "continue-on-error": "true",
+        "uses": f"actions/create-github-app-token@{APP_TOKEN_SHA}",
+        "with": {
+            "client-id": "${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}",
+            "private-key": "${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}",
+            "owner": "RSI-Index",
+            "repositories": "RSI-Index-Public",
+            "permission-discussions": "write",
+        },
+    }
+    assert reaction["if"] == authorization + " && steps.ack-token.outcome == 'success'"
+    assert reaction["continue-on-error"] == "true"
+    assert reaction["env"] == {
+        "GH_TOKEN": "${{ steps.ack-token.outputs.token }}",
+        "COMMENT_NODE_ID": "${{ github.event.comment.node_id }}",
+    }
+    assert "addReaction" in reaction["run"]
+    assert 'id="$COMMENT_NODE_ID"' in reaction["run"]
+    assert 'content="EYES"' in reaction["run"]
+    assert steps.index(reaction) < steps.index(named_steps["Dispatch privately"])
+
+
 def test_dispatch_workflow_never_handles_private_or_untrusted_content():
     _, raw = load_workflow()
     lower = raw.lower()
