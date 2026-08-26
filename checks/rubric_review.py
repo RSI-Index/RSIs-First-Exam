@@ -141,6 +141,8 @@ _OUTPUT_FIELD_LIMITS = {
     "quality_review": 1800,
 }
 _RUBRIC_OVERLAP_WORDS = 12
+_RUBRIC_OVERLAP_CHARS = 80
+_MARKDOWN_ESCAPE_RE = re.compile(r"([\\`*_{}\[\]()#+\-.!|~])")
 
 
 class RepositoryReference(NamedTuple):
@@ -632,11 +634,13 @@ def _public_text(value: str) -> str:
         for character in normalized
         if character in "\n\t" or not unicodedata.category(character).startswith("C")
     )
-    return html.escape(" ".join(without_controls.split()), quote=False)
+    escaped_html = html.escape(" ".join(without_controls.split()), quote=False)
+    escaped_markdown = _MARKDOWN_ESCAPE_RE.sub(r"\\\1", escaped_html)
+    return escaped_markdown.replace("@", "&#64;")
 
 
 def _table_cell(value: str) -> str:
-    return _public_text(value).replace("|", r"\|")
+    return _public_text(value)
 
 
 def render_public_review(payload: dict) -> str:
@@ -683,29 +687,59 @@ def _normalized_words(value: str) -> list[str]:
     return re.findall(r"[a-z0-9]+", normalized)
 
 
+def _canonical_alnum(value: str) -> str:
+    normalized = unicodedata.normalize("NFKC", value).casefold()
+    return "".join(character for character in normalized if character.isalnum())
+
+
+def _payload_text(value) -> str:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, dict):
+        return "\n".join(_payload_text(item) for item in value.values())
+    if isinstance(value, list):
+        return "\n".join(_payload_text(item) for item in value)
+    return ""
+
+
 def contains_private_rubric_overlap(rubric: str, public_review: str) -> bool:
     rubric_words = _normalized_words(rubric)
     public_words = _normalized_words(public_review)
     window = _RUBRIC_OVERLAP_WORDS
-    if len(rubric_words) < window or len(public_words) < window:
+    if len(rubric_words) >= window and len(public_words) >= window:
+        private_word_windows = {
+            tuple(rubric_words[index : index + window])
+            for index in range(len(rubric_words) - window + 1)
+        }
+        if any(
+            tuple(public_words[index : index + window]) in private_word_windows
+            for index in range(len(public_words) - window + 1)
+        ):
+            return True
+
+    rubric_chars = _canonical_alnum(rubric)
+    public_chars = _canonical_alnum(public_review)
+    char_window = _RUBRIC_OVERLAP_CHARS
+    if len(rubric_chars) < char_window or len(public_chars) < char_window:
         return False
-    private_windows = {
-        tuple(rubric_words[index : index + window])
-        for index in range(len(rubric_words) - window + 1)
+    private_char_windows = {
+        rubric_chars[index : index + char_window]
+        for index in range(len(rubric_chars) - char_window + 1)
     }
     return any(
-        tuple(public_words[index : index + window]) in private_windows
-        for index in range(len(public_words) - window + 1)
+        public_chars[index : index + char_window] in private_char_windows
+        for index in range(len(public_chars) - char_window + 1)
     )
 
 
 def finalize_judge_output(output_text: str, rubric: str) -> str:
     try:
         payload = parse_judge_payload(output_text)
+        model_text = _payload_text(payload)
         public_review = render_public_review(payload)
     except (KeyError, TypeError, ValueError, json.JSONDecodeError):
         return WITHHELD_REVIEW
-    if contains_private_rubric_overlap(rubric, public_review):
+    if contains_private_rubric_overlap(rubric, model_text):
         return WITHHELD_REVIEW
     return public_review
 
