@@ -88,9 +88,33 @@ def test_all_gpu_declaration_requires_numeric_profile_override() -> None:
         )
 
 
-def test_single_node_limit_is_enforced() -> None:
+@pytest.mark.parametrize("verifier_gpus", (4, 8))
+def test_single_node_reuses_work_gpus_when_phase_sum_exceeds_capacity(
+    verifier_gpus: int,
+) -> None:
+    definition = _target_definition()
+    definition = definition.model_copy(
+        update={
+            "gpu_requirement": GPURequirement(count=8),
+            "verifier": definition.verifier.model_copy(
+                update={"gpu_count": verifier_gpus}
+            ),
+        }
+    )
+
+    resources = derive_resources(
+        definition,
+        load_cluster_profile("bluevela", {"USER": "alice"}),
+    )
+
+    assert resources.work_gpus == 8
+    assert resources.verifier_gpus == verifier_gpus
+    assert resources.total_gpus == 8
+
+
+def test_phase_gpu_limit_is_enforced() -> None:
     definition = _target_definition().model_copy(
-        update={"gpu_requirement": GPURequirement(count=7)}
+        update={"gpu_requirement": GPURequirement(count=9)}
     )
 
     with pytest.raises(SetupError, match="single-node capacity"):
