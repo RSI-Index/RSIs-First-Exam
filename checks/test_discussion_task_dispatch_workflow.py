@@ -59,7 +59,7 @@ def test_dispatch_workflow_gates_token_and_dispatch_on_identifier_payload():
         "if": "steps.gate.outputs.should_dispatch == 'true'",
         "uses": f"actions/create-github-app-token@{APP_TOKEN_SHA}",
         "with": {
-            "app-id": "${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}",
+            "client-id": "${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}",
             "private-key": "${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}",
             "owner": "RSI-Index",
             "repositories": "RSI-Skills",
