@@ -12,9 +12,15 @@ The Discussion author or a current `RSI-Index` organization Owner can comment
 `/task <feedback>`, and use `/task confirm` to confirm the final version. An
 ordinary organization member or repository collaborator is not eligible.
 
+The same authorized users can post an exact, top-level `/reset` comment to
+discard an unpublished task attempt. Reset removes the private task State and
+the Discussion comments from the first valid `/task` through that `/reset`;
+the accepted Proposal and earlier review remain. It does not delete a private
+task repository that has already been published.
+
 Public ingress is a non-authoritative cost gate, not the eligibility decision.
 It checks the event action, canonical Public repository and category, stable
-actor identifiers, required identifiers, and `/task` command shape. For a
+actor identifiers, required identifiers, and command shape. For a
 non-author candidate, it uses the Dispatcher App to require an active
 organization membership whose API role is `admin` (Owner). It then creates an
 identifier-only private dispatch. The private worker repeats the authoritative

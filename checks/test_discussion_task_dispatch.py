@@ -34,6 +34,7 @@ def test_builds_identifier_only_candidate_for_author_task_command():
     event = accepted_event()
 
     assert build_dispatch_candidate(event) == {
+        "command": "task",
         "payload": {
             "source_repository": "RSI-Index/RSI-Index-Public",
             "discussion_number": 128,
@@ -62,6 +63,7 @@ def test_builds_candidate_for_non_author_so_owner_can_be_checked_authoritatively
     candidate = build_dispatch_candidate(event)
 
     assert candidate == {
+        "command": "task",
         "payload": {
             "source_repository": "RSI-Index/RSI-Index-Public",
             "discussion_number": 128,
@@ -110,6 +112,33 @@ def test_task_command_requires_exact_lowercase_token_boundary(body):
 @pytest.mark.parametrize("body", ["/task", "/task ", "/task use accuracy", "\t/task\n"])
 def test_task_command_accepts_identifier_only_command_forms(body):
     assert starts_task_command(body) is True
+
+
+def test_reset_requires_the_exact_lowercase_command_and_builds_a_reset_candidate():
+    event = accepted_event()
+    event["comment"]["body"] = "\n/reset\t"
+
+    candidate = build_dispatch_candidate(event)
+
+    assert candidate == {
+        "command": "reset",
+        "payload": {
+            "source_repository": "RSI-Index/RSI-Index-Public",
+            "discussion_number": 128,
+            "discussion_node_id": "D_kw128",
+            "triggering_comment_node_id": "DC_kw900",
+        },
+        "commenter_login": "author",
+        "is_author": True,
+    }
+
+
+@pytest.mark.parametrize("body", ["/Reset", "/resets", "/reset now", "prefix /reset"])
+def test_reset_rejects_ambiguous_or_extended_forms(body):
+    event = accepted_event()
+    event["comment"]["body"] = body
+
+    assert build_dispatch_candidate(event) is None
 
 
 @pytest.mark.parametrize(
@@ -184,7 +213,7 @@ def test_cli_atomically_writes_compact_sorted_payload_and_only_prints_decision(t
         '"triggering_comment_node_id":"DC_kw900"}'
     )
     assert github_output.read_text(encoding="utf-8") == (
-        "candidate=true\nis_author=true\ncommenter_login=author\n"
+        "candidate=true\ncommand=task\nis_author=true\ncommenter_login=author\n"
     )
     assert "Proposal body" not in result.stdout
     assert "Proposal body" not in github_output.read_text(encoding="utf-8")

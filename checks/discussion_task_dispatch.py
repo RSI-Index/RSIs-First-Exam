@@ -9,6 +9,7 @@ from pathlib import Path
 
 _SOURCE_REPOSITORY = "RSI-Index/RSI-Index-Public"
 _TASK_PREFIX = "/task"
+_RESET_COMMAND = "/reset"
 _GITHUB_LOGIN = re.compile(
     r"^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$"
 )
@@ -22,6 +23,14 @@ def starts_task_command(body: object) -> bool:
         len(command) == len(_TASK_PREFIX)
         or command[len(_TASK_PREFIX)].isspace()
     )
+
+
+def parse_dispatch_command(body: object) -> str | None:
+    if starts_task_command(body):
+        return "task"
+    if isinstance(body, str) and body.strip() == _RESET_COMMAND:
+        return "reset"
+    return None
 
 
 def _nonempty_string(value: object) -> bool:
@@ -71,10 +80,12 @@ def build_dispatch_candidate(event: dict) -> dict | None:
         return None
     if not _nonempty_string(discussion_node_id) or not _nonempty_string(comment_node_id):
         return None
-    if not starts_task_command(comment.get("body")):
+    command = parse_dispatch_command(comment.get("body"))
+    if command is None:
         return None
 
     return {
+        "command": command,
         "payload": {
             "source_repository": _SOURCE_REPOSITORY,
             "discussion_number": discussion_number,
@@ -125,6 +136,7 @@ def main(argv: list[str] | None = None) -> None:
         with open(github_output, "a", encoding="utf-8") as output:
             output.write(f"candidate={'true' if candidate is not None else 'false'}\n")
             if candidate is not None:
+                output.write(f"command={candidate['command']}\n")
                 output.write(
                     f"is_author={'true' if candidate['is_author'] else 'false'}\n"
                 )

@@ -100,7 +100,11 @@ def test_dispatch_workflow_posts_a_parser_built_identifier_only_request():
     assert "dispatch-payload.json" in build_request
     assert "json.dump" in build_request
     assert "repository-dispatch.json" in build_request
+    assert named_steps["Build dispatch request"]["env"] == {
+        "COMMAND": "${{ steps.gate.outputs.command }}"
+    }
     assert "discussion_task_command" in build_request
+    assert "discussion_task_reset" in build_request
     assert dispatch["env"] == {"GH_TOKEN": "${{ steps.app-token.outputs.token }}"}
     assert "gh api --method POST /repos/RSI-Index/RSI-Skills/dispatches" in dispatch["run"]
     assert "--input repository-dispatch.json" in dispatch["run"]
