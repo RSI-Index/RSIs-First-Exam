@@ -35,6 +35,11 @@ organization `Members: Read-only`. Each workflow call narrows the installation
 token to the repository and permissions needed for that step; no personal token
 is used.
 
+After this cutover, edit any already-accepted Discussion once before using
+`/task`. The review workflow intentionally updates only marker comments owned
+by the current App bot. A legacy `github-actions` or personal-token marker is
+left unchanged, and the edit creates a new App-owned authoritative marker.
+
 ## Private worker and outcomes
 
 The private worker owns request State, task generation, review, publishing,

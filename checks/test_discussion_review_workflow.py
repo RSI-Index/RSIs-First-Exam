@@ -82,29 +82,43 @@ def test_review_workflow_reads_the_private_skills_rubric_with_an_app_token():
     )
 
 
-def test_review_reactions_and_comments_use_a_repository_scoped_app_token():
-    steps = {step.get("name"): step for step in parsed_steps()}
+def test_review_reactions_and_comments_use_just_in_time_scoped_app_tokens():
+    ordered = parsed_steps()
+    steps = {step.get("name"): step for step in ordered}
+    expected_with = {
+        "client-id": "${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}",
+        "private-key": "${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}",
+        "owner": "RSI-Index",
+        "repositories": "RSI-Index-Public",
+        "permission-discussions": "write",
+    }
 
-    assert steps["Create public Discussion App token"] == {
-        "name": "Create public Discussion App token",
-        "id": "discussion-token",
+    assert steps["Create reaction Discussion App token"] == {
+        "name": "Create reaction Discussion App token",
+        "id": "reaction-token",
         "uses": f"actions/create-github-app-token@{APP_TOKEN_SHA}",
-        "with": {
-            "client-id": "${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}",
-            "private-key": "${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}",
-            "owner": "RSI-Index",
-            "repositories": "RSI-Index-Public",
-            "permission-discussions": "write",
-        },
+        "with": expected_with,
+    }
+    assert steps["Create comment Discussion App token"] == {
+        "name": "Create comment Discussion App token",
+        "id": "comment-token",
+        "uses": f"actions/create-github-app-token@{APP_TOKEN_SHA}",
+        "with": expected_with,
     }
     assert steps["React with eyes"]["env"]["GH_TOKEN"] == (
-        "${{ steps.discussion-token.outputs.token }}"
+        "${{ steps.reaction-token.outputs.token }}"
     )
     assert steps["Format and post or update comment"]["env"]["GH_TOKEN"] == (
-        "${{ steps.discussion-token.outputs.token }}"
+        "${{ steps.comment-token.outputs.token }}"
     )
     assert steps["Format and post or update comment"]["env"]["BOT_LOGIN"] == (
-        "${{ format('{0}[bot]', steps.discussion-token.outputs.app-slug) }}"
+        "${{ format('{0}[bot]', steps.comment-token.outputs.app-slug) }}"
+    )
+    assert ordered.index(steps["Create reaction Discussion App token"]) + 1 == (
+        ordered.index(steps["React with eyes"])
+    )
+    assert ordered.index(steps["Create comment Discussion App token"]) + 1 == (
+        ordered.index(steps["Format and post or update comment"])
     )
     assert "DISCUSSION_TOKEN" not in WORKFLOW.read_text(encoding="utf-8")
 
