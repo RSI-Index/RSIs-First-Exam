@@ -76,14 +76,25 @@ jobs:
 
       - name: Build dispatch request
         if: steps.gate.outputs.candidate == 'true' && (steps.gate.outputs.is_author == 'true' || steps.owner-gate.outputs.is_owner == 'true')
+        env:
+          COMMAND: ${{ steps.gate.outputs.command }}
         run: |
           python3 - <<'PY'
           import json
+          import os
           from pathlib import Path
 
           payload = json.load(Path("dispatch-payload.json").open(encoding="utf-8"))
+          event_types = {
+              "task": "discussion_task_command",
+              "reset": "discussion_task_reset",
+          }
+          try:
+              event_type = event_types[os.environ["COMMAND"]]
+          except KeyError:
+              raise SystemExit("invalid Discussion command") from None
           request = {
-              "event_type": "discussion_task_command",
+              "event_type": event_type,
               "client_payload": payload,
           }
           with Path("repository-dispatch.json").open("w", encoding="utf-8") as output:
