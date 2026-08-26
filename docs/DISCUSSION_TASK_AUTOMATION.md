@@ -7,19 +7,18 @@ logs.
 
 ## Request protocol
 
-The Discussion author can comment `/task` to request task creation. They can
-add high-level feedback with `/task <feedback>`, then use `/task confirm` to
-confirm the request. A request is eligible only when the commenter is the
-Discussion author and the Discussion has an accepted current Proposal.
+The Discussion author or a current `RSI-Index` organization Owner can comment
+`/task` to request task creation, add high-level feedback with
+`/task <feedback>`, and use `/task confirm` to confirm the final version. An
+ordinary organization member or repository collaborator is not eligible.
 
 Public ingress is a non-authoritative cost gate, not the eligibility decision.
-It checks only the event action, canonical Public repository and category,
-author-ID relationship, required identifiers, and `/task` command shape before
-creating an identifier-only private dispatch. It does not fetch or decide the
-current Proposal, approval, or command authority. The workflow has read-only
-Public contents permission; the scoped GitHub App token is created only after
-this gate passes and is used solely to deliver the request to the private
-worker.
+It checks the event action, canonical Public repository and category, stable
+actor identifiers, required identifiers, and `/task` command shape. For a
+non-author candidate, it uses the Dispatcher App to require an active
+organization membership whose API role is `admin` (Owner). It then creates an
+identifier-only private dispatch. The private worker repeats the authoritative
+authorization and does not trust this ingress result.
 
 ## Configuration
 
@@ -29,18 +28,22 @@ these Public repository settings:
 - Variable: `RSI_DISPATCH_APP_CLIENT_ID`
 - Secret: `RSI_DISPATCH_APP_PRIVATE_KEY`
 
-Keep the App's private-key material out of the repository. Its installation is
-scoped to the private worker repository, `RSI-Index/RSI-Skills`; the Public
-workflow does not need a general-purpose token or write access to Public.
+Keep the App's private-key material out of the repository. Install it on both
+`RSI-Index/RSI-Index-Public` and `RSI-Index/RSI-Skills`, with repository
+`Discussions: Read and write`, repository `Contents: Read and write`, and
+organization `Members: Read-only`. Each workflow call narrows the installation
+token to the repository and permissions needed for that step; no personal token
+is used.
 
 ## Private worker and outcomes
 
 The private worker owns request State, task generation, review, publishing,
 and Discussion replies. It authoritatively re-fetches the Discussion and
 command comment and reauthorizes the request: it verifies the approval marker
-and approving account, Proposal hash and currentness, category and Discussion
-author, and the unedited command. On a successful final result it creates a
-private repository and grants the Discussion author Write permission.
+and App identity, Proposal hash and currentness, category and Discussion author,
+current organization Owners, and the unedited command. On a successful final
+result it creates a private repository and grants the Discussion author Write
+permission; an Owner who operated the workflow does not replace that author.
 Contributors perform full execution validation locally; Public ingress does
 not perform or claim that validation.
 

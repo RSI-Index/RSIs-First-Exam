@@ -23,7 +23,7 @@ jobs:
 
       - name: Create dispatch App token
         id: app-token
-        if: steps.gate.outputs.should_dispatch == 'true'
+        if: steps.gate.outputs.candidate == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
         with:
           client-id: ${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}
@@ -31,9 +31,23 @@ jobs:
           owner: RSI-Index
           repositories: RSI-Skills
           permission-contents: write
+          permission-members: read
+
+      - name: Verify current organization Owner
+        id: owner-gate
+        if: steps.gate.outputs.candidate == 'true' && steps.gate.outputs.is_author != 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          COMMENTER_LOGIN: ${{ steps.gate.outputs.commenter_login }}
+        run: |
+          if gh api "/orgs/RSI-Index/memberships/$COMMENTER_LOGIN" > membership.json 2>/dev/null; then
+            python3 checks/org_owner_gate.py membership.json "$COMMENTER_LOGIN"
+          else
+            printf 'is_owner=false\n' >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build dispatch request
-        if: steps.gate.outputs.should_dispatch == 'true'
+        if: steps.gate.outputs.candidate == 'true' && (steps.gate.outputs.is_author == 'true' || steps.owner-gate.outputs.is_owner == 'true')
         run: |
           python3 - <<'PY'
           import json
@@ -49,7 +63,7 @@ jobs:
           PY
 
       - name: Dispatch privately
-        if: steps.gate.outputs.should_dispatch == 'true'
+        if: steps.gate.outputs.candidate == 'true' && (steps.gate.outputs.is_author == 'true' || steps.owner-gate.outputs.is_owner == 'true')
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
         run: |

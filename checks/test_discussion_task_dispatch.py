@@ -7,9 +7,7 @@ import sys
 from pathlib import Path
 
 import pytest
-
-from discussion_task_dispatch import build_dispatch_payload, starts_task_command
-
+from discussion_task_dispatch import build_dispatch_candidate, starts_task_command
 
 SCRIPT = Path(__file__).with_name("discussion_task_dispatch.py")
 
@@ -32,17 +30,21 @@ def accepted_event() -> dict:
     }
 
 
-def test_builds_identifier_only_payload_for_author_task_command():
+def test_builds_identifier_only_candidate_for_author_task_command():
     event = accepted_event()
 
-    assert build_dispatch_payload(event) == {
-        "source_repository": "RSI-Index/RSI-Index-Public",
-        "discussion_number": 128,
-        "discussion_node_id": "D_kw128",
-        "comment_node_id": "DC_kw900",
+    assert build_dispatch_candidate(event) == {
+        "payload": {
+            "source_repository": "RSI-Index/RSI-Index-Public",
+            "discussion_number": 128,
+            "discussion_node_id": "D_kw128",
+            "triggering_comment_node_id": "DC_kw900",
+        },
+        "commenter_login": "author",
+        "is_author": True,
     }
 
-    output = json.dumps(build_dispatch_payload(event), sort_keys=True)
+    output = json.dumps(build_dispatch_candidate(event)["payload"], sort_keys=True)
     for untrusted_value in (
         event["comment"]["body"],
         event["comment"]["user"]["login"],
@@ -53,13 +55,31 @@ def test_builds_identifier_only_payload_for_author_task_command():
         assert untrusted_value not in output
 
 
+def test_builds_candidate_for_non_author_so_owner_can_be_checked_authoritatively():
+    event = accepted_event()
+    event["comment"]["user"] = {"id": 99, "login": "current-owner"}
+
+    candidate = build_dispatch_candidate(event)
+
+    assert candidate == {
+        "payload": {
+            "source_repository": "RSI-Index/RSI-Index-Public",
+            "discussion_number": 128,
+            "discussion_node_id": "D_kw128",
+            "triggering_comment_node_id": "DC_kw900",
+        },
+        "commenter_login": "current-owner",
+        "is_author": False,
+    }
+    assert "current-owner" not in json.dumps(candidate["payload"], sort_keys=True)
+
+
 @pytest.mark.parametrize(
     "mutate",
     [
         lambda event: event.update(action="edited"),
         lambda event: event["repository"].update(full_name="other/repository"),
         lambda event: event["discussion"]["category"].update(name="General"),
-        lambda event: event["comment"]["user"].update(id=43),
         lambda event: event["discussion"].pop("number"),
         lambda event: event["discussion"].pop("node_id"),
         lambda event: event["comment"].pop("node_id"),
@@ -72,7 +92,7 @@ def test_rejects_wrong_or_incomplete_event(mutate):
     event = accepted_event()
     mutate(event)
 
-    assert build_dispatch_payload(event) is None
+    assert build_dispatch_candidate(event) is None
 
 
 @pytest.mark.parametrize(
@@ -84,7 +104,7 @@ def test_task_command_requires_exact_lowercase_token_boundary(body):
     event["comment"]["body"] = body
 
     assert starts_task_command(body) is False
-    assert build_dispatch_payload(event) is None
+    assert build_dispatch_candidate(event) is None
 
 
 @pytest.mark.parametrize("body", ["/task", "/task ", "/task use accuracy", "\t/task\n"])
@@ -108,15 +128,15 @@ def test_task_command_accepts_identifier_only_command_forms(body):
     ],
 )
 def test_malformed_untrusted_event_shapes_return_none_without_raising(event):
-    assert build_dispatch_payload(event) is None
+    assert build_dispatch_candidate(event) is None
 
 
-def test_author_identity_requires_equal_numeric_ids_even_when_logins_match():
+def test_author_identity_uses_numeric_ids_even_when_logins_match():
     event = accepted_event()
     event["discussion"]["user"] = {"id": 7, "login": "same-login"}
     event["comment"]["user"] = {"id": 8, "login": "same-login"}
 
-    assert build_dispatch_payload(event) is None
+    assert build_dispatch_candidate(event)["is_author"] is False
 
 
 @pytest.mark.parametrize("bad_id", ["42", 42.0, True, None, []])
@@ -124,7 +144,18 @@ def test_author_identity_requires_numeric_integer_ids(bad_id):
     event = accepted_event()
     event["comment"]["user"]["id"] = bad_id
 
-    assert build_dispatch_payload(event) is None
+    assert build_dispatch_candidate(event) is None
+
+
+@pytest.mark.parametrize(
+    "login",
+    ["", "-owner", "owner-", "owner--name", "owner/name", "a" * 40, 42, None],
+)
+def test_candidate_requires_a_valid_github_commenter_login(login):
+    event = accepted_event()
+    event["comment"]["user"]["login"] = login
+
+    assert build_dispatch_candidate(event) is None
 
 
 def test_cli_atomically_writes_compact_sorted_payload_and_only_prints_decision(tmp_path):
@@ -148,10 +179,13 @@ def test_cli_atomically_writes_compact_sorted_payload_and_only_prints_decision(t
     assert result.stdout == "true\n"
     assert result.stderr == ""
     assert output_path.read_text(encoding="utf-8") == (
-        '{"comment_node_id":"DC_kw900","discussion_node_id":"D_kw128",'
-        '"discussion_number":128,"source_repository":"RSI-Index/RSI-Index-Public"}'
+        '{"discussion_node_id":"D_kw128","discussion_number":128,'
+        '"source_repository":"RSI-Index/RSI-Index-Public",'
+        '"triggering_comment_node_id":"DC_kw900"}'
     )
-    assert github_output.read_text(encoding="utf-8") == "should_dispatch=true\n"
+    assert github_output.read_text(encoding="utf-8") == (
+        "candidate=true\nis_author=true\ncommenter_login=author\n"
+    )
     assert "Proposal body" not in result.stdout
     assert "Proposal body" not in github_output.read_text(encoding="utf-8")
     assert not list(tmp_path.glob(".dispatch.json.*"))
@@ -180,7 +214,7 @@ def test_cli_writes_null_and_false_for_rejected_event_without_body_leakage(tmp_p
     assert result.stdout == "false\n"
     assert result.stderr == ""
     assert output_path.read_text(encoding="utf-8") == "null"
-    assert github_output.read_text(encoding="utf-8") == "should_dispatch=false\n"
+    assert github_output.read_text(encoding="utf-8") == "candidate=false\n"
     assert body not in result.stdout
     assert body not in github_output.read_text(encoding="utf-8")
 

@@ -13,12 +13,21 @@ jobs:
     if: github.event.discussion.category.name == 'Task Ideas'
     runs-on: ubuntu-latest
     permissions:
-      discussions: write
       contents: read
     steps:
+      - name: Create public Discussion App token
+        id: discussion-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          client-id: ${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}
+          owner: RSI-Index
+          repositories: RSI-Index-Public
+          permission-discussions: write
+
       - name: React with eyes
         env:
-          GH_TOKEN: ${{ secrets.DISCUSSION_TOKEN }}
+          GH_TOKEN: ${{ steps.discussion-token.outputs.token }}
           DISCUSSION_NODE_ID: ${{ github.event.discussion.node_id }}
         run: |
           gh api graphql \
@@ -133,7 +142,8 @@ jobs:
 
       - name: Format and post or update comment
         env:
-          GH_TOKEN: ${{ secrets.DISCUSSION_TOKEN }}
+          GH_TOKEN: ${{ steps.discussion-token.outputs.token }}
+          BOT_LOGIN: ${{ format('{0}[bot]', steps.discussion-token.outputs.app-slug) }}
           DISCUSSION_ID: ${{ github.event.discussion.node_id }}
           DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
           EVENT_ACTION: ${{ github.event.action }}
@@ -160,7 +170,7 @@ jobs:
 
           case "$DECISION" in
             "Strong Accept"|"Accept")
-              NEXT_STEP="> 🤖 This automated recommendation is eligible for task dispatch. As the Discussion author, send \`/task\` to continue."
+              NEXT_STEP="> 🤖 This automated recommendation is eligible for task dispatch. The Discussion author or a current organization Owner can send \`/task\` to continue."
               ;;
             *)
               NEXT_STEP="> 🤖 This is an automated recommendation for a human maintainer — not a final decision. Edit your proposal to trigger a fresh review. Judged against the private task proposal rubric; ask a maintainer if a point is unclear."
@@ -193,7 +203,7 @@ jobs:
                 repository(name: $repo, owner: $owner) {
                   discussion(number: $number) {
                     comments(first: 100, after: $endCursor) {
-                      nodes { id body }
+                      nodes { id body author { login } }
                       pageInfo { hasNextPage endCursor }
                     }
                   }
@@ -202,8 +212,9 @@ jobs:
               -f owner="$REPOSITORY_OWNER" \
               -f repo="$REPOSITORY_NAME" \
               -F number="$DISCUSSION_NUMBER" \
-              --paginate --slurp \
-              --jq '[.[].data.repository.discussion.comments.nodes[] | select(.body | contains("<!-- rubric-review-bot -->")) | .id] | .[0] // empty')
+              --paginate --slurp | \
+              jq -r --arg bot "$BOT_LOGIN" \
+                '[.[].data.repository.discussion.comments.nodes[] | select(.author.login == $bot) | select(.body | contains("<!-- rubric-review-bot -->")) | .id] | .[0] // empty')
 
             if [ -n "$EXISTING_COMMENT_ID" ]; then
               gh api graphql \

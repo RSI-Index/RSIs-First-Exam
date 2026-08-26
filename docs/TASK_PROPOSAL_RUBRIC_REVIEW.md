@@ -11,8 +11,9 @@ The rubric is private. It lives in
 not in this repository, so that proposals are written to the research bar rather
 than to a published checklist. The discussion workflow checks that repository
 out per run using a read-only installation token from the Dispatcher GitHub App
-and passes the path to the runner as `RUBRIC_FILE`. The workflow also uses a
-`DISCUSSION_TOKEN` secret with write access to post or update its review comment.
+and passes the path to the runner as `RUBRIC_FILE`. A separate repository-scoped
+installation token from the same App posts reactions and creates or updates the
+review comment; no personal Discussion token is required.
 
 ## Judge configuration
 

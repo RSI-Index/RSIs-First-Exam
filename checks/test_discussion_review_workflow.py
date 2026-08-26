@@ -25,6 +25,9 @@ def test_edit_lookup_paginates_all_discussion_comments_for_bot_marker():
     assert "pageInfo { hasNextPage endCursor }" in lookup
     assert "--paginate --slurp" in lookup
     assert "[.[].data.repository.discussion.comments.nodes[]" in lookup
+    assert "author { login }" in lookup
+    assert 'select(.author.login == $bot)' in lookup
+    assert '--arg bot "$BOT_LOGIN"' in lookup
     assert 'select(.body | contains("<!-- rubric-review-bot -->"))' in lookup
 
 
@@ -77,6 +80,33 @@ def test_review_workflow_reads_the_private_skills_rubric_with_an_app_token():
     assert steps["Run rubric review"]["env"]["RUBRIC_FILE"] == (
         "${{ github.workspace }}/private-skills/rubrics/task-proposal.md"
     )
+
+
+def test_review_reactions_and_comments_use_a_repository_scoped_app_token():
+    steps = {step.get("name"): step for step in parsed_steps()}
+
+    assert steps["Create public Discussion App token"] == {
+        "name": "Create public Discussion App token",
+        "id": "discussion-token",
+        "uses": f"actions/create-github-app-token@{APP_TOKEN_SHA}",
+        "with": {
+            "client-id": "${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}",
+            "private-key": "${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}",
+            "owner": "RSI-Index",
+            "repositories": "RSI-Index-Public",
+            "permission-discussions": "write",
+        },
+    }
+    assert steps["React with eyes"]["env"]["GH_TOKEN"] == (
+        "${{ steps.discussion-token.outputs.token }}"
+    )
+    assert steps["Format and post or update comment"]["env"]["GH_TOKEN"] == (
+        "${{ steps.discussion-token.outputs.token }}"
+    )
+    assert steps["Format and post or update comment"]["env"]["BOT_LOGIN"] == (
+        "${{ format('{0}[bot]', steps.discussion-token.outputs.app-slug) }}"
+    )
+    assert "DISCUSSION_TOKEN" not in WORKFLOW.read_text(encoding="utf-8")
 
 
 def test_public_repository_does_not_ship_or_migrate_the_private_rubric():
