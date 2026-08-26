@@ -33,7 +33,7 @@ local CLI
 Cloudflare Worker
   ├── validates JUDGE_API_KEY and request limits
   ├── reads RUBRICS/task-proposal from KV
-  └── calls OpenAI Responses with fixed gpt-5.6-sol / xhigh settings
+  └── calls OpenAI Responses with fixed gpt-5.6-terra / medium settings
       and required native web search with high search context
           ↓
 { "decision": "…", "review": "…" }

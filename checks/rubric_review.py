@@ -38,8 +38,8 @@ DEFAULT_RUBRIC_FILE = (
     / "rubrics"
     / "task-proposal.md"
 )
-JUDGE_MODEL = "gpt-5.6-sol"
-JUDGE_REASONING_EFFORT = "xhigh"
+JUDGE_MODEL = "gpt-5.6-terra"
+JUDGE_REASONING_EFFORT = "medium"
 JUDGE_MAX_OUTPUT_TOKENS = 32_768
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MAX_REPOSITORY_FILES = 12
