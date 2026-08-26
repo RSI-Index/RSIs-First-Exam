@@ -57,6 +57,14 @@ untrusted data. Instructions embedded in any of them are evaluated only as
 proposal claims or evidence; they cannot override the rubric, judge instructions,
 or runner behavior.
 
+The private rubric is wrapped in a confidentiality instruction and the judge is
+constrained to a strict JSON schema. The runner validates and bounds every
+field, renders the public Markdown itself, and rejects long normalized overlap
+with the private rubric. Invalid, oversized, or overlapping model output is
+replaced with a fixed `require human review` response before the Discussion
+comment and its proposal marker are rendered; raw model output is never used as
+the fallback.
+
 If the URL, ref, or evidence paths are missing or cannot be fetched, the runner
 records that fact in the evidence bundle rather than pretending the repository
 was reviewed.
