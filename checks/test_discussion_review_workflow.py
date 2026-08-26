@@ -132,3 +132,14 @@ def test_review_workflow_renders_and_appends_the_canonical_marker():
     )[0]
     assert "${REVIEW_MARKER}" in comment_template
     assert format_comment["run"].count('-f body="$BODY"') == 2
+
+
+def test_review_workflow_replaces_withheld_output_before_publication():
+    steps = {step.get("name"): step for step in parsed_steps()}
+    run_review = steps["Run rubric review"]["run"]
+
+    assert 'publication_guard = result.get("publication_guard")' in run_review
+    assert 'if publication_guard == "withheld":' in run_review
+    assert 'decision = "require human review"' in run_review
+    assert "Automated review output was withheld" in run_review
+    assert 'elif publication_guard != "pass":' in run_review

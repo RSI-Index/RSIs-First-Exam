@@ -85,7 +85,21 @@ jobs:
           from pathlib import Path
 
           result = json.loads(Path("result.json").read_text(encoding="utf-8"))
-          decision = result.get("decision")
+          publication_guard = result.get("publication_guard")
+          if publication_guard == "withheld":
+              decision = "require human review"
+              review = (
+                  "Proposal summary:\n"
+                  "Automated review output was withheld because it could not be "
+                  "safely published. A human maintainer must review this proposal.\n\n"
+                  "Decision: require human review"
+              )
+          elif publication_guard != "pass":
+              raise SystemExit("Judge returned an invalid publication guard")
+          else:
+              decision = result.get("decision")
+              review = result.get("review")
+
           allowed_decisions = {
               "Strong Reject",
               "Reject",
@@ -98,7 +112,6 @@ jobs:
                   f"Judge returned a missing or non-canonical decision: {decision!r}"
               )
 
-          review = result.get("review")
           if not isinstance(review, str) or not review.strip():
               raise SystemExit("Judge returned an empty review")
 
