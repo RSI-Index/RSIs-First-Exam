@@ -648,7 +648,7 @@ def test_call_openai_always_uses_fixed_sol_model_and_xhigh_reasoning(review):
     ]
     assert call["tool_choice"] == "required"
     assert call["text"] == {"format": review.JUDGE_RESPONSE_FORMAT}
-    assert call["max_output_tokens"] == 4096
+    assert call["max_output_tokens"] == 32768
     assert call["store"] is False
 
 
@@ -669,6 +669,7 @@ def test_async_call_openai_enables_high_context_web_search(review):
         {"type": "web_search", "search_context_size": "high"}
     ]
     assert calls[0]["tool_choice"] == "required"
+    assert calls[0]["max_output_tokens"] == 32768
 
 
 def test_call_openai_withholds_full_private_rubric_exfiltration(review):
