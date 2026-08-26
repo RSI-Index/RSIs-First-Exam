@@ -15,8 +15,8 @@ jobs:
     permissions:
       contents: read
     steps:
-      - name: Create public Discussion App token
-        id: discussion-token
+      - name: Create reaction Discussion App token
+        id: reaction-token
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
         with:
           client-id: ${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}
@@ -27,7 +27,7 @@ jobs:
 
       - name: React with eyes
         env:
-          GH_TOKEN: ${{ steps.discussion-token.outputs.token }}
+          GH_TOKEN: ${{ steps.reaction-token.outputs.token }}
           DISCUSSION_NODE_ID: ${{ github.event.discussion.node_id }}
         run: |
           gh api graphql \
@@ -140,10 +140,20 @@ jobs:
           marker=$(python3 checks/proposal_review_marker.py)
           printf 'marker=%s\n' "$marker" >> "$GITHUB_OUTPUT"
 
+      - name: Create comment Discussion App token
+        id: comment-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          client-id: ${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}
+          owner: RSI-Index
+          repositories: RSI-Index-Public
+          permission-discussions: write
+
       - name: Format and post or update comment
         env:
-          GH_TOKEN: ${{ steps.discussion-token.outputs.token }}
-          BOT_LOGIN: ${{ format('{0}[bot]', steps.discussion-token.outputs.app-slug) }}
+          GH_TOKEN: ${{ steps.comment-token.outputs.token }}
+          BOT_LOGIN: ${{ format('{0}[bot]', steps.comment-token.outputs.app-slug) }}
           DISCUSSION_ID: ${{ github.event.discussion.node_id }}
           DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
           EVENT_ACTION: ${{ github.event.action }}
