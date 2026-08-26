@@ -4,6 +4,7 @@ import asyncio
 import base64
 import importlib.util
 import json
+import re
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -42,6 +43,15 @@ def structured_judge_output(**overrides) -> str:
     }
     payload.update(overrides)
     return json.dumps(payload)
+
+
+def word_internal_markdown(value: str) -> str:
+    def emphasize_suffix(match: re.Match[str]) -> str:
+        word = match.group(0)
+        split = max(1, len(word) // 2)
+        return f"{word[:split]}*{word[split:]}*"
+
+    return re.sub(r"[A-Za-z0-9]+", emphasize_suffix, value)
 
 
 def load_review_module():
@@ -708,6 +718,45 @@ def test_call_openai_withholds_a_long_normalized_rubric_fragment(review):
     assert result == review.WITHHELD_REVIEW
 
 
+def test_call_openai_withholds_private_fragment_with_word_internal_markdown(review):
+    secret_fragment = (
+        "distinctive alpha beta gamma delta epsilon zeta eta theta iota kappa "
+        "lambda mu nu xi omicron pi rho sigma tau upsilon phi chi"
+    )
+    rubric = f"Private preface. {secret_fragment}. Private suffix."
+    leaked = structured_judge_output(
+        proposal_summary=word_internal_markdown(secret_fragment)
+    )
+
+    class FakeResponses:
+        @staticmethod
+        def create(**kwargs):
+            return SimpleNamespace(status="completed", output_text=leaked)
+
+    result = review.call_openai(
+        rubric,
+        "proposal",
+        client=SimpleNamespace(responses=FakeResponses()),
+    )
+
+    assert result == review.WITHHELD_REVIEW
+    assert review.extract_decision(result) == "require human review"
+
+
+def test_public_renderer_makes_model_markdown_inert(review):
+    payload = json.loads(
+        structured_judge_output(
+            proposal_summary="Untrusted *emphasis* [link](https://example.com) `code`."
+        )
+    )
+
+    rendered = review.render_public_review(payload)
+
+    assert r"\*emphasis\*" in rendered
+    assert r"\[link\]\(https://example\.com\)" in rendered
+    assert r"\`code\`" in rendered
+
+
 def test_call_openai_withholds_invalid_or_oversized_structured_output(review):
     oversized = structured_judge_output(quality_review="x" * 5000)
 
@@ -779,6 +828,36 @@ def test_main_marks_a_withheld_review_for_fail_closed_publication(
     proposal.write_text("A proposal with no repository yet.")
     rubric.write_text("A private rubric.")
     monkeypatch.setattr(review, "call_openai", lambda *args, **kwargs: review.WITHHELD_REVIEW)
+
+    review.main([str(proposal), "--rubric", str(rubric)])
+    result = json.loads(capsys.readouterr().out)
+
+    assert result["publication_guard"] == "withheld"
+    assert result["decision"] == "require human review"
+    assert result["review"] == review.WITHHELD_REVIEW
+
+
+def test_main_withholds_word_internal_markdown_exfiltration(
+    review, monkeypatch, tmp_path, capsys
+):
+    secret_fragment = (
+        "distinctive alpha beta gamma delta epsilon zeta eta theta iota kappa "
+        "lambda mu nu xi omicron pi rho sigma tau upsilon phi chi"
+    )
+    leaked = structured_judge_output(
+        proposal_summary=word_internal_markdown(secret_fragment)
+    )
+    proposal = tmp_path / "proposal.md"
+    rubric = tmp_path / "rubric.md"
+    proposal.write_text("A proposal with no repository yet.")
+    rubric.write_text(f"Private preface. {secret_fragment}. Private suffix.")
+    monkeypatch.setattr(
+        review,
+        "call_openai",
+        lambda instructions, *args, **kwargs: review.finalize_judge_output(
+            leaked, instructions
+        ),
+    )
 
     review.main([str(proposal), "--rubric", str(rubric)])
     result = json.loads(capsys.readouterr().out)
