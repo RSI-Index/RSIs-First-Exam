@@ -1,4 +1,0 @@
-interface:
-  display_name: "Extract Blue Vela RSI Run Logs"
-  short_description: "Publish completed Blue Vela RSI-Harness logs by task"
-  default_prompt: "Use $extracting-rsi-run-logs-bluevela to extract the latest completed logs for a task."
