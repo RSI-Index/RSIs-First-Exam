@@ -17,15 +17,15 @@ mkdir -p "$BOT_DIR/checks"
 cp "$REPO_ROOT/checks/rubric_review.py" "$BOT_DIR/checks/rubric_review.py"
 touch "$BOT_DIR/checks/__init__.py"
 
-# Copy the rubric out of the private rubric repository. It is deliberately not
+# Copy the rubric out of the private Skills repository. It is deliberately not
 # in this public tree, so point RUBRIC_FILE at a clone of
-# https://github.com/Zhuofeng-Li/RSI-Index-Rubrics before running this script.
+# https://github.com/RSI-Index/RSI-Skills before running this script.
 # The copy lands where rubric_review.py's RUBRIC_FILE default expects it inside
 # the deployed bot.
-RUBRIC_FILE="${RUBRIC_FILE:-$REPO_ROOT/../RSI-Index-Rubrics/task-proposal.md}"
+RUBRIC_FILE="${RUBRIC_FILE:-$REPO_ROOT/../RSI-Skills/rubrics/task-proposal.md}"
 if [ ! -f "$RUBRIC_FILE" ]; then
   echo "ERROR: proposal rubric not found at $RUBRIC_FILE" >&2
-  echo "Clone https://github.com/Zhuofeng-Li/RSI-Index-Rubrics and set RUBRIC_FILE." >&2
+  echo "Clone https://github.com/RSI-Index/RSI-Skills and set RUBRIC_FILE." >&2
   exit 1
 fi
 mkdir -p "$BOT_DIR/rubrics"

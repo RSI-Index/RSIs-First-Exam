@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import base64
 import asyncio
+import base64
 import importlib.util
 import json
 from pathlib import Path
@@ -661,6 +661,13 @@ def test_cli_does_not_allow_model_override(review):
 
     with pytest.raises(SystemExit):
         parser.parse_args(["proposal.md", "--model", "gpt-5.6-terra"])
+
+
+def test_default_rubric_comes_from_a_sibling_private_skills_clone(review):
+    args = review.build_parser().parse_args(["proposal.md"])
+
+    assert review.PRIVATE_RUBRIC_REPO == "https://github.com/RSI-Index/RSI-Skills"
+    assert args.rubric == SCRIPT.parent.parent.parent / "RSI-Skills" / "rubrics/task-proposal.md"
 
 
 def test_main_exits_unsuccessfully_when_judge_has_no_canonical_decision(

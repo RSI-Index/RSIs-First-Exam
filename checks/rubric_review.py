@@ -26,12 +26,15 @@ from urllib.parse import quote, unquote
 import httpx
 from openai import AsyncOpenAI, OpenAI
 
-# The proposal rubric lives in the private rubric repository rather than this
-# public tree, so its location is supplied instead of assumed. Workflows check
-# that repository out and set RUBRIC_FILE; locally, clone it beside this one.
-PRIVATE_RUBRIC_REPO = "https://github.com/Zhuofeng-Li/RSI-Index-Rubrics"
+# The proposal rubric lives in the private Skills repository rather than this
+# public tree. Workflows check out only that file and set RUBRIC_FILE; locally,
+# clone RSI-Skills beside this repository or pass an explicit path.
+PRIVATE_RUBRIC_REPO = "https://github.com/RSI-Index/RSI-Skills"
 DEFAULT_RUBRIC_FILE = (
-    Path(__file__).parent.parent.parent / "RSI-Index-Rubrics" / "task-proposal.md"
+    Path(__file__).parent.parent.parent
+    / "RSI-Skills"
+    / "rubrics"
+    / "task-proposal.md"
 )
 JUDGE_MODEL = "gpt-5.6-sol"
 JUDGE_REASONING_EFFORT = "xhigh"

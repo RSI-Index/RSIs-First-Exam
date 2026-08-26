@@ -1,6 +1,6 @@
 # Discord Review Bot
 
-A Discord bot that automatically reviews task proposals posted in a forum channel. It uses the same rubric and review automation as the CI checks, so editing `task-proposal.md` in the private rubric repository ([`Zhuofeng-Li/RSI-Index-Rubrics`](https://github.com/Zhuofeng-Li/RSI-Index-Rubrics)) updates both CI and Discord reviews.
+A Discord bot that automatically reviews task proposals posted in a forum channel. It uses the same rubric and review automation as the CI checks, so editing `rubrics/task-proposal.md` in the private [`RSI-Index/RSI-Skills`](https://github.com/RSI-Index/RSI-Skills) repository updates both CI and Discord reviews.
 
 ## How It Works
 
@@ -16,7 +16,7 @@ The bot reuses shared abstractions from `checks/rubric_review.py`:
 
 | Import | Purpose |
 |--------|---------|
-| `load_rubric()` | Loads `task-proposal.md` from `RUBRIC_FILE`, or a sibling `RSI-Index-Rubrics/` clone |
+| `load_rubric()` | Loads `task-proposal.md` from `RUBRIC_FILE`, or a sibling `RSI-Skills/` clone |
 | `async_call_anthropic()` | Async wrapper around the Anthropic Messages API |
 | `extract_decision()` | Parses the decision line from the review output |
 | `DEFAULT_MODEL` | Default Claude model (consistent with CI) |
@@ -50,7 +50,7 @@ cp .env.example .env
 | `CHANNEL_ID` | Yes | — | Forum channel ID to watch |
 | `MODEL` | No | Value from `rubric_review.py` | Claude model to use |
 | `MIN_PROPOSAL_LENGTH` | No | `50` | Minimum character length to trigger a review |
-| `RUBRIC_FILE` | No | `../RSI-Index-Rubrics/task-proposal.md` | Path to the private rubric file |
+| `RUBRIC_FILE` | No | `../RSI-Skills/rubrics/task-proposal.md` | Path to the private rubric file |
 
 ## Running
 
@@ -63,7 +63,7 @@ The bot logs to stdout. You should see:
 Logged in as YourBot#1234 (id=...)
 Watching forum channel: 123456789
 Model: claude-opus-4-8
-Rubric: /path/to/RSI-Index-Rubrics/task-proposal.md
+Rubric: /path/to/RSI-Skills/rubrics/task-proposal.md
 ```
 
 ## Testing

@@ -34,15 +34,27 @@ jobs:
         with:
           persist-credentials: false
 
-      # The proposal rubric is private: it is the standard proposals are judged
-      # against, and publishing it invites proposals written to the checklist
-      # rather than to the bar. It is fetched per run instead of living in the
-      # public tree.
-      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+      - name: Create private Skills read token
+        id: skills-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
         with:
-          repository: Zhuofeng-Li/RSI-Index-Rubrics
-          token: ${{ secrets.RUBRIC_REPO_TOKEN }}
-          path: private-rubrics
+          client-id: ${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}
+          owner: RSI-Index
+          repositories: RSI-Skills
+          permission-contents: read
+
+      # The proposal rubric is private: it is fetched from the organization-only
+      # Skills repository per run instead of living in the public tree.
+      - name: Checkout private discussion rubric
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          repository: RSI-Index/RSI-Skills
+          ref: main
+          token: ${{ steps.skills-token.outputs.token }}
+          path: private-skills
+          sparse-checkout: rubrics/task-proposal.md
+          sparse-checkout-cone-mode: false
           persist-credentials: false
 
       - name: Install uv
@@ -60,7 +72,7 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RUBRIC_FILE: ${{ github.workspace }}/private-rubrics/task-proposal.md
+          RUBRIC_FILE: ${{ github.workspace }}/private-skills/rubrics/task-proposal.md
         run: |
           if ! uv run checks/rubric_review.py proposal.md > result.json 2> review.log; then
             cat review.log
