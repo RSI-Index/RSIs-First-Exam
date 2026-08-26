@@ -52,7 +52,7 @@ jobs:
         continue-on-error: true
         env:
           GH_TOKEN: ${{ steps.reaction-token.outputs.token }}
-          BOT_LOGIN: ${{ format('{0}[bot]', steps.reaction-token.outputs.app-slug) }}
+          BOT_LOGIN: ${{ steps.reaction-token.outputs.app-slug }}
           DISCUSSION_ID: ${{ github.event.discussion.node_id }}
           DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
           REPOSITORY_OWNER: ${{ github.repository_owner }}
@@ -63,7 +63,7 @@ jobs:
           <!-- rubric-review-bot -->
           ## 📋 Task Proposal Rubric Review
 
-          ⏳ Proposal review is running. This comment will update when the review finishes.
+          ⏳ Proposal review is running.
           COMMENT_EOF
           )
 
@@ -220,7 +220,7 @@ jobs:
         id: publish-review
         env:
           GH_TOKEN: ${{ steps.comment-token.outputs.token }}
-          BOT_LOGIN: ${{ format('{0}[bot]', steps.comment-token.outputs.app-slug) }}
+          BOT_LOGIN: ${{ steps.comment-token.outputs.app-slug }}
           DISCUSSION_ID: ${{ github.event.discussion.node_id }}
           DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
           REVIEW_MARKER: ${{ steps.marker.outputs.marker }}
@@ -340,7 +340,7 @@ jobs:
         continue-on-error: true
         env:
           GH_TOKEN: ${{ steps.failure-token.outputs.token }}
-          BOT_LOGIN: ${{ format('{0}[bot]', steps.failure-token.outputs.app-slug) }}
+          BOT_LOGIN: ${{ steps.failure-token.outputs.app-slug }}
           DISCUSSION_ID: ${{ github.event.discussion.node_id }}
           DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
           REPOSITORY_OWNER: ${{ github.repository_owner }}
