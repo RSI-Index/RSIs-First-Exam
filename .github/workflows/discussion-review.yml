@@ -7,6 +7,10 @@ on:
   discussion:
     types: [created, edited]
 
+concurrency:
+  group: discussion-review-${{ github.event.discussion.node_id }}
+  cancel-in-progress: true
+
 jobs:
   review:
     # Only review discussions in the "Task Ideas" category
@@ -38,6 +42,64 @@ jobs:
             }' \
             -f id="$DISCUSSION_NODE_ID" \
             -f content="EYES"
+
+      - name: Post or update running review comment
+        id: progress
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ steps.reaction-token.outputs.token }}
+          BOT_LOGIN: ${{ format('{0}[bot]', steps.reaction-token.outputs.app-slug) }}
+          DISCUSSION_ID: ${{ github.event.discussion.node_id }}
+          DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+          BODY=$(cat <<'COMMENT_EOF'
+          <!-- rubric-review-bot -->
+          ## 📋 Task Proposal Rubric Review
+
+          ⏳ Proposal review is running. This comment will update when the review finishes.
+          COMMENT_EOF
+          )
+
+          EXISTING_COMMENT_ID=$(gh api graphql \
+            -f query='query($repo: String!, $owner: String!, $number: Int!, $endCursor: String) {
+              repository(name: $repo, owner: $owner) {
+                discussion(number: $number) {
+                  comments(first: 100, after: $endCursor) {
+                    nodes { id body author { login } }
+                    pageInfo { hasNextPage endCursor }
+                  }
+                }
+              }
+            }' \
+            -f owner="$REPOSITORY_OWNER" \
+            -f repo="$REPOSITORY_NAME" \
+            -F number="$DISCUSSION_NUMBER" \
+            --paginate --slurp | \
+            jq -r --arg bot "$BOT_LOGIN" \
+              '[.[].data.repository.discussion.comments.nodes[] | select(.author.login == $bot) | select(.body | contains("<!-- rubric-review-bot -->")) | .id] | .[0] // empty')
+
+          if [ -n "$EXISTING_COMMENT_ID" ]; then
+            gh api graphql \
+              -f query='mutation($commentId: ID!, $body: String!) {
+                updateDiscussionComment(input: { commentId: $commentId, body: $body }) {
+                  comment { id url }
+                }
+              }' \
+              -f commentId="$EXISTING_COMMENT_ID" \
+              -f body="$BODY"
+          else
+            gh api graphql \
+              -f query='mutation($discussionId: ID!, $body: String!) {
+                addDiscussionComment(input: { discussionId: $discussionId, body: $body }) {
+                  comment { id url }
+                }
+              }' \
+              -f discussionId="$DISCUSSION_ID" \
+              -f body="$BODY"
+          fi
 
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -151,12 +213,12 @@ jobs:
           permission-discussions: write
 
       - name: Format and post or update comment
+        id: publish-review
         env:
           GH_TOKEN: ${{ steps.comment-token.outputs.token }}
           BOT_LOGIN: ${{ format('{0}[bot]', steps.comment-token.outputs.app-slug) }}
           DISCUSSION_ID: ${{ github.event.discussion.node_id }}
           DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
-          EVENT_ACTION: ${{ github.event.action }}
           REVIEW_MARKER: ${{ steps.marker.outputs.marker }}
           DECISION: ${{ steps.review.outputs.decision }}
           REPOSITORY_OWNER: ${{ github.repository_owner }}
@@ -206,44 +268,42 @@ jobs:
           COMMENT_EOF
           )
 
-          # On edit, find and update the existing review comment
-          if [ "$EVENT_ACTION" = "edited" ]; then
-            EXISTING_COMMENT_ID=$(gh api graphql \
-              -f query='query($repo: String!, $owner: String!, $number: Int!, $endCursor: String) {
-                repository(name: $repo, owner: $owner) {
-                  discussion(number: $number) {
-                    comments(first: 100, after: $endCursor) {
-                      nodes { id body author { login } }
-                      pageInfo { hasNextPage endCursor }
-                    }
+          # Replace the running comment on both creation and edit.
+          EXISTING_COMMENT_ID=$(gh api graphql \
+            -f query='query($repo: String!, $owner: String!, $number: Int!, $endCursor: String) {
+              repository(name: $repo, owner: $owner) {
+                discussion(number: $number) {
+                  comments(first: 100, after: $endCursor) {
+                    nodes { id body author { login } }
+                    pageInfo { hasNextPage endCursor }
                   }
                 }
-              }' \
-              -f owner="$REPOSITORY_OWNER" \
-              -f repo="$REPOSITORY_NAME" \
-              -F number="$DISCUSSION_NUMBER" \
-              --paginate --slurp | \
-              jq -r --arg bot "$BOT_LOGIN" \
-                '[.[].data.repository.discussion.comments.nodes[] | select(.author.login == $bot) | select(.body | contains("<!-- rubric-review-bot -->")) | .id] | .[0] // empty')
+              }
+            }' \
+            -f owner="$REPOSITORY_OWNER" \
+            -f repo="$REPOSITORY_NAME" \
+            -F number="$DISCUSSION_NUMBER" \
+            --paginate --slurp | \
+            jq -r --arg bot "$BOT_LOGIN" \
+              '[.[].data.repository.discussion.comments.nodes[] | select(.author.login == $bot) | select(.body | contains("<!-- rubric-review-bot -->")) | .id] | .[0] // empty')
 
-            if [ -n "$EXISTING_COMMENT_ID" ]; then
-              gh api graphql \
-                -f query='mutation($commentId: ID!, $body: String!) {
-                  updateDiscussionComment(input: {
-                    commentId: $commentId
-                    body: $body
-                  }) {
-                    comment { id url }
-                  }
-                }' \
-                -f commentId="$EXISTING_COMMENT_ID" \
-                -f body="$BODY"
-              echo "Updated existing review comment"
-              exit 0
-            fi
+          if [ -n "$EXISTING_COMMENT_ID" ]; then
+            gh api graphql \
+              -f query='mutation($commentId: ID!, $body: String!) {
+                updateDiscussionComment(input: {
+                  commentId: $commentId
+                  body: $body
+                }) {
+                  comment { id url }
+                }
+              }' \
+              -f commentId="$EXISTING_COMMENT_ID" \
+              -f body="$BODY"
+            echo "Updated existing review comment"
+            exit 0
           fi
 
-          # Post new comment (on creation, or if no existing comment found on edit)
+          # Fall back to a new comment if the progress acknowledgement was unavailable.
           gh api graphql \
             -f query='mutation($discussionId: ID!, $body: String!) {
               addDiscussionComment(input: {
@@ -258,3 +318,60 @@ jobs:
             }' \
             -f discussionId="$DISCUSSION_ID" \
             -f body="$BODY"
+
+      - name: Post or update failed review comment
+        if: always() && steps.progress.outcome == 'success' && steps.publish-review.outcome != 'success'
+        env:
+          GH_TOKEN: ${{ steps.reaction-token.outputs.token }}
+          BOT_LOGIN: ${{ format('{0}[bot]', steps.reaction-token.outputs.app-slug) }}
+          DISCUSSION_ID: ${{ github.event.discussion.node_id }}
+          DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+        run: |
+          set -euo pipefail
+          BODY=$(cat <<'COMMENT_EOF'
+          <!-- rubric-review-bot -->
+          ## 📋 Task Proposal Rubric Review
+
+          ⚠️ Proposal review failed before completion. Edit the proposal to retry.
+          COMMENT_EOF
+          )
+
+          EXISTING_COMMENT_ID=$(gh api graphql \
+            -f query='query($repo: String!, $owner: String!, $number: Int!, $endCursor: String) {
+              repository(name: $repo, owner: $owner) {
+                discussion(number: $number) {
+                  comments(first: 100, after: $endCursor) {
+                    nodes { id body author { login } }
+                    pageInfo { hasNextPage endCursor }
+                  }
+                }
+              }
+            }' \
+            -f owner="$REPOSITORY_OWNER" \
+            -f repo="$REPOSITORY_NAME" \
+            -F number="$DISCUSSION_NUMBER" \
+            --paginate --slurp | \
+            jq -r --arg bot "$BOT_LOGIN" \
+              '[.[].data.repository.discussion.comments.nodes[] | select(.author.login == $bot) | select(.body | contains("<!-- rubric-review-bot -->")) | .id] | .[0] // empty')
+
+          if [ -n "$EXISTING_COMMENT_ID" ]; then
+            gh api graphql \
+              -f query='mutation($commentId: ID!, $body: String!) {
+                updateDiscussionComment(input: { commentId: $commentId, body: $body }) {
+                  comment { id url }
+                }
+              }' \
+              -f commentId="$EXISTING_COMMENT_ID" \
+              -f body="$BODY"
+          else
+            gh api graphql \
+              -f query='mutation($discussionId: ID!, $body: String!) {
+                addDiscussionComment(input: { discussionId: $discussionId, body: $body }) {
+                  comment { id url }
+                }
+              }' \
+              -f discussionId="$DISCUSSION_ID" \
+              -f body="$BODY"
+          fi
