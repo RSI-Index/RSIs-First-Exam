@@ -61,13 +61,25 @@ jobs:
           set -euo pipefail
           BODY=$(cat <<'COMMENT_EOF'
           <!-- rubric-review-bot -->
+          <!-- rubric-review-status:running -->
           ## 📋 Task Proposal Rubric Review
 
           ⏳ Proposal review is running.
           COMMENT_EOF
           )
 
-          EXISTING_COMMENT_ID=$(gh api graphql \
+          SUPERSEDED_BODY=$(cat <<'COMMENT_EOF'
+          <!-- rubric-review-bot -->
+          <!-- rubric-review-status:superseded -->
+          ## 📋 Task Proposal Rubric Review
+
+          ↪️ Proposal review was superseded by a newer proposal edit.
+          COMMENT_EOF
+          )
+
+          # Preserve completed reviews. Only unfinished progress comments from
+          # cancelled runs are retired before this run creates its own comment.
+          RUNNING_COMMENT_IDS=$(gh api graphql \
             -f query='query($repo: String!, $owner: String!, $number: Int!, $endCursor: String) {
               repository(name: $repo, owner: $owner) {
                 discussion(number: $number) {
@@ -83,27 +95,30 @@ jobs:
             -F number="$DISCUSSION_NUMBER" \
             --paginate --slurp | \
             jq -r --arg bot "$BOT_LOGIN" \
-              '[.[].data.repository.discussion.comments.nodes[] | select(.author.login == $bot) | select(.body | contains("<!-- rubric-review-bot -->")) | .id] | .[0] // empty')
+              '[.[].data.repository.discussion.comments.nodes[] | select(.author.login == $bot) | select(.body | contains("<!-- rubric-review-bot -->")) | select(.body | contains("<!-- rubric-review-status:running -->")) | .id] | .[]')
 
-          if [ -n "$EXISTING_COMMENT_ID" ]; then
+          while IFS= read -r comment_id; do
+            [ -n "$comment_id" ] || continue
             gh api graphql \
               -f query='mutation($commentId: ID!, $body: String!) {
                 updateDiscussionComment(input: { commentId: $commentId, body: $body }) {
                   comment { id url }
                 }
               }' \
-              -f commentId="$EXISTING_COMMENT_ID" \
-              -f body="$BODY"
-          else
-            gh api graphql \
-              -f query='mutation($discussionId: ID!, $body: String!) {
-                addDiscussionComment(input: { discussionId: $discussionId, body: $body }) {
-                  comment { id url }
-                }
-              }' \
-              -f discussionId="$DISCUSSION_ID" \
-              -f body="$BODY"
-          fi
+              -f commentId="$comment_id" \
+              -f body="$SUPERSEDED_BODY"
+          done <<< "$RUNNING_COMMENT_IDS"
+
+          COMMENT_RESULT=$(gh api graphql \
+            -f query='mutation($discussionId: ID!, $body: String!) {
+              addDiscussionComment(input: { discussionId: $discussionId, body: $body }) {
+                comment { id url }
+              }
+            }' \
+            -f discussionId="$DISCUSSION_ID" \
+            -f body="$BODY")
+          COMMENT_ID=$(jq -er '.data.addDiscussionComment.comment.id' <<< "$COMMENT_RESULT")
+          printf 'comment_id=%s\n' "$COMMENT_ID" >> "$GITHUB_OUTPUT"
 
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
         with:
@@ -220,14 +235,12 @@ jobs:
         id: publish-review
         env:
           GH_TOKEN: ${{ steps.comment-token.outputs.token }}
-          BOT_LOGIN: ${{ steps.comment-token.outputs.app-slug }}
           DISCUSSION_ID: ${{ github.event.discussion.node_id }}
-          DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
+          PROGRESS_COMMENT_ID: ${{ steps.progress.outputs.comment_id }}
           REVIEW_MARKER: ${{ steps.marker.outputs.marker }}
           DECISION: ${{ steps.review.outputs.decision }}
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-          REPOSITORY_NAME: ${{ github.event.repository.name }}
         run: |
+          set -euo pipefail
           # Decision badge
           case "$DECISION" in
             "Strong Accept") BADGE="🟢 **Strong Accept**" ;;
@@ -256,6 +269,7 @@ jobs:
           # Build comment body
           BODY=$(cat << COMMENT_EOF
           ${BOT_MARKER}
+          <!-- rubric-review-status:completed -->
           ${REVIEW_MARKER}
           ## 📋 Task Proposal Rubric Review
 
@@ -272,26 +286,21 @@ jobs:
           COMMENT_EOF
           )
 
-          # Replace the running comment on both creation and edit.
-          EXISTING_COMMENT_ID=$(gh api graphql \
-            -f query='query($repo: String!, $owner: String!, $number: Int!, $endCursor: String) {
-              repository(name: $repo, owner: $owner) {
-                discussion(number: $number) {
-                  comments(first: 100, after: $endCursor) {
-                    nodes { id body author { login } }
-                    pageInfo { hasNextPage endCursor }
-                  }
+          # Update only this run's progress comment. If a newer edit already
+          # superseded it, this cancelled run must not publish over that state.
+          if [ -n "$PROGRESS_COMMENT_ID" ]; then
+            CURRENT_BODY=$(gh api graphql \
+              -f query='query($commentId: ID!) {
+                node(id: $commentId) {
+                  ... on DiscussionComment { body }
                 }
-              }
-            }' \
-            -f owner="$REPOSITORY_OWNER" \
-            -f repo="$REPOSITORY_NAME" \
-            -F number="$DISCUSSION_NUMBER" \
-            --paginate --slurp | \
-            jq -r --arg bot "$BOT_LOGIN" \
-              '[.[].data.repository.discussion.comments.nodes[] | select(.author.login == $bot) | select(.body | contains("<!-- rubric-review-bot -->")) | .id] | .[0] // empty')
-
-          if [ -n "$EXISTING_COMMENT_ID" ]; then
+              }' \
+              -f commentId="$PROGRESS_COMMENT_ID" \
+              --jq '.data.node.body // ""')
+            if [[ "$CURRENT_BODY" != *"<!-- rubric-review-status:running -->"* ]]; then
+              echo "Current review comment is no longer active; skipping publication"
+              exit 0
+            fi
             gh api graphql \
               -f query='mutation($commentId: ID!, $body: String!) {
                 updateDiscussionComment(input: {
@@ -301,9 +310,9 @@ jobs:
                   comment { id url }
                 }
               }' \
-              -f commentId="$EXISTING_COMMENT_ID" \
+              -f commentId="$PROGRESS_COMMENT_ID" \
               -f body="$BODY"
-            echo "Updated existing review comment"
+            echo "Updated this run's review comment"
             exit 0
           fi
 
@@ -325,7 +334,7 @@ jobs:
 
       - name: Create failure comment Discussion App token
         id: failure-token
-        if: always() && steps.publish-review.outcome != 'success'
+        if: always() && !cancelled() && steps.publish-review.outcome != 'success'
         continue-on-error: true
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
         with:
@@ -336,51 +345,43 @@ jobs:
           permission-discussions: write
 
       - name: Post or update failed review comment
-        if: always() && steps.publish-review.outcome != 'success' && steps.failure-token.outcome == 'success'
+        if: always() && !cancelled() && steps.publish-review.outcome != 'success' && steps.failure-token.outcome == 'success'
         continue-on-error: true
         env:
           GH_TOKEN: ${{ steps.failure-token.outputs.token }}
-          BOT_LOGIN: ${{ steps.failure-token.outputs.app-slug }}
           DISCUSSION_ID: ${{ github.event.discussion.node_id }}
-          DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-          REPOSITORY_NAME: ${{ github.event.repository.name }}
+          PROGRESS_COMMENT_ID: ${{ steps.progress.outputs.comment_id }}
         run: |
           set -euo pipefail
           BODY=$(cat <<'COMMENT_EOF'
           <!-- rubric-review-bot -->
+          <!-- rubric-review-status:failed -->
           ## 📋 Task Proposal Rubric Review
 
           ⚠️ Proposal review failed before completion. Edit the proposal to retry.
           COMMENT_EOF
           )
 
-          EXISTING_COMMENT_ID=$(gh api graphql \
-            -f query='query($repo: String!, $owner: String!, $number: Int!, $endCursor: String) {
-              repository(name: $repo, owner: $owner) {
-                discussion(number: $number) {
-                  comments(first: 100, after: $endCursor) {
-                    nodes { id body author { login } }
-                    pageInfo { hasNextPage endCursor }
-                  }
+          if [ -n "$PROGRESS_COMMENT_ID" ]; then
+            CURRENT_BODY=$(gh api graphql \
+              -f query='query($commentId: ID!) {
+                node(id: $commentId) {
+                  ... on DiscussionComment { body }
                 }
-              }
-            }' \
-            -f owner="$REPOSITORY_OWNER" \
-            -f repo="$REPOSITORY_NAME" \
-            -F number="$DISCUSSION_NUMBER" \
-            --paginate --slurp | \
-            jq -r --arg bot "$BOT_LOGIN" \
-              '[.[].data.repository.discussion.comments.nodes[] | select(.author.login == $bot) | select(.body | contains("<!-- rubric-review-bot -->")) | .id] | .[0] // empty')
-
-          if [ -n "$EXISTING_COMMENT_ID" ]; then
+              }' \
+              -f commentId="$PROGRESS_COMMENT_ID" \
+              --jq '.data.node.body // ""')
+            if [[ "$CURRENT_BODY" != *"<!-- rubric-review-status:running -->"* ]]; then
+              echo "Current review comment is no longer active; skipping failure publication"
+              exit 0
+            fi
             gh api graphql \
               -f query='mutation($commentId: ID!, $body: String!) {
                 updateDiscussionComment(input: { commentId: $commentId, body: $body }) {
                   comment { id url }
                 }
               }' \
-              -f commentId="$EXISTING_COMMENT_ID" \
+              -f commentId="$PROGRESS_COMMENT_ID" \
               -f body="$BODY"
           else
             gh api graphql \

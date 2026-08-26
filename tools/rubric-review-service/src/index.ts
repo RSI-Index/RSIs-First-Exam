@@ -4,8 +4,8 @@ export interface Env {
 }
 
 const MAX_PROPOSAL_CHARS = 200_000;
-const JUDGE_MODEL = "gpt-5.6-sol";
-const JUDGE_REASONING_EFFORT = "xhigh";
+const JUDGE_MODEL = "gpt-5.6-terra";
+const JUDGE_REASONING_EFFORT = "medium";
 const TASK_PROPOSAL_REVIEW_PATH = "/v1/reviews/task-proposal";
 
 type EvaluateRequest = {

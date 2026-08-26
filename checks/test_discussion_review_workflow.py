@@ -31,7 +31,7 @@ def test_review_workflow_serializes_each_discussion_and_restarts_on_edit():
     }
 
 
-def test_review_workflow_upserts_running_comment_before_private_work():
+def test_review_workflow_supersedes_only_unfinished_reviews_then_posts_fresh_progress():
     steps = parsed_steps()
     progress = step_named("Post or update running review comment")
 
@@ -49,14 +49,19 @@ def test_review_workflow_upserts_running_comment_before_private_work():
     assert steps.index(progress) == steps.index(step_named("React with eyes")) + 1
     assert steps.index(progress) < steps.index(step_named("Create private Skills read token"))
     assert "<!-- rubric-review-bot -->" in progress["run"]
+    assert "<!-- rubric-review-status:running -->" in progress["run"]
+    assert "<!-- rubric-review-status:superseded -->" in progress["run"]
     assert "Proposal review is running" in progress["run"]
     assert "This comment will update when the review finishes" not in progress["run"]
     assert "updateDiscussionComment" in progress["run"]
     assert "addDiscussionComment" in progress["run"]
     assert "--paginate --slurp" in progress["run"]
+    assert 'contains("<!-- rubric-review-status:running -->")' in progress["run"]
+    assert "comment_id=" in progress["run"]
+    assert '>> "$GITHUB_OUTPUT"' in progress["run"]
 
 
-def test_review_workflow_replaces_progress_with_generic_failure_on_any_later_error():
+def test_review_workflow_replaces_only_current_progress_with_generic_failure():
     steps = parsed_steps()
     failure_token = step_named("Create failure comment Discussion App token")
     failure = step_named("Post or update failed review comment")
@@ -64,7 +69,10 @@ def test_review_workflow_replaces_progress_with_generic_failure_on_any_later_err
     assert failure_token == {
         "name": "Create failure comment Discussion App token",
         "id": "failure-token",
-        "if": "always() && steps.publish-review.outcome != 'success'",
+        "if": (
+            "always() && !cancelled() && "
+            "steps.publish-review.outcome != 'success'"
+        ),
         "continue-on-error": "true",
         "uses": f"actions/create-github-app-token@{APP_TOKEN_SHA}",
         "with": {
@@ -76,13 +84,14 @@ def test_review_workflow_replaces_progress_with_generic_failure_on_any_later_err
         },
     }
     assert failure["if"] == (
-        "always() && steps.publish-review.outcome != 'success' && "
+        "always() && !cancelled() && "
+        "steps.publish-review.outcome != 'success' && "
         "steps.failure-token.outcome == 'success'"
     )
     assert failure["continue-on-error"] == "true"
     assert failure["env"]["GH_TOKEN"] == "${{ steps.failure-token.outputs.token }}"
-    assert failure["env"]["BOT_LOGIN"] == (
-        "${{ steps.failure-token.outputs.app-slug }}"
+    assert failure["env"]["PROGRESS_COMMENT_ID"] == (
+        "${{ steps.progress.outputs.comment_id }}"
     )
     assert steps.index(failure_token) == (
         steps.index(step_named("Format and post or update comment")) + 1
@@ -91,24 +100,31 @@ def test_review_workflow_replaces_progress_with_generic_failure_on_any_later_err
     assert "Proposal review failed before completion" in failure["run"]
     assert "updateDiscussionComment" in failure["run"]
     assert "addDiscussionComment" in failure["run"]
+    assert "EXISTING_COMMENT_ID" not in failure["run"]
+    assert "comments(first:" not in failure["run"]
     for private_text in ("RSI-Skills", "SKILL.md", "RUBRIC_FILE", "review.log"):
         assert private_text not in failure["run"]
 
 
-def test_successful_review_always_updates_the_running_comment():
+def test_successful_review_updates_only_the_current_runs_progress_comment():
     publish = step_named("Format and post or update comment")
 
     assert publish["id"] == "publish-review"
+    assert publish["env"]["PROGRESS_COMMENT_ID"] == (
+        "${{ steps.progress.outputs.comment_id }}"
+    )
     assert "EVENT_ACTION" not in publish["env"]
     assert 'if [ "$EVENT_ACTION" = "edited" ]' not in publish["run"]
     assert "updateDiscussionComment" in publish["run"]
     assert "addDiscussionComment" in publish["run"]
+    assert "EXISTING_COMMENT_ID" not in publish["run"]
+    assert "comments(first:" not in publish["run"]
 
 
-def test_edit_lookup_paginates_all_discussion_comments_for_bot_marker():
+def test_stale_progress_lookup_paginates_and_excludes_completed_reviews():
     workflow = WORKFLOW.read_text(encoding="utf-8")
-    lookup = workflow.split("EXISTING_COMMENT_ID=$(gh api graphql", 1)[1].split(
-        "if [ -n \"$EXISTING_COMMENT_ID\" ]", 1
+    lookup = workflow.split("RUNNING_COMMENT_IDS=$(gh api graphql", 1)[1].split(
+        "while IFS= read -r comment_id", 1
     )[0]
 
     assert "$endCursor: String" in lookup
@@ -120,6 +136,7 @@ def test_edit_lookup_paginates_all_discussion_comments_for_bot_marker():
     assert 'select(.author.login == $bot)' in lookup
     assert '--arg bot "$BOT_LOGIN"' in lookup
     assert 'select(.body | contains("<!-- rubric-review-bot -->"))' in lookup
+    assert 'select(.body | contains("<!-- rubric-review-status:running -->"))' in lookup
 
 
 def test_review_workflow_pins_actions_and_drops_checkout_credentials():
@@ -205,8 +222,8 @@ def test_review_reactions_and_comments_use_just_in_time_scoped_app_tokens():
     assert steps["Format and post or update comment"]["env"]["GH_TOKEN"] == (
         "${{ steps.comment-token.outputs.token }}"
     )
-    assert steps["Format and post or update comment"]["env"]["BOT_LOGIN"] == (
-        "${{ steps.comment-token.outputs.app-slug }}"
+    assert steps["Post or update running review comment"]["env"]["BOT_LOGIN"] == (
+        "${{ steps.reaction-token.outputs.app-slug }}"
     )
     assert ordered.index(steps["Create reaction Discussion App token"]) + 1 == (
         ordered.index(steps["React with eyes"])
@@ -220,7 +237,7 @@ def test_review_reactions_and_comments_use_just_in_time_scoped_app_tokens():
         for step in ordered
         if "BOT_LOGIN" in step.get("env", {})
     ]
-    assert len(bot_logins) == 3
+    assert len(bot_logins) == 1
     assert all("[bot]" not in login for login in bot_logins)
 
 
@@ -244,15 +261,16 @@ def test_review_workflow_passes_github_expressions_through_step_environment():
 def test_review_workflow_binds_zizmor_flagged_values_as_step_environment():
     steps = {step.get("name"): step for step in parsed_steps()}
     react = steps["React with eyes"]
+    progress = steps["Post or update running review comment"]
     format_comment = steps["Format and post or update comment"]
 
     assert react["env"]["DISCUSSION_NODE_ID"] == "${{ github.event.discussion.node_id }}"
     assert 'id="$DISCUSSION_NODE_ID"' in react["run"]
     assert format_comment["env"]["DECISION"] == "${{ steps.review.outputs.decision }}"
-    assert format_comment["env"].get("REPOSITORY_OWNER") == "${{ github.repository_owner }}"
-    assert format_comment["env"].get("REPOSITORY_NAME") == "${{ github.event.repository.name }}"
-    assert 'owner="$REPOSITORY_OWNER"' in format_comment["run"]
-    assert 'repo="$REPOSITORY_NAME"' in format_comment["run"]
+    assert progress["env"]["REPOSITORY_OWNER"] == "${{ github.repository_owner }}"
+    assert progress["env"]["REPOSITORY_NAME"] == "${{ github.event.repository.name }}"
+    assert 'owner="$REPOSITORY_OWNER"' in progress["run"]
+    assert 'repo="$REPOSITORY_NAME"' in progress["run"]
 
 
 def test_review_workflow_renders_and_appends_the_canonical_marker():
