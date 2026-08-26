@@ -4,7 +4,6 @@ from pathlib import Path
 
 import yaml
 
-
 WORKFLOW = Path(__file__).parent.parent / ".github/workflows/discussion-task-dispatch.yml"
 CHECKOUT_SHA = "fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09"
 APP_TOKEN_SHA = "bcd2ba49218906704ab6c1aa796996da409d3eb1"
@@ -44,7 +43,7 @@ def test_dispatch_workflow_is_public_only_and_minimally_privileged():
     assert len([step for step in steps if step.get("uses", "").startswith("actions/checkout@")]) == 1
 
 
-def test_dispatch_workflow_gates_token_and_dispatch_on_identifier_payload():
+def test_dispatch_workflow_gates_token_and_dispatch_on_author_or_current_owner():
     workflow, _ = load_workflow()
     steps = workflow["jobs"]["dispatch"]["steps"]
     named_steps = steps_by_name(workflow)
@@ -56,7 +55,7 @@ def test_dispatch_workflow_gates_token_and_dispatch_on_identifier_payload():
     assert named_steps["Create dispatch App token"] == {
         "name": "Create dispatch App token",
         "id": "app-token",
-        "if": "steps.gate.outputs.should_dispatch == 'true'",
+        "if": "steps.gate.outputs.candidate == 'true'",
         "uses": f"actions/create-github-app-token@{APP_TOKEN_SHA}",
         "with": {
             "client-id": "${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}",
@@ -64,10 +63,31 @@ def test_dispatch_workflow_gates_token_and_dispatch_on_identifier_payload():
             "owner": "RSI-Index",
             "repositories": "RSI-Skills",
             "permission-contents": "write",
+            "permission-members": "read",
         },
     }
+    owner_gate = named_steps["Verify current organization Owner"]
+    assert owner_gate["id"] == "owner-gate"
+    assert owner_gate["if"] == (
+        "steps.gate.outputs.candidate == 'true' && "
+        "steps.gate.outputs.is_author != 'true'"
+    )
+    assert owner_gate["env"] == {
+        "GH_TOKEN": "${{ steps.app-token.outputs.token }}",
+        "COMMENTER_LOGIN": "${{ steps.gate.outputs.commenter_login }}",
+    }
+    assert "/orgs/RSI-Index/memberships/$COMMENTER_LOGIN" in owner_gate["run"]
+    assert "checks/org_owner_gate.py" in owner_gate["run"]
+
+    authorization = (
+        "steps.gate.outputs.candidate == 'true' && "
+        "(steps.gate.outputs.is_author == 'true' || "
+        "steps.owner-gate.outputs.is_owner == 'true')"
+    )
     for name in ("Build dispatch request", "Dispatch privately"):
-        assert named_steps[name]["if"] == "steps.gate.outputs.should_dispatch == 'true'"
+        assert named_steps[name]["if"] == authorization
+
+    assert gate_index < token_index < steps.index(owner_gate)
 
 
 def test_dispatch_workflow_posts_a_parser_built_identifier_only_request():

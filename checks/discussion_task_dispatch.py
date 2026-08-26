@@ -2,13 +2,16 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import tempfile
 from pathlib import Path
 
-
 _SOURCE_REPOSITORY = "RSI-Index/RSI-Index-Public"
 _TASK_PREFIX = "/task"
+_GITHUB_LOGIN = re.compile(
+    r"^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$"
+)
 
 
 def starts_task_command(body: object) -> bool:
@@ -29,7 +32,7 @@ def _integer(value: object) -> bool:
     return type(value) is int
 
 
-def build_dispatch_payload(event: dict) -> dict | None:
+def build_dispatch_candidate(event: dict) -> dict | None:
     if not isinstance(event, dict) or event.get("action") != "created":
         return None
 
@@ -55,7 +58,10 @@ def build_dispatch_payload(event: dict) -> dict | None:
     comment_author_id = comment_user.get("id")
     if not _integer(discussion_author_id) or not _integer(comment_author_id):
         return None
-    if discussion_author_id != comment_author_id:
+    commenter_login = comment_user.get("login")
+    if not isinstance(commenter_login, str) or not _GITHUB_LOGIN.fullmatch(
+        commenter_login
+    ):
         return None
 
     discussion_number = discussion.get("number")
@@ -69,10 +75,14 @@ def build_dispatch_payload(event: dict) -> dict | None:
         return None
 
     return {
-        "source_repository": _SOURCE_REPOSITORY,
-        "discussion_number": discussion_number,
-        "discussion_node_id": discussion_node_id,
-        "comment_node_id": comment_node_id,
+        "payload": {
+            "source_repository": _SOURCE_REPOSITORY,
+            "discussion_number": discussion_number,
+            "discussion_node_id": discussion_node_id,
+            "triggering_comment_node_id": comment_node_id,
+        },
+        "commenter_login": commenter_login,
+        "is_author": discussion_author_id == comment_author_id,
     }
 
 
@@ -106,16 +116,21 @@ def main(argv: list[str] | None = None) -> None:
     except json.JSONDecodeError:
         event = None
 
-    payload = build_dispatch_payload(event)
-    should_dispatch = payload is not None
+    candidate = build_dispatch_candidate(event)
+    payload = candidate["payload"] if candidate is not None else None
     _write_json_atomically(output_path, payload)
 
     github_output = os.environ.get("GITHUB_OUTPUT")
     if github_output:
         with open(github_output, "a", encoding="utf-8") as output:
-            output.write(f"should_dispatch={'true' if should_dispatch else 'false'}\n")
+            output.write(f"candidate={'true' if candidate is not None else 'false'}\n")
+            if candidate is not None:
+                output.write(
+                    f"is_author={'true' if candidate['is_author'] else 'false'}\n"
+                )
+                output.write(f"commenter_login={candidate['commenter_login']}\n")
 
-    print("true" if should_dispatch else "false")
+    print("true" if candidate is not None else "false")
 
 
 if __name__ == "__main__":
