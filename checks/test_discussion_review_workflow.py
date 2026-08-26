@@ -40,7 +40,7 @@ def test_review_workflow_upserts_running_comment_before_private_work():
     assert progress["continue-on-error"] == "true"
     assert progress["env"] == {
         "GH_TOKEN": "${{ steps.reaction-token.outputs.token }}",
-        "BOT_LOGIN": "${{ format('{0}[bot]', steps.reaction-token.outputs.app-slug) }}",
+        "BOT_LOGIN": "${{ steps.reaction-token.outputs.app-slug }}",
         "DISCUSSION_ID": "${{ github.event.discussion.node_id }}",
         "DISCUSSION_NUMBER": "${{ github.event.discussion.number }}",
         "REPOSITORY_OWNER": "${{ github.repository_owner }}",
@@ -50,6 +50,7 @@ def test_review_workflow_upserts_running_comment_before_private_work():
     assert steps.index(progress) < steps.index(step_named("Create private Skills read token"))
     assert "<!-- rubric-review-bot -->" in progress["run"]
     assert "Proposal review is running" in progress["run"]
+    assert "This comment will update when the review finishes" not in progress["run"]
     assert "updateDiscussionComment" in progress["run"]
     assert "addDiscussionComment" in progress["run"]
     assert "--paginate --slurp" in progress["run"]
@@ -81,7 +82,7 @@ def test_review_workflow_replaces_progress_with_generic_failure_on_any_later_err
     assert failure["continue-on-error"] == "true"
     assert failure["env"]["GH_TOKEN"] == "${{ steps.failure-token.outputs.token }}"
     assert failure["env"]["BOT_LOGIN"] == (
-        "${{ format('{0}[bot]', steps.failure-token.outputs.app-slug) }}"
+        "${{ steps.failure-token.outputs.app-slug }}"
     )
     assert steps.index(failure_token) == (
         steps.index(step_named("Format and post or update comment")) + 1
@@ -205,7 +206,7 @@ def test_review_reactions_and_comments_use_just_in_time_scoped_app_tokens():
         "${{ steps.comment-token.outputs.token }}"
     )
     assert steps["Format and post or update comment"]["env"]["BOT_LOGIN"] == (
-        "${{ format('{0}[bot]', steps.comment-token.outputs.app-slug) }}"
+        "${{ steps.comment-token.outputs.app-slug }}"
     )
     assert ordered.index(steps["Create reaction Discussion App token"]) + 1 == (
         ordered.index(steps["React with eyes"])
@@ -214,6 +215,13 @@ def test_review_reactions_and_comments_use_just_in_time_scoped_app_tokens():
         ordered.index(steps["Format and post or update comment"])
     )
     assert "DISCUSSION_TOKEN" not in WORKFLOW.read_text(encoding="utf-8")
+    bot_logins = [
+        step["env"]["BOT_LOGIN"]
+        for step in ordered
+        if "BOT_LOGIN" in step.get("env", {})
+    ]
+    assert len(bot_logins) == 3
+    assert all("[bot]" not in login for login in bot_logins)
 
 
 def test_public_repository_does_not_ship_or_migrate_the_private_rubric():
