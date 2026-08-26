@@ -56,7 +56,7 @@ Use noise controls proportional to the actual uncertainty. At proposal stage, ob
 
 ## Round 4 — Workspace and action space
 
-Draft starting artifacts, final deliverable, editable components, and prohibited actions from confirmed evidence. Have the contributor decide web, external-service, and additional-data access. Draft safeguards for every enabled path. Record web-search access separately from each external service; put every service's purpose, data flow, and boundary in the dedicated external-services row.
+Draft starting artifacts, final deliverable, editable components, and prohibited actions from confirmed evidence. Default web-search access to disabled. Enable it only when it is necessary for the intended research action space and the contributor defines a concrete purpose and boundary. Have the contributor decide external-service and additional-data access. Draft safeguards for every enabled path. Record web-search access separately from each external service; put every service's purpose, data flow, and boundary in the dedicated external-services row.
 
 ## Round 5 — Compute
 
