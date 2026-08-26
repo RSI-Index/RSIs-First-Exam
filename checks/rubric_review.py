@@ -40,6 +40,7 @@ DEFAULT_RUBRIC_FILE = (
 )
 JUDGE_MODEL = "gpt-5.6-sol"
 JUDGE_REASONING_EFFORT = "xhigh"
+JUDGE_MAX_OUTPUT_TOKENS = 32_768
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MAX_REPOSITORY_FILES = 12
 MAX_REPOSITORY_FILE_BYTES = 128 * 1024
@@ -755,7 +756,7 @@ def call_openai(instructions: str, user_input, *, client=None) -> str:
         tools=[WEB_SEARCH_TOOL],
         tool_choice="required",
         text={"format": JUDGE_RESPONSE_FORMAT},
-        max_output_tokens=4096,
+        max_output_tokens=JUDGE_MAX_OUTPUT_TOKENS,
         store=False,
     )
     if getattr(response, "status", None) != "completed":
@@ -781,7 +782,7 @@ async def async_call_openai(instructions: str, user_input, *, client=None) -> st
         tools=[WEB_SEARCH_TOOL],
         tool_choice="required",
         text={"format": JUDGE_RESPONSE_FORMAT},
-        max_output_tokens=4096,
+        max_output_tokens=JUDGE_MAX_OUTPUT_TOKENS,
         store=False,
     )
     if getattr(response, "status", None) != "completed":
