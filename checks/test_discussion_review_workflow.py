@@ -2,9 +2,10 @@ from pathlib import Path
 
 import yaml
 
-
 WORKFLOW = Path(__file__).parent.parent / ".github/workflows/discussion-review.yml"
+ROOT = WORKFLOW.parent.parent.parent
 CHECKOUT_SHA = "fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09"
+APP_TOKEN_SHA = "bcd2ba49218906704ab6c1aa796996da409d3eb1"
 SETUP_UV_SHA = "38f3f104447c67c051c4a08e39b64a148898af3a"
 
 
@@ -43,6 +44,51 @@ def test_review_workflow_pins_actions_and_drops_checkout_credentials():
         checkout.get("with", {}).get("persist-credentials") for checkout in checkouts
     ] == ["false", "false"]
     assert setup_uv["uses"] == f"astral-sh/setup-uv@{SETUP_UV_SHA}"
+
+
+def test_review_workflow_reads_the_private_skills_rubric_with_an_app_token():
+    steps = {step.get("name"): step for step in parsed_steps()}
+
+    assert steps["Create private Skills read token"] == {
+        "name": "Create private Skills read token",
+        "id": "skills-token",
+        "uses": f"actions/create-github-app-token@{APP_TOKEN_SHA}",
+        "with": {
+            "client-id": "${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}",
+            "private-key": "${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}",
+            "owner": "RSI-Index",
+            "repositories": "RSI-Skills",
+            "permission-contents": "read",
+        },
+    }
+    assert steps["Checkout private discussion rubric"] == {
+        "name": "Checkout private discussion rubric",
+        "uses": f"actions/checkout@{CHECKOUT_SHA}",
+        "with": {
+            "repository": "RSI-Index/RSI-Skills",
+            "ref": "main",
+            "token": "${{ steps.skills-token.outputs.token }}",
+            "path": "private-skills",
+            "sparse-checkout": "rubrics/task-proposal.md",
+            "sparse-checkout-cone-mode": "false",
+            "persist-credentials": "false",
+        },
+    }
+    assert steps["Run rubric review"]["env"]["RUBRIC_FILE"] == (
+        "${{ github.workspace }}/private-skills/rubrics/task-proposal.md"
+    )
+
+
+def test_public_repository_does_not_ship_or_migrate_the_private_rubric():
+    workflows = "\n".join(
+        path.read_text(encoding="utf-8")
+        for path in sorted((ROOT / ".github/workflows").glob("*.yml"))
+    )
+
+    assert not (ROOT / "rubrics/task-proposal.md").exists()
+    assert not (ROOT / ".github/workflows/migrate-private-rubric.yml").exists()
+    assert "Zhuofeng-Li/RSI-Index-Rubrics" not in workflows
+    assert "RUBRIC_REPO_TOKEN" not in workflows
 
 
 def test_review_workflow_passes_github_expressions_through_step_environment():

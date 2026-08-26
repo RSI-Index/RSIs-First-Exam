@@ -104,7 +104,7 @@ upload the new file:
 ```bash
 cd tools/rubric-review-service
 npx wrangler kv key put --binding=RUBRICS task-proposal \
-  --path ../../../RSI-Index-Rubrics/task-proposal.md --remote
+  --path ../../../RSI-Skills/rubrics/task-proposal.md --remote
 ```
 
 The next request reads the new KV value. No Worker code deployment is required.

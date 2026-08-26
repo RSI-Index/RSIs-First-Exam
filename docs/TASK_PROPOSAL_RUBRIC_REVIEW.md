@@ -6,12 +6,13 @@ frontier activity; it does not run training, reproduce the baseline, or require
 measured variance yet.
 
 The rubric is private. It lives in
-[`Zhuofeng-Li/RSI-Index-Rubrics`](https://github.com/Zhuofeng-Li/RSI-Index-Rubrics),
+[`RSI-Index/RSI-Skills`](https://github.com/RSI-Index/RSI-Skills) at
+`rubrics/task-proposal.md`,
 not in this repository, so that proposals are written to the research bar rather
 than to a published checklist. The discussion workflow checks that repository
-out per run using the `RUBRIC_REPO_TOKEN` secret and passes the path to the
-runner as `RUBRIC_FILE`. The workflow also uses a `DISCUSSION_TOKEN` secret
-with write access to post or update its review comment.
+out per run using a read-only installation token from the Dispatcher GitHub App
+and passes the path to the runner as `RUBRIC_FILE`. The workflow also uses a
+`DISCUSSION_TOKEN` secret with write access to post or update its review comment.
 
 ## Judge configuration
 
@@ -63,6 +64,9 @@ was reviewed.
 ## Run locally (maintainers)
 
 Create a non-empty `proposal.md`, then run from the repository root:
+
+Clone the private `RSI-Skills` repository beside this repository, or set
+`RUBRIC_FILE` to its `rubrics/task-proposal.md` path.
 
 ```bash
 export OPENAI_API_KEY="your-api-key"
