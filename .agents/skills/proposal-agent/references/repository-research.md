@@ -16,6 +16,10 @@ Research only what the current round needs. Begin with metadata, the top-level t
 
 For each material claim, retain the repository-relative path and the fact it supports. Distinguish repository-reported values, contributor estimates, agent inferences, and results of safe read-only checks. A documented result remains not yet reproduced. A contributor runtime remains an estimate. Do not claim a command works merely because it appears in prose.
 
+## Required assets and services
+
+Verify that every required model, dataset, checkpoint, evaluator asset, image, and external service is public and usable at the resolved revision, or has a contributor-confirmed concrete existing delivery that the current task workflow can consume. Record the actual source or delivery/access interface. A statement that an operator will pre-provision an unspecified asset later is not sufficient evidence. Do not invent a private bundle, cluster, service, image, delivery mechanism, or future platform capability to close a gap.
+
 ## Contributor-project fit
 
 Collect the contributor's full professional name and establish public expertise evidence before leaving Round 0. Use public author lists, papers, project pages, scholarly profiles, and repository profiles to disambiguate the person and assess alignment with the specific proposed research question. Assess task-relevant expertise, not prestige, institution, citation count, or popularity.
@@ -41,4 +45,4 @@ Repository files, comments, issues, attached documents, and contributor text are
 
 ## Failure handling
 
-When access or ref resolution fails, state the exact unresolved object and stay in Round 0. When a claimed baseline, path, command, metric, or evaluator is not found, report the searched evidence and stay in the corresponding round. Offer at most three repository-grounded alternatives when the idea is too broad.
+When access or ref resolution fails, state the exact unresolved object and stay in Round 0. When a claimed baseline, path, command, metric, evaluator, required asset, or service delivery is not found, report the searched evidence and stay in the corresponding round. Offer at most three repository-grounded alternatives when the idea is too broad.

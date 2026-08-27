@@ -23,10 +23,10 @@ The Agent timeout is eight days: 24 hours of Work, two blocking 72-hour submissi
 
 ## Read-only validation
 
-Run the refiner validator and RSI-Harness compiler together:
+Run the private task-authoring validator and RSI-Harness compiler together:
 
 ```bash
-python3 /home/nsl/yichen/RSI-Index/RSI-Index-Public/.agents/skills/private-task-authoring-tool/scripts/validate_task.py \
+python3 /absolute/path/to/private-task-authoring-validator/validate_task.py \
   /home/nsl/yichen/RSI-Index/task_collect/refined_tasks/slime-search-policy \
   --harness-root /home/nsl/yichen/RSI-Index/RSI-Harness
 ```
