@@ -14,9 +14,10 @@ ordinary organization member or repository collaborator is not eligible.
 
 The same authorized users can post an exact, top-level `/reset` comment to
 discard an unpublished task attempt. Reset removes the private task State and
-the Discussion comments from the first valid `/task` through that `/reset`;
-the accepted Proposal and earlier review remain. It does not delete a private
-task repository that has already been published.
+the Discussion comments from the first valid `/task` after the accepted review
+through that `/reset`; the accepted Proposal and review remain. Published tasks
+cannot be reset, so their State, Discussion history, and private repository are
+left unchanged.
 
 Public ingress is a non-authoritative cost gate, not the eligibility decision.
 It checks the event action, canonical Public repository and category, stable
