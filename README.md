@@ -9,7 +9,8 @@
 RSI-Index uses a Discussion-first workflow to turn an approved research
 proposal into a private, ready-to-use RSI task repository.
 
-## 1. Create a proposal
+
+### 1. Create a proposal
 
 Clone this repository and open it in Codex:
 
@@ -23,13 +24,13 @@ will help you define the research question, baseline, evaluation, scope, and
 compute requirements, then generate an RSI task proposal. Review the completed
 proposal before submitting it.
 
-## 2. Submit the proposal
+### 2. Submit the proposal
 
 Create a new [Task Ideas Discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/categories/task-ideas)
 and paste in the proposal. Edit the same Discussion in response to the
 automated review until the proposal is accepted.
 
-## 3. Create the task
+### 3. Create the task
 
 After the proposal is accepted, continue in the same Discussion. Send each
 command as a new comment; editing an earlier command does not start a new run.
@@ -44,18 +45,18 @@ command as a new comment; editing an earlier command does not start a new run.
 After confirmation, the workflow finishes the task and creates a private
 repository for you. Then follow the path that matches your task.
 
-## Without GPU
+**Without GPU**
 
 When the private task repository has been created, the contribution workflow
 is complete.
 
-## With GPU
+**With GPU**
 
 Clone the private task repository on a machine with the required GPU. Follow
 the repository's README and use its included `harbor-task-validator` skill to
 complete validation.
 
-## Share feedback
+### 4. Share feedback
 
 Please leave brief feedback on `proposal-agent` and the task workflow in
 [this Discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/7).
