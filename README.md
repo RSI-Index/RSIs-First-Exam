@@ -2,7 +2,7 @@
 
 > [!TIP]
 >
-> ### From idea to validated RSI task in ≤30 active minutes
+> ### From idea to validated RSI task in ≤ 30 active minutes
 >
 > Bring the idea—the agents handle the rest. Review, validate, and have fun! 🚀
 
