@@ -4,7 +4,7 @@
 >
 > ### From idea to validated RSI task in ≤ 30 active minutes
 >
-> Bring the idea—our agents handle the rest. Review, validate, and have fun! 🚀
+> Bring the idea—our agents handle the rest. Review, validate, and have fun!
 
 
 ```bash
