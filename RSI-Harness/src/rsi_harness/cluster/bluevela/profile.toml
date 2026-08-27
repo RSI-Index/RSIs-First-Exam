@@ -1,0 +1,46 @@
+name = "bluevela"
+adapter = "bluevela"
+owner = "${USER}"
+
+[scheduler]
+kind = "lsf"
+submit_binary = "bsub"
+status_binary = "bjobs"
+cancel_binary = "bkill"
+queue = "normal"
+group = "grp_models"
+poll_seconds = 10.0
+
+[storage]
+run_root = "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs"
+image_cache = "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images"
+logs_root = "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/logs"
+hf_home = "/proj/datasets/interns/yuetai/hf-home"
+hf_datasets_cache = "/proj/datasets/interns/yuetai/hf-datasets-cache"
+
+[builder]
+binary = "/usr/bin/podman"
+cpu_slots = 64
+memory_mb = 524288
+walltime = "02:00"
+temp_root = "/tmp"
+min_tmp_mb = 71680
+rootless_apt_sandbox = true
+faked_binary = "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/tools/apptainer-unprivileged-1.5.2/x86_64/utils/bin/faked-sysv"
+fakeroot_library = "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/tools/apptainer-unprivileged-1.5.2/x86_64/utils/lib/libfakeroot/libfakeroot-sysv.so"
+
+[apptainer]
+binary = "/proj/datasets/interns/yuetai/rsi-nemotron/apptainer-env/bin/apptainer"
+dns_bind = "/etc/resolv.conf"
+extra_binds = ["/proj"]
+build_args = ["--fakeroot"]
+# Harbor tasks conventionally expose their mutable checkout at /testbed.  A
+# portable profile may override this without changing the adapter code.
+workspace_target = "/testbed"
+temp_root = "/tmp"
+
+[resources]
+min_cpu_slots = 8
+min_memory_mb = 65536
+gpus_per_node = 8
+walltime_margin_seconds = 900

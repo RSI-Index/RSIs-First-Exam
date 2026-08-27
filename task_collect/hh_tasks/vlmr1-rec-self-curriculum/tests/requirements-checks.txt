@@ -1,0 +1,23 @@
+# Dependencies for the CONFIG-TIME gates only. Deliberately one line.
+#
+# The package's checks split cleanly in two, and keeping the split visible is the point:
+#
+#   config-time -- runs anywhere, needs only pyyaml (+ stdlib tomllib, so Python >= 3.11):
+#     tests/contract_check.py     the five-copy drift gate
+#     tests/upstream_check.py     contract citations vs the pinned tree (needs a clone present)
+#     tests/score.py              per-round anchored reward
+#     tests/chain_score.py        chain metrics
+#     tests/carry_check.py        carry facts, leak scan, ledger continuity
+#     environment/task-tools/asset_check.py   stdlib only, no pyyaml at all (agent image)
+#
+#   run-time -- needs the training stack and therefore the VERIFIER IMAGE, never a bare venv:
+#     tests/evaluate.py           torch, transformers, qwen_vl_utils, flash-attn, PIL
+#     tests/policy_check.py       importable bare, but calls litellm; test.sh runs it from
+#                                 /opt/policy-venv so the judge's deps never touch the eval env
+#
+# Verified under /proj/long-multi/hhua/.venv (uv, CPython 3.12.12): with pyyaml added, every
+# config-time gate runs and produces the same numbers as the training env. So CI can run the
+# drift gate and the chain scorer on any machine -- no GPU, no 21 GB of assets, no image build.
+# That is what makes "configuration only" checkable rather than aspirational.
+
+pyyaml>=6.0

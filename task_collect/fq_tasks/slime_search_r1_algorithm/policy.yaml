@@ -1,0 +1,41 @@
+version: 1
+task: autolab/slime-search-r1-algorithm
+participant:
+  writable:
+    - /app/project/rl_research/algorithm_config.toml
+    - /app/output
+  algorithm_extensions:
+    - built_in_advantage_estimator
+    - policy_clipping_and_normalization
+    - kl_entropy_and_importance_sampling
+    - optimizer_and_schedule
+frozen:
+  source:
+    - /opt/slime
+    - /opt/Search-R1
+    - /opt/Megatron-LM
+    - /task-tools
+    - /var/lib/slime-task
+  assets:
+    - /models/Qwen2.5-3B
+    - /datasets/nq_hotpotqa_train/train.parquet
+    - /retriever/bm25
+    - /retriever/wiki-18.jsonl
+  hidden:
+    - /eval
+    - /models/reference
+    - /tests
+prohibited:
+  - participant_python_hooks
+  - external_network_or_downloads
+  - alternate_models_or_tokenizers
+  - changes_to_data_order_or_multiplicity
+  - changes_to_search_rollout_reward_or_sampling
+  - hidden_evaluation_access
+  - partial_budget_final_submission
+required_outputs:
+  - /app/output/hf_model
+  - /app/output/provenance.json
+  - /app/output/experiments.jsonl
+  - /app/output/selected-attempt.json
+  - /app/output/control-complete.json

@@ -1,0 +1,65 @@
+{
+  "manifest_version": 1,
+  "task_id": "datacomp_s_filter_discovery",
+  "sources": [
+    {
+      "name": "datacomp_runtime",
+      "role": "runtime_source",
+      "repository": "https://github.com/mlfoundations/datacomp",
+      "commit": "4a8df1992566ef8334773f7152e1855b1f716162",
+      "tree": "177afe8164d943d702a7ac28703108521ab168d7",
+      "license_spdx": "MIT",
+      "files": [
+        {"path": "scale_configs.py", "sha256": "09082c6e5ef249510837f7b41845a5ab573be936190aec22f29db75588601352"},
+        {"path": "train.py", "sha256": "80cda7fbbb7d65bfc3a244608446352290295d7baac248043f98de29228010c6"},
+        {"path": "baselines.py", "sha256": "fb85ad77edd28c45cd8a65a3a85e63abece8619ed8fa7a85f2d957170db3c4b6"},
+        {"path": "resharder.py", "sha256": "78bc1cff3f69699b696dd2b6de79f1d34b0f6847283a81204e73c25cbcd7bd61"},
+        {"path": "evaluate.py", "sha256": "dd174f17a21adc7938d8583b6ffe566053cee78aa1acebebbbe3d7475e4026e4"},
+        {"path": "aggregate_scores.py", "sha256": "919f0090e671d09d8c919c7e2a9323a05954dd7f5638ae4674d2907de9fbd9e4"},
+        {"path": "tasklist.yml", "sha256": "4d82b5843558ddc647136ef7dfda39965e2b4448e84c91624ac6c528e5301345"},
+        {"path": "environment.yml", "sha256": "fb23085b294b63f47be1717db502ff5cdd3d15a2ef41b845e732ed03e3120e10"}
+      ]
+    },
+    {
+      "name": "open_clip_runtime",
+      "role": "runtime_dependency",
+      "repository": "https://github.com/mlfoundations/open_clip",
+      "version": "open-clip-torch==2.16.1",
+      "commit": "395851ee9c55fdddb63f5579955cdd6d754d261c",
+      "tree": "091e08b0a0a30899afc8b7299edc739df228d098",
+      "license_spdx": "MIT",
+      "files": [
+        {"path": "src/training/main.py", "sha256": "5cec45d0a482b43737e315678bc481b6594e6482fc904b6ddda4c8b413f0f23f"},
+        {"path": "src/training/train.py", "sha256": "7fef3f71465f6e29e200cc11a3757aca8092fe9e5015262854d08ae4a843bbc2"},
+        {"path": "src/training/data.py", "sha256": "6bb521880dd688e49e13e0d121a834ace29bd1f9253fdc72a54454323bc41f5d"},
+        {"path": "src/open_clip/loss.py", "sha256": "6257ee1ac8e53178f439387f8e6111ba2d10b362a47475e3b0511405d24e7d82"},
+        {"path": "src/open_clip/model.py", "sha256": "771b41b4e366c2fe0a4bf22746a61290176620e68b4c6ba2912ad8836e76765a"}
+      ]
+    },
+    {
+      "name": "open_clip_result_evidence",
+      "role": "baseline_documentation_only",
+      "repository": "https://github.com/mlfoundations/open_clip",
+      "commit": "db4d4911cc0fc4bc58bc98579c52875750450530",
+      "tree": "a2404f893ffa79a52bc26a33665e3dbb2dbd5d0f",
+      "license_spdx": "MIT",
+      "files": [
+        {"path": "docs/openclip_results.csv", "sha256": "6b3f9313e2e24691b31ab69b534b2553165be1a975dd149ee9b4a7facb384d21"}
+      ]
+    }
+  ],
+  "data": {
+    "state": "task_owned_official_bootstrap",
+    "delivery_mode": "setup_then_content_addressed_read_only_mounts",
+    "setup_entrypoint": "setup/prepare_assets.sh",
+    "setup_source_lock": "setup/asset_sources.lock.json",
+    "harbor_runtime_acquisition": "forbidden",
+    "commonpool_scale": "small",
+    "repository_stated_storage_gb": {
+      "parquet": 3,
+      "features_npz": 75,
+      "image_shards": 450
+    },
+    "deployment": "Run the task-owned official setup on the destination cluster, then launch with run_harbor.sh; Harbor runtime mounts only the sealed snapshot."
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "base_model": "hamishivi/Qwen3.5-9B",
+  "base_model_revision": "be36edae3fd57c6cd66556fbce88b6c896ec3f0a",
+  "official_baseline": "allenai/tmax-9b@step_200",
+  "training_data_manifest": "/app/output/attempts/rl-selected/input-manifest.json",
+  "training_prompt_manifest": "/app/output/attempts/rl-selected/input-manifest.json",
+  "training_reward_manifest": "/app/output/attempts/rl-selected/input-manifest.json",
+  "training_trajectories": 51200,
+  "optimizer_updates": 200,
+  "gpu_count": 64,
+  "topology_mapping": "8 nodes x 8 H100s; 16 learner GPUs and 48 TP1 vLLM engines",
+  "training_command": "python /task-tools/tmax_async_run.py submit --attempt-id rl-selected --max-updates 200 --hypothesis-file /app/output/HYPOTHESIS.md",
+  "rl_recipe": {"algorithm": "dppo", "learning_rate": 1e-6, "unique_prompts": 8, "group_size": 32},
+  "upstream_commit": "7387d2f9142397a458dc39f0827a2ab0b4c03cda",
+  "infrastructure_patch_sha256": "REPLACE_WITH_MEASURED_SHA256",
+  "optimization_attempts": ["rl-001-example", "rl-selected"],
+  "generated_tokens": 0,
+  "sandbox_steps": 0,
+  "selected_checkpoint": "/app/output/submission/model",
+  "web_search": "disabled"
+}

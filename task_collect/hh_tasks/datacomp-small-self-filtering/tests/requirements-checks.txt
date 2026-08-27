@@ -1,0 +1,16 @@
+# CONFIG-TIME checks only: what is needed to lint and validate the package on a login node with no
+# GPU, no data and no containers.
+#
+#   tests/contract_check.py     drift gate across contract.yaml / task.toml / policy.yaml / evaluator
+#   tests/upstream_check.py     needs a datacomp clone to point at; pyyaml only
+#   tests/pool_check.py         without --recompute; pyyaml only
+#   reference/assert_null_chain.py
+#   ../../harness/run_chain.py --runtime fake
+#
+# RUN-TIME dependencies (torch, open_clip_torch, webdataset, pandas, numpy) are installed by the two
+# Dockerfiles and are deliberately NOT listed here. The split exists so the whole gate set runs in a
+# few seconds inside a plain venv: a gate suite that needs a GPU is a gate suite that gets skipped.
+#
+# Note that tests/pool_check.py --recompute and tests/carry_check.py DO need numpy, but both only run
+# inside the verifier image where it is present.
+pyyaml>=6.0
