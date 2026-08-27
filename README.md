@@ -32,18 +32,15 @@ automated review until the proposal is accepted.
 
 ### 3. Create the task
 
-After the proposal is accepted, continue in the same Discussion. Send each
-command as a new comment; editing an earlier command does not start a new run.
+After your proposal is accepted, continue in the same Discussion. Post each command as a new comment; editing a comment will not trigger a new run.
 
-- `/task` starts task preparation.
-- `/task <feedback>` asks the Task Agent to revise the latest version.
-- `/task confirm` approves the latest version and starts task creation.
-- If the bot asks for more information, reply with `/task <answer>`.
-- Before the repository is created, `/reset` discards the current attempt and
-  returns the Discussion to the accepted proposal.
+* `/task` starts task preparation.
+* `/task <feedback>` revises the task.
+* `/task confirm` approves and creates the task.
+* `/task <answer>` provides requested information.
+* `/reset` discards the task attempt before repository creation.
 
-After confirmation, the workflow finishes the task and creates a private
-repository for you. Then follow the path that matches your task.
+Once the private repository is created, follow the appropriate path below.
 
 **Without GPUs**
 
