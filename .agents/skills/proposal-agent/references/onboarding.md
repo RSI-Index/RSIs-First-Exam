@@ -28,7 +28,7 @@ Use the official open-source repository when available and pin an immutable comm
 
 | Characteristic | What it means |
 |---|---|
-| Fully open | The selected lane has public, usable code, configurations, required model/checkpoint and data assets, and an evaluation path. |
+| Fully open | The selected lane has public, usable code, configurations, required model/checkpoint and data assets, and an evaluation path. A vague promise that an operator will pre-provision missing assets later does not establish availability. |
 | Influential | The project shaped its area through adoption, citations, community use for frontier work. |
 | Timely | The research area remains active in the current research cycle. |
 | Reproducible | The official experiment can run end to end. Missing critical assets or an unverifiable metric block admission. |
@@ -44,18 +44,19 @@ Use the official open-source repository when available and pin an immutable comm
 
 ## Compute orientation
 
-One candidate experiment means taking one fixed idea and configuration from launch through any required training or optimization and evaluation until it produces a valid score. It should normally use no more than 8 H100-equivalent GPUs at peak and finish within 12 wall-clock hours. This reference applies to one experiment, not the full multi-experiment AutoResearch trajectory. A large estimate beyond is applicable but will go through our internal human review.
+One candidate experiment means taking one fixed idea and configuration from launch through any required training or optimization and evaluation until it produces a valid score. The selected lane must fit on a single physical node and use at most 8 H100-equivalent GPUs at peak. A lane that inherently requires multi-node execution or a larger peak is not admitted; a faithful repository-supported single-node lane may be selected instead. Runtime over 12 wall-clock hours remains a non-blocking compute flag for later resource review. This applies to one experiment, not the full multi-experiment AutoResearch trajectory.
 
 
 ## What to provide in Round 0
 
 Ask for:
 
-1. the one selected project and its official repository URL;
-2. the exact commit or tag, if already known;
-3. which project-selection route applies and a brief explanation of the contributor's relationship to the project and domain fit;
-4. a few sentences describing the initial research question;
-5. why the underlying area is foundational or frontier-relevant currently; and
-6. whether one candidate experiment is likely to exceed the normal compute reference significantly.
+1. the contributor's full professional name and publication email;
+2. the one selected project and its official repository URL;
+3. the exact commit or tag, if already known;
+4. which project-selection route applies and a brief explanation of the contributor's relationship to the project and domain fit;
+5. a few sentences describing the initial research question;
+6. why the underlying area is foundational or frontier-relevant currently; and
+7. whether one candidate experiment likely needs multiple physical nodes, more than 8 H100-equivalent GPUs at peak, or more than 12 wall-clock hours.
 
 Do not request exact compute details yet. The proposal agent investigates repository facts and current frontier evidence; the contributor supplies expert judgment and explicit decisions.

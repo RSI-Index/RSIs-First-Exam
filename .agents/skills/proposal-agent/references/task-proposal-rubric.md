@@ -58,8 +58,15 @@ compute check, and then assess proposal quality when the gates pass.
   submitted by the research agent. It does not include rerunning the candidate's
   training recipe.
 - **Normal compute reference:** at most 8 H100-equivalent GPUs and at most 12
-  hours for one single experiment run. This is a planning reference, not a
-  proposal-stage acceptance limit.
+  hours for one single experiment run. Runtime over 12 hours remains non-blocking
+  at proposal stage.
+- **Execution-lane eligibility:** one physical node and at most 8
+  H100-equivalent GPUs at peak for one single experiment run. Multi-node lanes
+  and lanes using more than 8 H100-equivalent GPUs are outside the currently
+  admitted task class.
+- **Current execution model:** the current RSI-Harness uses a shared
+  Base/Work/Judge environment. Judge evaluates the Work snapshot, and task-owned
+  tests are injected Judge-only; this is not an independent clean-Base verifier.
 - **Rolling six-month window:** the six calendar months ending on the supplied
   UTC review date.
 - **Directly related work:** a distinct paper or public preprint whose central
@@ -79,21 +86,25 @@ Evaluate all eight gates before deciding. Do not stop at the first concern.
   `require human review`.
 - If all eight gates pass, continue to Layer 2 even when the compute check is
   flagged.
-- A compute flag or missing compute estimate by itself must not produce
-  `Reject`, `Strong Reject`, or `require human review` at proposal stage.
+- A runtime flag or missing runtime estimate by itself must not produce `Reject`,
+  `Strong Reject`, or `require human review` at proposal stage. Hardware
+  topology and peak-count eligibility are evaluated under the Source Repository
+  gate.
 
 ### 1. Contributor Expertise Alignment
 
-- The proposal must provide the contributor's full professional name.
+- The proposal must provide the contributor's full professional name and
+  contributor-provided email. Do not infer, scrape, or invent the email.
 - Use web search to disambiguate the contributor through public author lists,
   papers, project pages, scholarly profiles, or repository profiles, then assess
   expertise against the proposal's specific research question.
 - Pass this gate only when the public record establishes credible, task-relevant
   expertise. Judge expertise alignment, not institutional prestige, citation
   count, or general popularity.
-- A missing full name or a clearly expertise-misaligned contributor fails this
-  gate. If identity remains ambiguous or public evidence is unavailable after a
-  reasonable search, return `require human review` instead of guessing.
+- A missing full name, missing contributor-provided email, or a clearly
+  expertise-misaligned contributor fails this gate. If identity remains
+  ambiguous or public evidence is unavailable after a reasonable search, return
+  `require human review` instead of guessing.
 
 ### 2. Source Repository
 
@@ -106,6 +117,15 @@ Evaluate all eight gates before deciding. Do not stop at the first concern.
   research and its relationship to the upstream project is explicit.
 - A paper may provide context, but paper claims alone cannot substitute for
   runnable code or repository evidence.
+- Every required model, dataset, checkpoint, evaluator asset, image, and
+  external service must be public and usable, or have a contributor-confirmed
+  concrete existing delivery/access interface usable by the current task
+  workflow. A vague statement that an operator will pre-provision something
+  later is insufficient.
+- The selected execution lane must fit on a single physical node and use at most
+  8 H100-equivalent GPUs at peak. A lane that inherently requires multi-node
+  execution or more than 8 H100-equivalent GPUs fails this gate unless the
+  proposal already selects a faithful, repository-supported single-node lane.
 
 ### 3. Model-Development AutoResearch Scope
 
@@ -148,6 +168,12 @@ Evaluate all eight gates before deciding. Do not stop at the first concern.
 - The proposal must state a clear research question or optimization objective
   related to model development.
 - It must define a primary metric or reward and a fixed comparison protocol.
+- Every fixed budget must define its counted unit and whether replacement
+  generation, retries, and resampling count toward that budget.
+- The reward contract must state whether a candidate-invalid artifact is
+  unscored or receives an explicitly defined finite scalar. Candidate-invalid,
+  infrastructure, timeout, and incomplete outcomes default to unscored unless
+  the contributor explicitly defines otherwise.
 - The contributor must give a reasonable explanation for why useful improvement
   or discovery space exists and why a meaningful gain should be distinguishable
   from ordinary metric noise.
@@ -193,6 +219,11 @@ Evaluate all eight gates before deciding. Do not stop at the first concern.
 - Safeguards must be realistic for the intended task. Do not claim protections
   that the proposal and evidence do not establish; record material residual
   limitations instead.
+- Assess safeguards against the current shared Base/Work/Judge environment:
+  Judge uses the Work snapshot and task-owned tests are Judge-only. A safeguard
+  that depends on a future or unsupported Harness capability, separate verifier
+  image, or clean-Base Judge does not count. If such a capability is essential
+  to the evaluation boundary, this gate fails.
 - Fail this gate only when the design leaves a credible direct path to evaluation
   leakage or reward hacking, or when the exposure and safeguards are materially
   undefined.
@@ -203,13 +234,17 @@ Evaluate all eight gates before deciding. Do not stop at the first concern.
   or newly collected/generated data.
 - Such access is allowed when it is part of the intended model-development action
   space and the contributor reasonably defines its purpose and boundaries.
+- Any required external asset or service must have a concrete existing delivery
+  or access interface. “The operator will pre-provision it” without that
+  interface is insufficient.
 - The proposal must explain how answer leakage, final-evaluation leakage, and
   reward hacking will be prevented. A well-justified bounded design can pass at
   proposal stage; network access is not automatically a human-review outcome.
 
 ## Non-blocking Compute Check
 
-Always report compute separately from the eight proposal gates.
+Always report runtime separately from the eight proposal gates. Hardware
+topology and peak-count eligibility are handled by the Source Repository gate.
 
 - Record the GPU or accelerator type, peak count, and estimated wall-clock time
   for one scoreable candidate run when provided. Distinguish a single run from
@@ -219,13 +254,16 @@ Always report compute separately from the eight proposal gates.
   comparably material cost. Do not treat an absent proxy plan as a concern for
   an ordinary run; clear failure termination such as divergence, NaN, OOM, or
   execution failure is sufficient when relevant.
-- If a run exceeds 8 H100-equivalent GPUs or 12 hours, write a clear `Flag` and
-  state which threshold is exceeded. The flag is retained for resource review
-  after baseline reproduction.
+- If runtime exceeds 12 hours, write a clear `Flag` and state the estimate. The
+  runtime flag is retained for resource review after baseline reproduction.
+- Multi-node execution or more than 8 H100-equivalent GPUs is not a non-blocking
+  compute flag; it fails the Source Repository gate as an ineligible execution
+  lane.
 - If the estimate is absent or still approximate, write `Estimate incomplete`
   and state what is missing.
-- At this stage, an over-limit or incomplete compute estimate is non-blocking.
-  When it is the proposal's only concern, the final decision must still be
+- Runtime over 12 hours remains non-blocking, as does an incomplete runtime
+  estimate when single-node and peak-GPU eligibility are already known. When a
+  runtime flag is the proposal's only concern, the final decision must still be
   `Accept` or `Strong Accept`, not `require human review`.
 - The actual GPU-hour budget, concurrency approval, and strict feasibility gate
   are set after baseline reproduction and the first representative trial.
@@ -233,7 +271,7 @@ Always report compute separately from the eight proposal gates.
 ## Layer 2: Quality Review
 
 Apply this layer when all eight proposal gates pass. It distinguishes `Accept`
-from `Strong Accept` and must not turn a non-blocking compute flag into a
+from `Strong Accept` and must not turn a non-blocking runtime flag into a
 proposal-stage rejection or human-review decision.
 
 ### 1. Current Frontier Relevance
@@ -271,7 +309,7 @@ anti-cheating boundaries remain stable.
 
 ### 6. Iteration Practicality
 
-Assess the likely cadence and usefulness of iterative trials. A compute flag may
+Assess the likely cadence and usefulness of iterative trials. A runtime flag may
 be noted as a quality concern, but by itself it cannot make the proposal fail or
 require proposal-stage human review.
 
@@ -316,8 +354,10 @@ Hard gate review:
 
 Compute note:
 [Write one of: Within normal reference | Flag | Estimate incomplete.
-Include the known accelerator count and single-run time. A Flag or incomplete
-estimate is explicitly non-blocking at proposal stage.]
+Include the known accelerator count, physical-node count, and single-run time.
+Runtime Flags and incomplete runtime estimates are explicitly non-blocking at
+proposal stage; hardware eligibility violations belong in the Source Repository
+gate.]
 
 Quality review:
 [If a proposal gate did not pass, write: Not evaluated because Layer 1 did not

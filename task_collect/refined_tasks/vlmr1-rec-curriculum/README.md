@@ -28,7 +28,7 @@ rsi-harness run /home/nsl/yichen/RSI-Index/task_collect/refined_tasks/vlmr1-rec-
 The required authoritative read-only authoring check is:
 
 ```bash
-python /home/nsl/yichen/RSI-Index/RSI-Index-Public/.agents/skills/private-task-authoring-tool/scripts/validate_task.py \
+python /absolute/path/to/private-task-authoring-validator/validate_task.py \
   /home/nsl/yichen/RSI-Index/task_collect/refined_tasks/vlmr1-rec-curriculum \
   --harness-root /home/nsl/yichen/RSI-Index/RSI-Harness
 ```
