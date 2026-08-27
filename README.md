@@ -1,5 +1,12 @@
 # Contributing an RSI task
 
+> [!TIP]
+>
+> ### From idea to validated RSI task in ≤30 active minutes
+>
+> Bring the idea—the agents handle the rest. Review, validate, and have fun! 🚀
+
+
 ```bash
 git clone https://github.com/RSI-Index/RSI-Index-Public.git
 cd RSI-Index-Public
