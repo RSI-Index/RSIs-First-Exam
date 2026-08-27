@@ -49,7 +49,7 @@ Once the private task repository has been created, proceed to [Step 4: Share fee
 Clone the private task repository on a machine with the required GPU resources. Follow the repository’s README and use the included `harbor-task-validator` skill to complete the validation. Please upload all generated validation logs to the repository. 
 
 > [!NOTE]
-> Contributions validated with the required GPUs receive more credit than contributions completed without GPU validation.
+> Contributions validated with the required GPUs can receive more credit than contributions completed without GPU validation.
 
 ### 4. Share feedback
 
