@@ -1,0 +1,6 @@
+{
+  "algorithm": "dppo",
+  "group_size": 32,
+  "learning_rate": 1e-06,
+  "unique_prompts": 8
+}

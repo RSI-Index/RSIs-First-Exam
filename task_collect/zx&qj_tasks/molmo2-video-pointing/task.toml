@@ -1,0 +1,127 @@
+schema_version = "1.3"
+source = "allenai/molmo2@f3cb1085fbb97c4a4d7fdcadd77cf871bf37a88a"
+artifacts = [
+  "/app/project",
+  { source = "/app/output", exclude = [
+    "*/wandb", "*/wandb/*",
+    "*/hf-cache", "*/hf-cache/*",
+    "*/dataloader-cache", "*/dataloader-cache/*",
+  ] },
+]
+
+[task]
+name = "scale-autoresearch/molmo2-video-pointing"
+description = "Beat the pristine Molmo2-4B video-pointing fine-tuning lane at a matched starting checkpoint, staged data, and update budget by improving the mixture, temporal preprocessing, supervision format, recipe, and/or pointing architecture; understanding what carries video pointing quality guides the search."
+authors = [{ name = "Scale AutoResearch" }]
+keywords = ["molmo2", "allenai", "video-pointing", "counting", "vlm", "fine-tuning", "data-mixture"]
+
+[metadata]
+difficulty = "hard"
+category = "model_development"
+upstream_commit = "f3cb1085fbb97c4a4d7fdcadd77cf871bf37a88a"
+license = "Apache-2.0"
+
+[metadata.optimization]
+metric = "mean of official-protocol video count accuracy (correct on vixmo_points_count_clip_63s:val) and video pointing F1 (f1 on vixmo_points_point_eval:val)"
+direction = "higher"
+submission_mode = "artifact"
+scope = "video-pointing fine-tuning lane: data mixture over staged corpora, min/max point splits, point/count mode mix, temporal frame sampling and time encoding, token pooling, pointing output format, loss token weighting, optimizer, schedule, batching, seed, seq_len, context parallelism, and pointing-head architecture changes loadable from workspace code; frozen are the starting checkpoint, staged corpora, 8000-update budget at global batch <=128 and seq_len <=16384, 1x8 topology, tokenizer/vocabulary, a 1.005x parameter budget, eval-path code, and the frozen evaluator"
+
+[metadata.science]
+headline = "Understand which mechanisms carry video pointing and counting quality in Molmo2 and train a strictly better video-pointing model at a matched starting checkpoint, data, and update budget."
+guiding_question = "What determines video pointing quality: frame-sampling density and caps, time encoding, token pooling, the point/count supervision mix and its count-stratified splits, the pointing output format (coordinates-as-text vs the in-repo MolmoPoint grounding-token head), or loss weighting? This guides hypothesis choice and is encouraged in the agent's notes, but it is NOT a separately verified deliverable — the scored deliverable is the best submitted model."
+
+[metadata.fidelity]
+reference = "pinned allenai/molmo2 public repository only"
+baseline = "released sft.py video_pointing sub-mixture (vixmo_points_minmax_0_5 0.4, vixmo_points_minmax_6_25 0.3, vixmo_points_minmax_26_60 0.1, academic_points_clip_63s_2fps 0.2) fine-tuned from the released Molmo2-4B pretrain-stage checkpoint for 8000 updates"
+non_repository_inputs = "none for scientific design; H100 SKU, container, offline data/checkpoint staging, launch wrapper, async adapter, verifier, and reward are task infrastructure"
+
+[metadata.baseline]
+method = "task-pristine pinned allenai/molmo2 sft.py lane: released video_pointing sub-mixture and released fine-tuning defaults from the staged Molmo2-4B pretrain checkpoint, 8000 updates, global batch 128, seq_len 16384, 1x8 H100"
+score_status = "pending"
+reference_run = "TBD-pending-step4-reproduction"
+lsf_job_id = "TBD"
+parameters = "TBD"
+parameter_budget = "1.005x pristine whole-model count, measured at reproduction"
+optimizer_updates = 8000
+packed_tokens_budget = 16777216000
+training_seconds = "TBD"
+count_correct = "TBD"
+count_close = "TBD"
+point_precision = "TBD"
+point_recall = "TBD"
+point_f1 = "TBD"
+video_point_score = "TBD"
+reward = "TBD"
+released_specialist_anchor = "staged allenai/Molmo2-VideoPoint-4B evaluated under the frozen protocol; metrics TBD at reproduction"
+
+[metadata.run_contract]
+asset_root = "TBD/agent_envs/scale_autoresearch_tasks"
+full_run_root = "TBD/agent_envs/scale_autoresearch_tasks/full_runs/molmo2_video_pointing"
+full_run_gpus = 8
+agent_trajectories = 1
+web_search = "disabled"
+hard_network_isolation = false
+scientific_budget = "at most 8000 optimizer updates per candidate at global batch <=128 and seq_len <=16384 (<=16,777,216,000 packed tokens) on 1x8 ranks; mixture, preprocessing, format, recipe, and pointing architecture are free variables, with the released sft.py video_pointing lane as the documented starting point"
+topology_mapping = "single-node 8-GPU torchrun exactly as in the repository README; only the scheduler/container launch layer is translated to LSF/Apptainer"
+current_scientific_status = "Task v1 (video pointing science). Pristine baseline reproduction (design_sop step 4) pending; baseline metrics, screening anchors, and the released-specialist anchor are filled in before the task is finalized. A 1x2 H100 harness smoke run (2026-08-06, 20 updates, 24 eval examples per task) exercised train -> stage -> policy gate -> frozen eval -> reward end to end and returned reward 0.020833 with policy_gate 1; it validates the harness only and is not a baseline."
+measured_single_run = "TBD at reproduction; heavier candidates (max frames, cp_degree) may run longer. Verifier cost is generation-bound, not data-bound: an undertrained model never emits EOS and runs every example to the 2048-token cap (~70 s/example), giving a ~105 min worst case for the 714 val examples on 8 ranks."
+
+# Open items that must be resolved during the step-4 reproduction.
+data_staging_caveat = "Video staging must come from the shared mirror /weka/oe-training-default/mm-olmo (MOLMO_DATA_DIR), which already holds the 2fps videos and the Molmo2-VideoPoint / Molmo2-VideoPointEval / Molmo2-VideoCountEval annotation copies. The GCS bucket referenced by the HuggingFace youtube_id_to_urls_mapping.json (gs://molmo2-youtube-cc-videos) is REQUESTER-PAYS: anonymous download fails with HTTP 400 'Bucket is a requester pays bucket but no user project provided'. A fresh copy requires a billed GCS project (gsutil -u <project> or the userProject parameter); the annotation parquets are public, only the videos are billed."
+context_parallel_caveat = "UNVERIFIED: cp_degree > 1 (parallelism.context_parallel_config.attention_type=ring) has never been run for this task. The 2026-08-06 smoke run exercised only the attention_type=sdpa path, because ring_flash_attn/flash_attn could not be built on the dev host (no CUDA toolkit, no nvcc). The task action space allows context parallelism, so cp_degree=2 must be validated inside the real container (which ships ring-flash-attn 0.1.8) as part of the step-4 reproduction."
+default_agent_session = "submit wrapper requests an uncapped scheduler envelope by default (LSF_WALLTIME overrides); long training runs are asynchronous and monitored every 30 minutes with the LLM offline; interrupted runs resume in place via the repo's allow_resume checkpointing and restored agent sessions"
+
+[agent]
+network_mode = "public"
+
+[environment]
+network_mode = "public"
+docker_image = "TBD/agent_envs/scale_autoresearch_tasks/images/molmo2_video_pointing-environment.sif"
+build_timeout_sec = 10800
+cpus = 32
+memory_mb = 524288
+storage_mb = 409600
+gpus = 8
+gpu_types = ["H100"]
+
+[environment.env]
+WANDB_MODE = "offline"
+HF_DATASETS_OFFLINE = "1"
+MOLMO_DATA_DIR = "/datasets/molmo2-official/molmo_data"
+HF_HOME = "/datasets/molmo2-official/huggingface"
+MOLMO2_START_CHECKPOINT = "/datasets/molmo2-official/checkpoints/Molmo2-4B-Pretrain"
+OLMO_SHARED_FS = "1"
+OMP_NUM_THREADS = "8"
+
+[verifier]
+timeout_sec = 14400
+environment_mode = "separate"
+network_mode = "public"
+
+[verifier.environment]
+network_mode = "public"
+docker_image = "TBD/agent_envs/scale_autoresearch_tasks/images/molmo2_video_pointing-tests.sif"
+build_timeout_sec = 10800
+cpus = 32
+memory_mb = 262144
+storage_mb = 204800
+gpus = 8
+gpu_types = ["H100"]
+
+[verifier.environment.env]
+WANDB_MODE = "offline"
+HF_DATASETS_OFFLINE = "1"
+MOLMO_DATA_DIR = "/datasets/molmo2-official/molmo_data"
+HF_HOME = "/datasets/molmo2-official/huggingface"
+MOLMO2_START_CHECKPOINT = "/datasets/molmo2-official/checkpoints/Molmo2-4B-Pretrain"
+OLMO_SHARED_FS = "1"
+OMP_NUM_THREADS = "8"
+
+[verifier.env]
+POLICY_JUDGE_MODEL = "${POLICY_JUDGE_MODEL}"
+POLICY_JUDGE_MODEL_SECONDARY = "${POLICY_JUDGE_MODEL_SECONDARY:-}"
+OPENAI_API_KEY = "${OPENAI_API_KEY:-}"
+ANTHROPIC_API_KEY = "${ANTHROPIC_API_KEY:-}"
+GEMINI_API_KEY = "${GEMINI_API_KEY:-}"
+GOOGLE_API_KEY = "${GOOGLE_API_KEY:-}"

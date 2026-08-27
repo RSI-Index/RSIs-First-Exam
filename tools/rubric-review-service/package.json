@@ -1,0 +1,14 @@
+{
+  "name": "rsi-rubric-review-service",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "check": "tsc --noEmit",
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2",
+    "wrangler": "^4.124.0"
+  }
+}

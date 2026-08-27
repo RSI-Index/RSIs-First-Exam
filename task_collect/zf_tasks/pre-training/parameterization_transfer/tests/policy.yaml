@@ -1,0 +1,7 @@
+version: 1
+task: parameterization-transfer
+allowed_source_globs:
+  - parameterization_transfer.py
+  - 3rdparty/Megatron-LM/megatron/core/parameterization/**
+  - 3rdparty/Megatron-LM/megatron/core/fusions/**
+  - 3rdparty/Megatron-LM/megatron/core/extensions/**

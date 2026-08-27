@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "scientific_score_source": false,
+  "source": "instruction.md model-card context",
+  "baseline_metrics": [
+    {
+      "baseline": "osunlp/QUEST-35B-RL",
+      "metric": "BrowseComp avg@3 accuracy",
+      "value": 45.5,
+      "unit": "percent",
+      "direction": "maximize",
+      "evaluation_unit": "published model-card protocol",
+      "status": "contextual; differently scored"
+    },
+    {
+      "baseline": "osunlp/QUEST-35B-RL",
+      "metric": "HLE avg@3 accuracy",
+      "value": 37.9,
+      "unit": "percent",
+      "direction": "maximize",
+      "evaluation_unit": "published model-card protocol",
+      "status": "contextual; differently scored"
+    }
+  ]
+}

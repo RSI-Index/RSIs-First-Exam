@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+# Makes tools/discord-review-bot/ self-contained for Railway deployment.
+#
+# Copies checks/rubric_review.py and the rubric markdown into this
+# directory so Railway only needs to deploy tools/discord-review-bot/ (set as
+# the root directory in Railway dashboard).
+#
+# Usage: bash tools/discord-review-bot/setup-railway.sh
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/../.." && pwd)"
+BOT_DIR="$REPO_ROOT/tools/discord-review-bot"
+
+# Copy the shared review module so checks imports work
+mkdir -p "$BOT_DIR/checks"
+cp "$REPO_ROOT/checks/rubric_review.py" "$BOT_DIR/checks/rubric_review.py"
+touch "$BOT_DIR/checks/__init__.py"
+
+# Copy the rubric out of the private Skills repository. It is deliberately not
+# in this public tree, so point RUBRIC_FILE at a clone of
+# https://github.com/RSI-Index/RSI-Skills before running this script.
+# The copy lands where rubric_review.py's RUBRIC_FILE default expects it inside
+# the deployed bot.
+RUBRIC_FILE="${RUBRIC_FILE:-$REPO_ROOT/../RSI-Skills/rubrics/task-proposal.md}"
+if [ ! -f "$RUBRIC_FILE" ]; then
+  echo "ERROR: proposal rubric not found at $RUBRIC_FILE" >&2
+  echo "Clone https://github.com/RSI-Index/RSI-Skills and set RUBRIC_FILE." >&2
+  exit 1
+fi
+mkdir -p "$BOT_DIR/rubrics"
+cp "$RUBRIC_FILE" "$BOT_DIR/rubrics/task-proposal.md"
+
+# rubric_review.py's DEFAULT_RUBRIC_FILE points at a sibling clone of the private
+# rubric repo, which does not exist in the deployed bot, so the deployment is
+# told where its own copy landed.
+DEPLOYED_RUBRIC_FILE="rubrics/task-proposal.md"
+if command -v railway &>/dev/null; then
+  echo "Setting RUBRIC_FILE=$DEPLOYED_RUBRIC_FILE in Railway..."
+  railway variables set RUBRIC_FILE="$DEPLOYED_RUBRIC_FILE"
+else
+  echo "railway CLI not found — set RUBRIC_FILE manually in Railway dashboard:"
+  echo "  RUBRIC_FILE=$DEPLOYED_RUBRIC_FILE"
+fi
+
+# Derive REPO_URL from git remote and set it in Railway so the bot can link
+# back to the repository.  Works for both SSH and HTTPS remotes.
+REMOTE_URL=$(git -C "$REPO_ROOT" remote get-url origin 2>/dev/null || true)
+if [ -n "$REMOTE_URL" ]; then
+  # Normalise SSH (git@github.com:org/repo.git) → HTTPS
+  REPO_URL=$(echo "$REMOTE_URL" \
+    | sed -E 's|^git@github\.com:|https://github.com/|' \
+    | sed -E 's|\.git$||')
+
+  if command -v railway &>/dev/null; then
+    echo "Setting REPO_URL=$REPO_URL in Railway..."
+    railway variables set REPO_URL="$REPO_URL"
+  else
+    echo "railway CLI not found — set REPO_URL manually in Railway dashboard:"
+    echo "  REPO_URL=$REPO_URL"
+  fi
+fi
+
+echo ""
+echo "Railway setup complete. Copied into tools/discord-review-bot/:"
+echo "  checks/rubric_review.py"
+echo "  checks/__init__.py"
+echo "  rubrics/task-proposal.md"
+echo ""
+echo "Set root directory to 'tools/discord-review-bot' in Railway dashboard, then deploy."
+echo "Use: railway up --no-gitignore  (copied files are gitignored)"

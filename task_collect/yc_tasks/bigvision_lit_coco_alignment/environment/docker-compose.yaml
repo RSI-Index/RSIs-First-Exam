@@ -1,0 +1,23 @@
+services:
+  main:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    network_mode: none
+    read_only: true
+    shm_size: 64gb
+    tmpfs:
+      - /tmp:size=32g,exec
+    volumes:
+      - ./project:/app/project
+      - ${BIGVISION_TRAIN_TFDS_ROOT:-../.assets/tfds}:/datasets/tfds:ro
+      - ${BIGVISION_INITIALIZER_ROOT:-../.assets/initializers}:/datasets/initializers:ro
+      - ${BIGVISION_BASELINE_CONTRACT_HOST:-../.assets/contracts/baseline_contract.json}:/opt/contracts/baseline_contract.json:ro
+      - ${BIGVISION_OUTPUT_ROOT:-../.runs/output}:/app/output
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 8
+              capabilities: [gpu]

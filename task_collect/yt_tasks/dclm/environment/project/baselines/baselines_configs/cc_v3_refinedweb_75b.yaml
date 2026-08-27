@@ -1,0 +1,4 @@
+- source: cc_v3
+  steps:
+    - func: random_sampling_filter
+      keep_probability: 0.5

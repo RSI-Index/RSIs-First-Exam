@@ -1,0 +1,17 @@
+Bootstrap: localimage
+From: @ENVIRONMENT_SIF@
+
+%files
+    tests /tests
+
+%post
+    mkdir -p /logs/verifier /app/output
+    chmod 0555 /tests/test.sh
+
+%environment
+    export HF_HUB_OFFLINE=1
+    export TRANSFORMERS_OFFLINE=1
+    export UV_OFFLINE=1
+
+%runscript
+    exec bash "$@"

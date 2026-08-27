@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "task_id": "datacomp_s_filter_discovery",
+  "status": "complete",
+  "runtime_network": "none",
+  "provisioning_mode": "task_owned_official_setup_then_read_only_mounts",
+  "network_downloader_in_harbor": false,
+  "setup_entrypoint": "setup/prepare_assets.sh",
+  "default_host_asset_root": ".assets",
+  "mount_root": "/datasets",
+  "required": {
+    "commonpool_s/metadata": {"mode": "read_only", "expected_rows": 12800000, "manifest": "commonpool_s/manifests/metadata.json"},
+    "commonpool_s/features": {"mode": "read_only", "manifest": "commonpool_s/manifests/features.json"},
+    "commonpool_s/full_shards": {"mode": "read_only", "expected_shards": 1288, "manifest": "commonpool_s/manifests/full_shards.json"},
+    "commonpool_s/manifests/available_uids.npy": {"mode": "read_only", "format": "numpy u8,u8"},
+    "evaluation": {"mode": "verifier_only_read_only", "task_count": 40, "non_null_primary_metrics": 38, "manifest": "evaluation/manifest.json"}
+  },
+  "forbidden": ["runtime URL acquisition", "mutable branches", "unmanifested files", "candidate-visible evaluation assets"],
+  "operator_note": "Run the task-owned setup entrypoint once on the destination cluster; acquisition uses official sources, then Harbor mounts the sealed outputs read-only."
+}

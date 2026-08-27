@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "task_id": "bigvision_lit_coco_alignment",
+  "status": "complete",
+  "calibration_profile": "repository_anchored_demo_v1",
+  "profile_scope": "complete_demo_contract",
+  "reference_run_id": "bigvision-readme-coco_B16B",
+  "reference_metric": 38.9245,
+  "released_checkpoint_metric": 38.9245,
+  "imagenet_retention_lower_bound": 19.665,
+  "trainable_parameter_ceiling": 111000000,
+  "training_flop_ceiling": 2.0e18,
+  "image_parameter_digest": "f19b1f95a43d34ea98ed50bc93ad8d77ed15c189b9e1e74231ba26e02e0bc62d",
+  "asset_manifest_sha256": "be3f0b6a2d78cc748d5280f45be3d203f80718323dc5cd8605cd9dbf531c2e48",
+  "runtime_image_id": "recipe-sha256:c80413382c48ef08132e58d01e2c3eae6d13f71ef9e55b5a671fc4e442192cb4",
+  "evaluator_tolerance": 0.0,
+  "fixed_training": {
+    "global_batch_size": 4096,
+    "image_model": "ViT-B/16",
+    "learning_rate": 0.001,
+    "optimizer": "scale_by_adam",
+    "optimizer_steps": 5000,
+    "pair_exposures": 20480000,
+    "seed": 0,
+    "warmup_steps": 150,
+    "weight_decay": 0.01,
+    "world_size": 8
+  },
+  "calibration_provenance": {
+    "reference_metric": {
+      "evidence_class": "repository_anchor",
+      "source": "Big Vision README_lit.md coco_B16B: I2T R@1 47.2, T2I R@1 32.1"
+    },
+    "released_checkpoint_metric": {
+      "evidence_class": "repository_anchor",
+      "source": "Big Vision README_lit.md coco_B16B"
+    },
+    "imagenet_retention_lower_bound": {
+      "evidence_class": "engineering_policy",
+      "basis": "95 percent of the repository ImageNet zero-shot anchor 20.7"
+    },
+    "trainable_parameter_ceiling": {
+      "evidence_class": "engineering_estimate",
+      "basis": "BERT-base text tower plus projection and temperature"
+    },
+    "training_flop_ceiling": {
+      "evidence_class": "engineering_estimate",
+      "basis": "5,000-step, global-batch-4,096 LiT training budget"
+    },
+    "image_parameter_digest": {
+      "evidence_class": "initializer_identifier_digest",
+      "basis": "SHA256 of the canonical official ViT-B/16 AugReg initializer URI"
+    },
+    "asset_manifest_sha256": {
+      "evidence_class": "package_contract_digest",
+      "source": "environment/asset_contract.json"
+    },
+    "runtime_image_id": {
+      "evidence_class": "build_recipe_digest",
+      "basis": "environment Dockerfile and requirements lock"
+    },
+    "evaluator_tolerance": {
+      "evidence_class": "demo_policy",
+      "basis": "deterministic clean-evaluator comparison"
+    }
+  },
+  "note": "Complete demo calibration. Repository metrics and engineering budgets are typed explicitly and are not represented as a local training run."
+}
