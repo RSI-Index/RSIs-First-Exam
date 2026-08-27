@@ -6,8 +6,7 @@
 >
 > Bring the idea—our agents handle the rest. Review, validate, and have fun!
 
-RSI-Index uses a Discussion-first workflow to turn an approved research
-proposal into a private, ready-to-use RSI task repository.
+RSI-Index provides a highly automated workflow that turns your research idea into a private, ready-to-use RSI task repository—with only a few quick reviews and confirmations from you.
 
 
 ### 1. Create a proposal
@@ -37,7 +36,6 @@ After your proposal is accepted, continue in the same Discussion. Post each comm
 * `/task` starts task preparation.
 * `/task <feedback>` revises the task.
 * `/task confirm` approves and creates the task.
-* `/task <answer>` provides requested information.
 * `/reset` discards the task attempt before repository creation.
 
 Once the private repository is created, follow the appropriate path below.
