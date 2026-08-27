@@ -45,20 +45,19 @@ command as a new comment; editing an earlier command does not start a new run.
 After confirmation, the workflow finishes the task and creates a private
 repository for you. Then follow the path that matches your task.
 
-**Without GPU**
+**Without GPUs**
 
-When the private task repository has been created, the contribution workflow
-is complete.
+Once the private task repository has been created, proceed to [Step 4: Share feedback](#4-share-feedback) to complete the contribution workflow.
 
-**With GPU**
+**With a GPU**
 
-Clone the private task repository on a machine with the required GPU. Follow
-the repository's README and use its included `harbor-task-validator` skill to
-complete validation.
+Clone the private task repository on a machine with the required GPU resources. Follow the repository’s README and use the included `harbor-task-validator` skill to complete the validation. Please upload all generated validation logs to the repository. 
+
+> [!NOTE]
+> Contributions validated with the required GPUs receive more credit than contributions completed without GPU validation.
 
 ### 4. Share feedback
 
-Please leave brief feedback on `proposal-agent` and the task workflow in
-[this Discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/7).
+Please leave brief feedback on `proposal-agent` and the overall task contribution workflow in [this Discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/7).
 
-Thank you for contributing to RSI-Index! 🙏
+After completing Steps 1–4, your contribution is complete. Thank you for contributing to RSI-Index! 🙏
