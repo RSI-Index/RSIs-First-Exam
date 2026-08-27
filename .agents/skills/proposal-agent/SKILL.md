@@ -62,7 +62,7 @@ Use noise controls proportional to the actual uncertainty. At proposal stage, ob
 
 Draft starting artifacts, final deliverable, editable components, and prohibited actions from confirmed evidence. Every required model, dataset, checkpoint, evaluator asset, image, or external service must be publicly available or have a contributor-confirmed concrete existing delivery that the current task workflow can use. A vague promise that an operator will pre-provision something is not an asset interface. Do not invent a private bundle, cluster, service, image, or delivery mechanism.
 
-Have the contributor decide web, external-service, and additional-data access. Draft safeguards for every enabled path. Record web-search access separately from each external service; put every service's purpose, data flow, and boundary in the dedicated external-services row.
+Default web-search access to disabled. Enable it only when it is necessary for the intended research action space and the contributor defines a concrete purpose and boundary. Have the contributor decide external-service and additional-data access. Draft safeguards for every enabled path. Record web-search access separately from each external service; put every service's purpose, data flow, and boundary in the dedicated external-services row.
 
 ## Round 5 — Compute
 
