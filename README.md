@@ -44,7 +44,7 @@ Once the private repository is created, follow the appropriate path below.
 
 Once the private task repository has been created, proceed to [Step 4: Share feedback](#4-share-feedback) to complete the contribution workflow.
 
-**With a GPU**
+**With GPUs**
 
 Clone the private task repository on a machine with the required GPU resources. Follow the repository’s README and use the included `harbor-task-validator` skill to complete the validation. Please upload all generated validation logs to the repository. 
 
