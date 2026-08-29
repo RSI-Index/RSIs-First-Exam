@@ -61,8 +61,11 @@ or runner behavior.
 The private rubric is wrapped in a confidentiality instruction and the judge is
 constrained to a strict JSON schema. The runner validates and bounds every
 field, escapes all model text as inert Markdown, renders the public review
-itself, and rejects long word- or character-normalized overlap with the private
-rubric. Invalid, oversized, or overlapping model output is
+itself, and rejects substantial word- or character-normalized overlap that is
+newly introduced from the private rubric. Text already present in the submitted
+proposal or supplied repository evidence is safe to restate and does not count
+as a private-rubric disclosure unless it reproduces the complete private rubric.
+Invalid, oversized, complete-rubric, or novel overlapping model output is
 replaced with a fixed `require human review` response before the Discussion
 comment and its proposal marker are rendered; raw model output is never used as
 the fallback.
