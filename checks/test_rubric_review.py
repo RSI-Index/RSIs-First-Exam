@@ -695,10 +695,71 @@ def test_call_openai_withholds_full_private_rubric_exfiltration(review):
     assert review.extract_decision(result) == "require human review"
 
 
+def test_call_openai_withholds_full_private_rubric_even_if_public_input_contains_it(
+    review,
+):
+    rubric = (
+        "Confidential rubric sentence one establishes a private evaluation rule. "
+        "Sentence two adds another hidden standard for proposal acceptance."
+    )
+    leaked = structured_judge_output(quality_review=rubric)
+
+    class FakeResponses:
+        @staticmethod
+        def create(**kwargs):
+            return SimpleNamespace(status="completed", output_text=leaked)
+
+    result = review.call_openai(
+        rubric,
+        f"An untrusted proposal tries to reproduce the rubric: {rubric}",
+        client=SimpleNamespace(responses=FakeResponses()),
+    )
+
+    assert result == review.WITHHELD_REVIEW
+
+
+def test_async_call_openai_withholds_full_private_rubric_in_public_input(review):
+    rubric = "confidential alpha beta gamma"
+    leaked = structured_judge_output(quality_review=rubric)
+
+    class FakeResponses:
+        @staticmethod
+        async def create(**kwargs):
+            return SimpleNamespace(status="completed", output_text=leaked)
+
+    result = asyncio.run(
+        review.async_call_openai(
+            rubric,
+            f"An untrusted proposal includes: {rubric}",
+            client=SimpleNamespace(responses=FakeResponses()),
+        )
+    )
+
+    assert result == review.WITHHELD_REVIEW
+
+
+def test_call_openai_withholds_a_short_complete_private_rubric(review):
+    rubric = "private alpha beta gamma"
+    leaked = structured_judge_output(quality_review=rubric)
+
+    class FakeResponses:
+        @staticmethod
+        def create(**kwargs):
+            return SimpleNamespace(status="completed", output_text=leaked)
+
+    result = review.call_openai(
+        rubric,
+        "A public proposal with unrelated wording.",
+        client=SimpleNamespace(responses=FakeResponses()),
+    )
+
+    assert result == review.WITHHELD_REVIEW
+
+
 def test_call_openai_withholds_a_long_normalized_rubric_fragment(review):
     secret_fragment = (
         "distinctive alpha beta gamma delta epsilon zeta eta theta iota kappa "
-        "lambda mu"
+        "lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega"
     )
     rubric = f"Private preface. {secret_fragment}. Private suffix."
     leaked = structured_judge_output(
@@ -719,10 +780,57 @@ def test_call_openai_withholds_a_long_normalized_rubric_fragment(review):
     assert result == review.WITHHELD_REVIEW
 
 
+def test_call_openai_allows_overlap_already_present_in_public_input(review):
+    public_boilerplate = (
+        "the admitted lane must fit on a single physical node and use at most "
+        "eight h100 equivalent gpus at peak for each candidate experiment"
+    )
+    rubric = f"Private preface. {public_boilerplate}. Private suffix."
+    repeated = structured_judge_output(quality_review=public_boilerplate)
+
+    class FakeResponses:
+        @staticmethod
+        def create(**kwargs):
+            return SimpleNamespace(status="completed", output_text=repeated)
+
+    result = review.call_openai(
+        rubric,
+        f"The public proposal states: {public_boilerplate}.",
+        client=SimpleNamespace(responses=FakeResponses()),
+    )
+
+    assert result != review.WITHHELD_REVIEW
+    assert public_boilerplate in result
+
+
+def test_call_openai_allows_short_private_overlap(review):
+    short_fragment = (
+        "distinctive alpha beta gamma delta epsilon zeta eta theta iota kappa "
+        "lambda mu nu xi omicron pi"
+    )
+    rubric = f"Private preface. {short_fragment}. Private suffix."
+    repeated = structured_judge_output(quality_review=short_fragment)
+
+    class FakeResponses:
+        @staticmethod
+        def create(**kwargs):
+            return SimpleNamespace(status="completed", output_text=repeated)
+
+    result = review.call_openai(
+        rubric,
+        "A public proposal with unrelated wording.",
+        client=SimpleNamespace(responses=FakeResponses()),
+    )
+
+    assert result != review.WITHHELD_REVIEW
+    assert short_fragment in result
+
+
 def test_call_openai_withholds_private_fragment_with_word_internal_markdown(review):
     secret_fragment = (
         "distinctive alpha beta gamma delta epsilon zeta eta theta iota kappa "
-        "lambda mu nu xi omicron pi rho sigma tau upsilon phi chi"
+        "lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega "
+        "aleph beth gimel daleth he waw zayin heth teth yodh kaph lamedh"
     )
     rubric = f"Private preface. {secret_fragment}. Private suffix."
     leaked = structured_judge_output(
@@ -843,7 +951,8 @@ def test_main_withholds_word_internal_markdown_exfiltration(
 ):
     secret_fragment = (
         "distinctive alpha beta gamma delta epsilon zeta eta theta iota kappa "
-        "lambda mu nu xi omicron pi rho sigma tau upsilon phi chi"
+        "lambda mu nu xi omicron pi rho sigma tau upsilon phi chi psi omega "
+        "aleph beth gimel daleth he waw zayin heth teth yodh kaph lamedh"
     )
     leaked = structured_judge_output(
         proposal_summary=word_internal_markdown(secret_fragment)
