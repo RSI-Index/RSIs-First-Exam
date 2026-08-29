@@ -297,12 +297,13 @@ def test_review_workflow_renders_and_appends_the_canonical_marker():
     assert format_comment["run"].count('-f body="$BODY"') == 2
 
 
-def test_review_workflow_replaces_withheld_output_before_publication():
+def test_review_workflow_has_no_synthetic_decision_fallback():
     steps = {step.get("name"): step for step in parsed_steps()}
     run_review = steps["Run rubric review"]["run"]
 
-    assert 'publication_guard = result.get("publication_guard")' in run_review
-    assert 'if publication_guard == "withheld":' in run_review
-    assert 'decision = "require human review"' in run_review
-    assert "Automated review output was withheld" in run_review
-    assert 'elif publication_guard != "pass":' in run_review
+    assert 'decision = result.get("decision")' in run_review
+    assert 'review = result.get("review")' in run_review
+    assert "publication_guard" not in run_review
+    assert "withheld" not in run_review
+    assert "require human review" not in run_review
+    assert "Strong Reject" not in run_review

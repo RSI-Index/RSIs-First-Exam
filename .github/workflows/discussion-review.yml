@@ -175,25 +175,11 @@ jobs:
           from pathlib import Path
 
           result = json.loads(Path("result.json").read_text(encoding="utf-8"))
-          publication_guard = result.get("publication_guard")
-          if publication_guard == "withheld":
-              decision = "require human review"
-              review = (
-                  "Proposal summary:\n"
-                  "Automated review output was withheld because it could not be "
-                  "safely published. A human maintainer must review this proposal.\n\n"
-                  "Decision: require human review"
-              )
-          elif publication_guard != "pass":
-              raise SystemExit("Judge returned an invalid publication guard")
-          else:
-              decision = result.get("decision")
-              review = result.get("review")
+          decision = result.get("decision")
+          review = result.get("review")
 
           allowed_decisions = {
-              "Strong Reject",
               "Reject",
-              "require human review",
               "Accept",
               "Strong Accept",
           }
@@ -245,9 +231,7 @@ jobs:
           case "$DECISION" in
             "Strong Accept") BADGE="🟢 **Strong Accept**" ;;
             "Accept")        BADGE="🟢 **Accept**" ;;
-            "require human review") BADGE="🟡 **require human review**" ;;
             "Reject")        BADGE="🔴 **Reject**" ;;
-            "Strong Reject") BADGE="🔴 **Strong Reject**" ;;
             *)
               echo "Unexpected non-canonical decision: $DECISION" >&2
               exit 1
@@ -262,7 +246,7 @@ jobs:
               NEXT_STEP="> 🤖 This automated recommendation is eligible for task dispatch. The Discussion author or a current organization Owner can send \`/task\` to continue."
               ;;
             *)
-              NEXT_STEP="> 🤖 This is an automated recommendation for a human maintainer — not a final decision. Edit your proposal to trigger a fresh review. Judged against the private task proposal rubric; ask a maintainer if a point is unclear."
+              NEXT_STEP="> 🤖 This automated recommendation is not eligible for task dispatch. Edit your proposal to trigger a fresh review. Judged against the private task proposal rubric; ask a maintainer if a point is unclear."
               ;;
           esac
 
