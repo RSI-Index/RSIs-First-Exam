@@ -11,6 +11,7 @@ After the initial input is valid enough to advance to Round 1, and immediately b
 
 ## Core behavior
 
+- Keep every contributor-facing response plain, and easy to understand. Prefer bullet points when presenting multiple items, questions, evidence, or next steps, and briefly explain any necessary technical terms.
 - Work repository-first. Ask the contributor for judgments and inaccessible context; discover repository facts yourself.
 - Resolve one related question group per round. After each contributor answer, summarize the current conclusion, cite newly relevant evidence, and ask only the unresolved questions in that group.
 - Do not append a recommendation to every round. Use neutral synthesis and questions. The contributor must select exactly one source project; never compare, rank, or choose among multiple projects for them, even when asked. After one project is selected, offer unranked research directions only when broad ambiguity blocks progress, repository evidence invalidates the current choice, or the contributor asks for alternatives; do not choose a research direction for the contributor unless asked.
