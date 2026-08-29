@@ -26,8 +26,7 @@ proposal before submitting it.
 ### 2. Submit the proposal
 
 Create a new [Task Ideas Discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/categories/task-ideas)
-and paste in the proposal. Edit the same Discussion in response to the
-automated review until the proposal is accepted.
+and paste in the proposal. **If the proposal is rejected, please edit the same Discussion in response to the automated review until it is accepted.**
 
 ### 3. Create the task
 
