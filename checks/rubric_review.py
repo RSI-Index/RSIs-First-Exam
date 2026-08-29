@@ -48,9 +48,7 @@ MAX_REPOSITORY_TREE_PATHS = 200
 MAX_REPOSITORY_EVIDENCE_CHARS = 250_000
 WEB_SEARCH_TOOL = {"type": "web_search", "search_context_size": "high"}
 PUBLIC_DECISIONS = (
-    "Strong Reject",
     "Reject",
-    "require human review",
     "Accept",
     "Strong Accept",
 )
@@ -64,7 +62,7 @@ GATE_FIELDS = (
     ("evaluation_integrity", "Evaluation Integrity"),
     ("data_and_network_boundaries", "Data and Network Boundaries"),
 )
-GATE_STATUSES = ("Pass", "Fail", "Human review")
+GATE_STATUSES = ("Pass", "Fail")
 COMPUTE_STATUSES = ("Within normal reference", "Flag", "Estimate incomplete")
 _GATE_RESULT_SCHEMA = {
     "type": "object",
@@ -128,12 +126,6 @@ JUDGE_RESPONSE_FORMAT = {
         },
     },
 }
-WITHHELD_REVIEW = (
-    "Proposal summary:\n"
-    "Automated review output was withheld because it could not be safely "
-    "published. A human maintainer must review this proposal.\n\n"
-    "Decision: require human review"
-)
 _OUTPUT_FIELD_LIMITS = {
     "proposal_summary": 1000,
     "evidence": 1600,
@@ -141,8 +133,6 @@ _OUTPUT_FIELD_LIMITS = {
     "compute_details": 800,
     "quality_review": 1800,
 }
-_RUBRIC_OVERLAP_WORDS = 20
-_RUBRIC_OVERLAP_CHARS = 160
 _MARKDOWN_ESCAPE_RE = re.compile(r"([\\`*_{}\[\]()#+\-.!|~])")
 
 
@@ -609,6 +599,11 @@ def parse_judge_payload(output_text: str) -> dict:
             f"hard_gate_review.{name}.evidence",
             _OUTPUT_FIELD_LIMITS["gate_evidence"],
         )
+    failed_gate_present = any(gate["status"] == "Fail" for gate in gates.values())
+    if payload["decision"] == "Reject" and not failed_gate_present:
+        raise ValueError("Reject requires at least one failed hard gate")
+    if payload["decision"] != "Reject" and failed_gate_present:
+        raise ValueError(f"{payload['decision']} requires every hard gate to pass")
 
     compute = _require_exact_keys(
         payload["compute_note"], {"status", "details"}, "compute_note"
@@ -683,104 +678,9 @@ def render_public_review(payload: dict) -> str:
     return "\n".join(lines)
 
 
-def _normalized_words(value: str) -> list[str]:
-    normalized = unicodedata.normalize("NFKC", value).casefold()
-    return re.findall(r"[a-z0-9]+", normalized)
-
-
-def _canonical_alnum(value: str) -> str:
-    normalized = unicodedata.normalize("NFKC", value).casefold()
-    return "".join(character for character in normalized if character.isalnum())
-
-
-def _payload_text(value) -> str:
-    if isinstance(value, str):
-        return value
-    if isinstance(value, dict):
-        return "\n".join(_payload_text(item) for item in value.values())
-    if isinstance(value, list):
-        return "\n".join(_payload_text(item) for item in value)
-    return ""
-
-
-def _contains_sequence(items: list[str], sequence: tuple[str, ...]) -> bool:
-    if not sequence or len(items) < len(sequence):
-        return False
-    return any(
-        tuple(items[index : index + len(sequence)]) == sequence
-        for index in range(len(items) - len(sequence) + 1)
-    )
-
-
-def contains_private_rubric_overlap(
-    rubric: str,
-    public_review: str,
-    allowed_source_text: str = "",
-) -> bool:
-    rubric_words = _normalized_words(rubric)
-    public_words = _normalized_words(public_review)
-    allowed_words = _normalized_words(allowed_source_text)
-
-    full_rubric_words = tuple(rubric_words)
-    if _contains_sequence(public_words, full_rubric_words):
-        return True
-
-    rubric_chars = _canonical_alnum(rubric)
-    public_chars = _canonical_alnum(public_review)
-    if rubric_chars and rubric_chars in public_chars:
-        return True
-
-    window = _RUBRIC_OVERLAP_WORDS
-    if len(rubric_words) >= window and len(public_words) >= window:
-        private_word_windows = {
-            tuple(rubric_words[index : index + window])
-            for index in range(len(rubric_words) - window + 1)
-        }
-        allowed_word_windows = {
-            tuple(allowed_words[index : index + window])
-            for index in range(max(0, len(allowed_words) - window + 1))
-        }
-        if any(
-            tuple(public_words[index : index + window]) in private_word_windows
-            and tuple(public_words[index : index + window]) not in allowed_word_windows
-            for index in range(len(public_words) - window + 1)
-        ):
-            return True
-
-    allowed_chars = _canonical_alnum(allowed_source_text)
-
-    char_window = _RUBRIC_OVERLAP_CHARS
-    if len(rubric_chars) < char_window or len(public_chars) < char_window:
-        return False
-    private_char_windows = {
-        rubric_chars[index : index + char_window]
-        for index in range(len(rubric_chars) - char_window + 1)
-    }
-    allowed_char_windows = {
-        allowed_chars[index : index + char_window]
-        for index in range(max(0, len(allowed_chars) - char_window + 1))
-    }
-    return any(
-        public_chars[index : index + char_window] in private_char_windows
-        and public_chars[index : index + char_window] not in allowed_char_windows
-        for index in range(len(public_chars) - char_window + 1)
-    )
-
-
-def finalize_judge_output(
-    output_text: str,
-    rubric: str,
-    allowed_source_text: str = "",
-) -> str:
-    try:
-        payload = parse_judge_payload(output_text)
-        model_text = _payload_text(payload)
-        public_review = render_public_review(payload)
-    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
-        return WITHHELD_REVIEW
-    if contains_private_rubric_overlap(rubric, model_text, allowed_source_text):
-        return WITHHELD_REVIEW
-    return public_review
+def finalize_judge_output(output_text: str) -> str:
+    payload = parse_judge_payload(output_text)
+    return render_public_review(payload)
 
 
 def call_openai(instructions: str, user_input, *, client=None) -> str:
@@ -806,11 +706,7 @@ def call_openai(instructions: str, user_input, *, client=None) -> str:
     output_text = getattr(response, "output_text", None)
     if not isinstance(output_text, str) or not output_text.strip():
         raise RuntimeError("OpenAI response completed without review text")
-    return finalize_judge_output(
-        output_text,
-        instructions,
-        allowed_source_text=_payload_text(user_input),
-    )
+    return finalize_judge_output(output_text)
 
 
 async def async_call_openai(instructions: str, user_input, *, client=None) -> str:
@@ -836,17 +732,11 @@ async def async_call_openai(instructions: str, user_input, *, client=None) -> st
     output_text = getattr(response, "output_text", None)
     if not isinstance(output_text, str) or not output_text.strip():
         raise RuntimeError("OpenAI response completed without review text")
-    return finalize_judge_output(
-        output_text,
-        instructions,
-        allowed_source_text=_payload_text(user_input),
-    )
+    return finalize_judge_output(output_text)
 
 
 _CANONICAL_DECISIONS = {
-    "strong reject": "Strong Reject",
     "reject": "Reject",
-    "require human review": "require human review",
     "accept": "Accept",
     "strong accept": "Strong Accept",
 }
@@ -947,7 +837,6 @@ def main(argv: list[str] | None = None) -> None:
         "repository": repository_label,
         "decision": decision,
         "review": review,
-        "publication_guard": "withheld" if review == WITHHELD_REVIEW else "pass",
     }
     print(json.dumps(result))
 

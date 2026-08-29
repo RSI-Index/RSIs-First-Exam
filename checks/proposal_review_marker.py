@@ -6,14 +6,11 @@ import os
 import re
 from dataclasses import dataclass
 
-
 _MARKER_PREFIX = "<!-- rsi-proposal-review:"
 _MARKER_PATTERN = re.compile(r"<!-- rsi-proposal-review:(.*?) -->")
 _REQUIRED_KEYS = {"decision", "discussion_node_id", "proposal_sha256", "schema"}
 _CANONICAL_DECISIONS = {
-    "Strong Reject",
     "Reject",
-    "require human review",
     "Accept",
     "Strong Accept",
 }

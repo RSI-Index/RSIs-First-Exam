@@ -42,9 +42,9 @@ The judge uses web search to disambiguate the contributor and assess public
 task-relevant expertise. It also searches the rolling six-month window ending on
 the supplied UTC review date and treats X topic activity as supporting community
 evidence. Frontier evidence is non-blocking: limited recent work or incomplete
-search access is reported as a quality limitation, not a rejection or
-human-review trigger. If contributor identity cannot be reliably disambiguated,
-the expertise gate requires human review rather than a guess.
+search access is reported as a quality limitation, not a rejection. If
+contributor identity cannot be reliably disambiguated, the expertise gate fails
+rather than guessing the identity.
 
 Before judging, the runner reads GitHub repository metadata and resolves the
 selected ref once to an immutable commit SHA. It then uses that same SHA for a
@@ -61,14 +61,9 @@ or runner behavior.
 The private rubric is wrapped in a confidentiality instruction and the judge is
 constrained to a strict JSON schema. The runner validates and bounds every
 field, escapes all model text as inert Markdown, renders the public review
-itself, and rejects substantial word- or character-normalized overlap that is
-newly introduced from the private rubric. Text already present in the submitted
-proposal or supplied repository evidence is safe to restate and does not count
-as a private-rubric disclosure unless it reproduces the complete private rubric.
-Invalid, oversized, complete-rubric, or novel overlapping model output is
-replaced with a fixed `require human review` response before the Discussion
-comment and its proposal marker are rendered; raw model output is never used as
-the fallback.
+itself, and publishes valid structured review output without a textual-overlap
+guard. Invalid or oversized model output makes the command and Discussion
+workflow fail; the runner never replaces it with a synthetic decision.
 
 If the URL, ref, or evidence paths are missing or cannot be fetched, the runner
 records that fact in the evidence bundle rather than pretending the repository
@@ -90,10 +85,10 @@ uv run checks/rubric_review.py proposal.md
 ```
 
 The command writes one JSON object to standard output and a readable copy of the
-review to standard error. The final decision is exactly one of `Strong Reject`,
-`Reject`, `require human review`, `Accept`, or `Strong Accept`.
+review to standard error. The final decision is exactly one of `Reject`,
+`Accept`, or `Strong Accept`.
 
-If the judge response has no decision or its decision is not one of those five
+If the judge response has no decision or its decision is not one of those three
 canonical values, the command and discussion workflow fail. They do not invent
 an `Unknown` fallback or publish a review comment with an invalid decision.
 
@@ -121,9 +116,9 @@ python3 tools/rubric-review-service/scripts/evaluate.py proposal.md
 ```
 
 The command prints one JSON object containing `decision`, `review`, `model`,
-and `reasoning_effort`. A successful decision is exactly one of `Strong Reject`,
-`Reject`, `require human review`, `Accept`, or `Strong Accept`. Keep the review
-with the proposal while revising it; the rubric itself is never returned.
+and `reasoning_effort`. A successful decision is exactly one of `Reject`,
+`Accept`, or `Strong Accept`. Keep the review with the proposal while revising
+it; the rubric itself is never returned.
 
 For a quick connectivity check that does not need either key or call OpenAI:
 
