@@ -54,9 +54,11 @@ compute check, and then assess proposal quality when the gates pass.
   candidate.
 - **Baseline:** a traceable reference implementation or artifact evaluated under
   the same primary metric and comparison protocol as the agent's candidate.
-- **Evaluation run:** scoring the model, checkpoint, or other candidate artifact
-  submitted by the research agent. It does not include rerunning the candidate's
-  training recipe.
+- **Evaluation run:** prefer direct evaluation of a model, checkpoint, or other
+  candidate artifact submitted by the research agent. When the contributor
+  explains why direct evaluation cannot answer the scientific question, it may
+  instead use evaluation-time retraining under a fixed protocol from a submitted
+  declarative configuration or manifest.
 - **Normal compute reference:** at most 8 H100-equivalent GPUs and at most 12
   hours for one single experiment run. Runtime over 12 hours remains non-blocking
   at proposal stage.
@@ -200,9 +202,26 @@ Evaluate all eight gates before deciding. Do not stop at the first concern.
 - The proposal must state exactly which datasets, examples, aggregate scores,
   per-example feedback, logs, or trajectories the agent can see during research,
   and what remains hidden or reserved.
-- By default, a fixed evaluator scores each submitted candidate artifact
-  directly and returns the declared aggregate feedback needed for iteration. It
-  must not rerun the candidate's training recipe during evaluation.
+- The proposal must declare its evaluation mode. Prefer direct evaluation when
+  a fixed evaluator can answer the scientific question by scoring the submitted
+  model, checkpoint, or other artifact.
+- Follow the contributor's scientifically coherent choice of evaluation-time
+  retraining under a fixed protocol when the contributor explains why direct
+  evaluation cannot answer the scientific question. In that mode, require a
+  declarative configuration or manifest and a fixed evaluation execution
+  contract: evaluator-owned source code, data, seeds, training configuration,
+  run budget, metric capture, candidate-failure behavior, and matched
+  baseline/candidate execution under the same evaluator-owned protocol except
+  the declared candidate-versus-baseline treatment.
+- For evaluation-time retraining, define whether any candidate code, logs, or
+  checkpoints are accepted; protect the fixed evaluator and metric from
+  candidate control or fabricated outputs; and account for replacements,
+  retries, and resampling as declared runs. Candidate-invalid, infrastructure,
+  timeout, and incomplete outcomes must follow the declared score semantics.
+- Do not fail this gate merely because evaluation-time retraining occurs or the
+  submitted candidate is a configuration or manifest. Fail when the retraining
+  justification or fixed execution contract is missing, materially
+  contradictory, or unsafe.
 - By default, evaluation examples, answers, per-example outcomes, and evaluator
   internals are not returned to the agent. A separate hidden final split is
   optional, not preferred or mechanically required.
