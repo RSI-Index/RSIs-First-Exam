@@ -1,12 +1,12 @@
-# Contributing an RSI task
+# Contributing an RSI task with VibeRSI
 
 > [!TIP]
 >
-> ### From idea to a validated RSI task in under 1 hour
+> ### VibeRSI: from idea to a validated RSI task in under 1 hour
 >
-> Bring the idea—our agents handle the rest. Review, validate, and have fun!
+> Bring the idea and our agents handle the rest. Review, validate, and have fun!
 
-RSI-Index provides a highly automated workflow that turns your research idea into a private, ready-to-use RSI task repository—with only a few quick reviews and confirmations from you.
+**VibeRSI** is the RSI-Index contribution pipeline. It turns your research idea into a private, ready-to-use RSI task repository through an automated workflow with only a few quick reviews and confirmations from you.
 
 
 ### 1. Create a proposal
@@ -39,19 +39,22 @@ After your proposal is accepted, continue in the same Discussion. Post each comm
 
 Once the private repository is created, follow the appropriate path below.
 
+> [!IMPORTANT]
+> **Be responsible for your experiment design.** Every setup you specify will be run on real compute resources, either your own cluster or ours. Choose a task scope, experiment plan, and compute budget that fit the GPU resources available for your burden.
+
 **Without GPUs**
 
-Once the private task repository has been created, proceed to [Step 4: Share feedback](#4-share-feedback) to complete the contribution workflow.
+During private beta, contributors without access to the required GPUs may ask our RSI-Index team to run the experiment on their behalf. This support is temporary. At public launch, this path will no longer be accepted: contributors must run their tasks to completion and submit a complete trajectory.
 
 **With GPUs**
 
-Clone the private task repository on a machine with the required GPU resources. Follow the repository’s README and use the included `harbor-task-validator` skill to complete the validation. Please upload all generated validation logs to the repository. 
+Clone the private task repository on a machine with the required GPU resources. Follow the repository’s README and use the included `harbor-task-validator` skill to run the final task end to end. Upload the complete trajectory and all generated validation logs to the repository.
 
-> [!NOTE]
-> Contributions validated with the required GPUs can receive more credit than contributions completed without GPU validation.
+> [!CAUTION]
+> We review every task for scientific soundness, rigor, and novelty, and independently reproduce submitted tasks. Proposal approval and trajectory submission do not guarantee inclusion. A task with an unreasonable, unsupported, or irreproducible design may still be rejected after trajectory submission and excluded from RSI-Index.
 
 ### 4. Share feedback
 
-Please leave brief feedback on `proposal-agent` and the overall task contribution workflow in [this Discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/7).
+Please leave brief feedback on `proposal-agent` and the overall VibeRSI pipeline in [this Discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/7).
 
-After completing Steps 1–4, your contribution is complete. Thank you for contributing to RSI-Index! 🙏
+After completing Steps 1–4 and submitting the required trajectory and validation logs, your task is ready for final review. Thank you for contributing to RSI-Index! 🙏
