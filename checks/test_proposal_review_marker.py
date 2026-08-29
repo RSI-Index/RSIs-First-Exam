@@ -1,5 +1,4 @@
 import pytest
-
 from proposal_review_marker import (
     ReviewMarker,
     canonical_proposal_bytes,
@@ -17,7 +16,7 @@ def test_hash_is_stable_and_body_sensitive():
 def test_canonical_hash_uses_literal_unicode_json_and_fixed_digest():
     # This fixture's digest was independently calculated for the literal UTF-8
     # bytes of {"body":"café ☃","title":"提案"}.
-    expected_bytes = '{"body":"café ☃","title":"提案"}'.encode("utf-8")
+    expected_bytes = '{"body":"café ☃","title":"提案"}'.encode()
 
     assert canonical_proposal_bytes("提案", "café ☃") == expected_bytes
     assert b"\\u" not in canonical_proposal_bytes("提案", "café ☃")
@@ -43,11 +42,14 @@ def test_accept_marker_round_trips_unicode():
     )
 
 
-@pytest.mark.parametrize(
-    "decision", ["Reject", "Strong Reject", "require human review"]
-)
-def test_non_accept_decisions_are_not_eligible(decision):
-    assert ReviewMarker(1, decision, "a" * 64, "D_1").eligible is False
+def test_reject_decision_is_not_eligible():
+    assert ReviewMarker(1, "Reject", "a" * 64, "D_1").eligible is False
+
+
+@pytest.mark.parametrize("decision", ["Strong Reject", "require human review"])
+def test_removed_decisions_cannot_be_rendered(decision):
+    with pytest.raises(ValueError, match="canonical"):
+        render_review_marker(decision, "a" * 64, "D_1")
 
 
 def test_strong_accept_decision_is_eligible():
