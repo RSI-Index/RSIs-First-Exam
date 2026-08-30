@@ -60,6 +60,7 @@ GATE_FIELDS = (
     ("research_action_space", "Research Action Space"),
     ("evaluation_integrity", "Evaluation Integrity"),
     ("data_and_network_boundaries", "Data and Network Boundaries"),
+    ("task_generation_readiness", "Task-Generation Readiness"),
 )
 GATE_STATUSES = ("Pass", "Fail")
 COMPUTE_STATUSES = ("Within normal reference", "Flag", "Estimate incomplete")
