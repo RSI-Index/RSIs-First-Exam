@@ -85,16 +85,18 @@ uv run checks/rubric_review.py proposal.md
 ```
 
 The command writes one JSON object to standard output and a readable copy of the
-review to standard error. The final decision is exactly one of `Reject`,
-`Accept`, or `Strong Accept`.
+review to standard error. The final decision is exactly `Reject` or `Pass`:
+one or more failed gates produce `Reject`, while all nine passed gates produce
+`Pass`.
 
-If the judge response has no decision or its decision is not one of those three
+If the judge response has no decision or its decision is not one of those two
 canonical values, the command and discussion workflow fail. They do not invent
 an `Unknown` fallback or publish a review comment with an invalid decision.
 
 Every review also contains a separate compute note. A single run above 8
 H100-equivalent GPUs or 12 hours is flagged for the later resource review, but a
-compute flag alone still receives `Accept` or `Strong Accept` at proposal stage.
+compute flag alone still receives `Pass` at proposal stage unless another gate
+fails.
 Strict resource approval and empirical variance gating happen after baseline
 reproduction.
 
@@ -116,8 +118,8 @@ python3 tools/rubric-review-service/scripts/evaluate.py proposal.md
 ```
 
 The command prints one JSON object containing `decision`, `review`, `model`,
-and `reasoning_effort`. A successful decision is exactly one of `Reject`,
-`Accept`, or `Strong Accept`. Keep the review with the proposal while revising
+and `reasoning_effort`. A successful decision is exactly `Reject` or `Pass`.
+Keep the review with the proposal while revising
 it; the rubric itself is never returned.
 
 For a quick connectivity check that does not need either key or call OpenAI:

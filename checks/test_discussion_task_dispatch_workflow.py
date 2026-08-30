@@ -6,6 +6,7 @@ import yaml
 
 WORKFLOW = Path(__file__).parent.parent / ".github/workflows/discussion-task-dispatch.yml"
 README = Path(__file__).parent.parent / "README.md"
+OPERATOR_DOC = Path(__file__).parent.parent / "docs/DISCUSSION_TASK_AUTOMATION.md"
 CHECKOUT_SHA = "fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09"
 APP_TOKEN_SHA = "bcd2ba49218906704ab6c1aa796996da409d3eb1"
 
@@ -184,13 +185,16 @@ def test_dispatch_workflow_never_handles_private_or_untrusted_content():
     assert "repository:" not in lower
 
 
-def test_public_commands_keep_start_and_feedback_on_the_existing_task_dispatch():
+def test_legacy_commands_stay_on_existing_dispatch_but_out_of_contributor_start_path():
     _, raw = load_workflow()
     readme = README.read_text(encoding="utf-8")
+    operator_doc = OPERATOR_DOC.read_text(encoding="utf-8")
 
-    assert "`/task`" in readme
-    assert "`/task <answer or guidance>`" in readme
+    assert "`/task`" not in readme
+    assert "`/task <answer or correction>`" in readme
     assert "`/task confirm`" not in readme
+    assert "Legacy plain `/task`" in operator_doc
+    assert "`/task confirm`" in operator_doc
     assert "COMMAND: ${{ steps.gate.outputs.command }}" in raw
     assert "discussion_task_command" in raw
     assert "task_confirm" not in raw.lower()

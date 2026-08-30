@@ -6,6 +6,29 @@ SKILL = PROPOSAL_AGENT / "SKILL.md"
 TEMPLATE = PROPOSAL_AGENT / "references" / "proposal-template.md"
 RUBRIC = PROPOSAL_AGENT / "references" / "task-proposal-rubric.md"
 README = ROOT / "README.md"
+OPERATOR_AUTOMATION = ROOT / "docs" / "DISCUSSION_TASK_AUTOMATION.md"
+
+
+def rubric_copies() -> dict[str, Path]:
+    copies = {"public proposal-agent reference": RUBRIC}
+    workspace = ROOT.parents[2] if ROOT.parent.name == ".worktrees" else ROOT.parent
+    skills_root = workspace / "RSI-Skills"
+    matching_worktree = skills_root / ".worktrees" / ROOT.name
+    if matching_worktree.is_dir():
+        skills_root = matching_worktree
+    authoritative = skills_root / "rubrics" / "task-proposal.md"
+    private_reference = (
+        skills_root
+        / ".agents"
+        / "skills"
+        / "proposal-agent"
+        / "references"
+        / "task-proposal-rubric.md"
+    )
+    if authoritative.is_file() and private_reference.is_file():
+        copies["private authoritative rubric"] = authoritative
+        copies["private proposal-agent reference"] = private_reference
+    return copies
 
 
 def test_proposal_agent_allows_justified_fixed_protocol_retraining():
@@ -88,19 +111,62 @@ def test_reference_rubric_rejects_failed_task_generation_readiness():
     assert "### 9. task-generation readiness" in rubric
     assert "task-generation readiness | pass / fail" in rubric
     assert "a task-generation readiness failure forces `reject`" in rubric
-    assert "at least one of the nine proposal gates fails" in rubric
+    assert "one or more of the nine gates fail" in rubric
 
 
-def test_readme_describes_one_command_task_creation_with_optional_answers():
+def test_all_available_rubric_copies_use_only_the_nine_gate_pass_reject_rule():
+    gate_rows = (
+        "Contributor Expertise Alignment",
+        "Source Repository",
+        "Model-Development AutoResearch Scope",
+        "Traceable Baseline",
+        "Scientific Objective and Metric",
+        "Research Action Space",
+        "Evaluation Integrity",
+        "Data and Network Boundaries",
+        "Task-Generation Readiness",
+    )
+
+    assert len(rubric_copies()) in {1, 3}
+    for label, path in rubric_copies().items():
+        source = path.read_text(encoding="utf-8")
+        normalized = " ".join(source.split())
+        for gate in gate_rows:
+            assert f"| {gate} | Pass / Fail |" in source, label
+        assert "## Layer 2:" not in source, label
+        assert "Reject: one or more of the nine gates fail." in normalized, label
+        assert (
+            "Pass: all nine gates pass; compute flags remain non-blocking unless "
+            "another gate fails."
+        ) in normalized, label
+        assert "Decision: Reject | Pass" in source, label
+        assert "**Strong Accept:**" not in source, label
+        assert "Decision: Reject | Accept" not in source, label
+        assert "Decision: Accept" not in source, label
+
+
+def test_readme_describes_automatic_task_creation_with_only_requested_answers():
     readme = README.read_text(encoding="utf-8")
     normalized = " ".join(readme.lower().split())
 
     assert "about 1 hour" in normalized
-    assert "send `/task` once" in normalized
-    assert "genuine task-defining question" in normalized
-    assert "`/task <answer or guidance>`" in readme
-    assert "automatically continues" in normalized
+    for stage in (
+        "submit or edit the discussion",
+        "pass or reject initial check",
+        "task building starts automatically",
+        "`/task <answer or correction>` only if asked",
+        "accepted",
+        "private task repository",
+    ):
+        assert stage in normalized
+    assert "send `/task` once" not in normalized
+    assert "post `/task`" not in normalized
     assert "`/task confirm`" not in readme
+    assert "legacy" not in normalized
+
+    operator = OPERATOR_AUTOMATION.read_text(encoding="utf-8").lower()
+    assert "legacy" in operator
+    assert "/task" in operator
 
     without_gpu = readme.split("**Without GPUs**", 1)[1].split("**With GPUs**", 1)[0]
     with_gpu = readme.split("**With GPUs**", 1)[1].split("### 4.", 1)[0]
