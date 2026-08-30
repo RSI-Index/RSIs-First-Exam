@@ -40,6 +40,7 @@ def test_builds_identifier_only_candidate_for_author_task_command():
             "discussion_number": 128,
             "discussion_node_id": "D_kw128",
             "triggering_comment_node_id": "DC_kw900",
+            "trigger_kind": "comment",
         },
         "commenter_login": "author",
         "is_author": True,
@@ -69,6 +70,7 @@ def test_builds_candidate_for_non_author_so_owner_can_be_checked_authoritatively
             "discussion_number": 128,
             "discussion_node_id": "D_kw128",
             "triggering_comment_node_id": "DC_kw900",
+            "trigger_kind": "comment",
         },
         "commenter_login": "current-owner",
         "is_author": False,
@@ -127,6 +129,7 @@ def test_reset_requires_the_exact_lowercase_command_and_builds_a_reset_candidate
             "discussion_number": 128,
             "discussion_node_id": "D_kw128",
             "triggering_comment_node_id": "DC_kw900",
+            "trigger_kind": "comment",
         },
         "commenter_login": "author",
         "is_author": True,
@@ -210,6 +213,7 @@ def test_cli_atomically_writes_compact_sorted_payload_and_only_prints_decision(t
     assert output_path.read_text(encoding="utf-8") == (
         '{"discussion_node_id":"D_kw128","discussion_number":128,'
         '"source_repository":"RSI-Index/RSI-Index-Public",'
+        '"trigger_kind":"comment",'
         '"triggering_comment_node_id":"DC_kw900"}'
     )
     assert github_output.read_text(encoding="utf-8") == (

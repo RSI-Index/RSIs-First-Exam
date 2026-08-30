@@ -14,7 +14,7 @@ SCRIPT = Path(__file__).with_name("rubric_review.py")
 
 def structured_judge_output(**overrides) -> str:
     payload = {
-        "decision": "Accept",
+        "decision": "Pass",
         "proposal_summary": "A bounded proposal summary.",
         "evidence_reviewed": {
             "contributor_public_expertise": "Public expertise evidence.",
@@ -622,7 +622,7 @@ def test_call_openai_always_uses_fixed_terra_model_and_medium_reasoning(review):
 
     result = review.call_openai("rubric", "proposal", client=client)
 
-    assert result.endswith("Decision: Accept")
+    assert result.endswith("Decision: Pass")
     assert "Proposal summary:" in result
     assert len(calls) == 1
     call = calls[0]
@@ -638,6 +638,10 @@ def test_call_openai_always_uses_fixed_terra_model_and_medium_reasoning(review):
     ]
     assert call["tool_choice"] == "required"
     assert call["text"] == {"format": review.JUDGE_RESPONSE_FORMAT}
+    assert review.JUDGE_RESPONSE_FORMAT["schema"]["properties"]["decision"] == {
+        "type": "string",
+        "enum": ["Reject", "Pass"],
+    }
     assert call["max_output_tokens"] == 32768
     assert call["store"] is False
 
@@ -654,7 +658,7 @@ def test_async_call_openai_enables_high_context_web_search(review):
 
     result = asyncio.run(review.async_call_openai("rubric", "proposal", client=client))
 
-    assert result.endswith("Decision: Accept")
+    assert result.endswith("Decision: Pass")
     assert calls[0]["tools"] == [
         {"type": "web_search", "search_context_size": "high"}
     ]
@@ -678,7 +682,7 @@ def test_call_openai_publishes_structured_output_that_repeats_rubric_text(review
     )
 
     assert rubric in result
-    assert result.endswith("Decision: Accept")
+    assert result.endswith("Decision: Pass")
 
 
 def test_async_call_openai_publishes_structured_output_that_repeats_rubric_text(
@@ -701,7 +705,7 @@ def test_async_call_openai_publishes_structured_output_that_repeats_rubric_text(
     )
 
     assert rubric in result
-    assert result.endswith("Decision: Accept")
+    assert result.endswith("Decision: Pass")
 
 
 def test_public_renderer_makes_model_markdown_inert(review):
@@ -734,9 +738,8 @@ def test_call_openai_rejects_oversized_structured_output(review):
         )
 
 
-@pytest.mark.parametrize("decision", ["Accept", "Strong Accept"])
-def test_call_openai_rejects_acceptance_with_a_failed_gate(review, decision):
-    payload = json.loads(structured_judge_output(decision=decision))
+def test_call_openai_rejects_pass_with_a_failed_gate(review):
+    payload = json.loads(structured_judge_output(decision="Pass"))
     payload["hard_gate_review"]["contributor_expertise_alignment"]["status"] = (
         "Fail"
     )
@@ -777,7 +780,7 @@ def test_call_openai_rejects_incomplete_response(review):
             return SimpleNamespace(
                 status="incomplete",
                 incomplete_details={"reason": "max_output_tokens"},
-                output_text="Decision: Accept",
+                output_text="Decision: Pass",
             )
 
     client = SimpleNamespace(responses=FakeResponses())
@@ -789,13 +792,14 @@ def test_call_openai_rejects_incomplete_response(review):
 @pytest.mark.parametrize(
     ("text", "expected"),
     [
-        ("Decision: Accept", "Accept"),
+        ("Decision: Pass", "Pass"),
         ("Decision: reject", "Reject"),
-        ("Decision: Strong Accept", "Strong Accept"),
+        ("Decision: Accept", None),
+        ("Decision: Strong Accept", None),
         ("**Decision:** **require human review**", None),
         ("Decision: strong reject", None),
         ("Decision: Maybe", None),
-        ("Decision: Accept\nExtra trailing text", None),
+        ("Decision: Pass\nExtra trailing text", None),
     ],
 )
 def test_extract_decision_accepts_only_canonical_value_on_final_line(
@@ -839,7 +843,7 @@ def test_main_emits_a_review_without_a_publication_guard(
         "decision",
         "review",
     }
-    assert result["decision"] == "Accept"
+    assert result["decision"] == "Pass"
     assert result["review"] == rendered
 
 

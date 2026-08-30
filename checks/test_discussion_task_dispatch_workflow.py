@@ -111,6 +111,24 @@ def test_dispatch_workflow_posts_a_parser_built_identifier_only_request():
     assert "--input repository-dispatch.json" in dispatch["run"]
 
 
+def test_manual_dispatch_payload_is_explicitly_a_comment_trigger():
+    workflow, _ = load_workflow()
+    named_steps = steps_by_name(workflow)
+    authorization = (
+        "steps.gate.outputs.candidate == 'true' && "
+        "(steps.gate.outputs.is_author == 'true' || "
+        "steps.owner-gate.outputs.is_owner == 'true')"
+    )
+
+    assert named_steps["Build dispatch request"]["if"] == authorization
+    assert named_steps["Dispatch privately"]["if"] == authorization
+    assert "payload = json.load" in named_steps["Build dispatch request"]["run"]
+    assert 'payload.get("trigger_kind") != "comment"' in named_steps[
+        "Build dispatch request"
+    ]["run"]
+    assert '"client_payload": payload' in named_steps["Build dispatch request"]["run"]
+
+
 def test_authorized_task_command_gets_non_blocking_eyes_acknowledgement():
     workflow, _ = load_workflow()
     steps = workflow["jobs"]["dispatch"]["steps"]
