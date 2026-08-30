@@ -8,7 +8,7 @@ contributor to have already reproduced the baseline, measured final run-to-run
 variance, or completed an agent trajectory.
 
 FrontierRSI accepts iterative research tasks related to model development in the
-broad sense. Apply the eight proposal gates, record the separate non-blocking
+broad sense. Apply the nine proposal gates, record the separate non-blocking
 compute check, and then assess proposal quality when the gates pass.
 
 ## Evidence rules
@@ -78,13 +78,13 @@ compute check, and then assess proposal quality when the gates pass.
 
 ## Layer 1: Proposal Gates
 
-Evaluate all eight gates before deciding. Do not stop at the first concern.
+Evaluate all nine gates before deciding. Do not stop at the first concern.
 
 - If any gate fails, return `Reject`.
 - If a material, non-compute ambiguity genuinely cannot be resolved from the
   contributor's justification or repository evidence, fail the affected gate
   and return `Reject`.
-- If all eight gates pass, continue to Layer 2 even when the compute check is
+- If all nine gates pass, continue to Layer 2 even when the compute check is
   flagged.
 - A runtime flag or missing runtime estimate by itself must not produce `Reject`
   at proposal stage. Hardware topology and peak-count eligibility are evaluated
@@ -257,9 +257,30 @@ Evaluate all eight gates before deciding. Do not stop at the first concern.
   reward hacking will be prevented. A well-justified bounded design can pass at
   proposal stage; network access does not automatically fail the gate.
 
+### 9. Task-Generation Readiness
+
+- Simulate handing the accepted proposal directly to the standard Task Agent.
+  Pass only when it would not need another contributor-owned choice about the
+  research question, baseline, evaluation or reward, action space, data
+  boundary, network boundary, or compute contract.
+- Existing proposal fields must establish that candidate-producing compute runs
+  in Work by default; Judge reloads and evaluates the complete materialized
+  candidate snapshot; normal evaluation is candidate-only; Solution
+  materializes the traceable baseline without training or evaluation;
+  candidate-invalid results are unscored unless a finite scalar was selected;
+  and Work/Judge follow the current shared snapshot model.
+- Web search, each external service, and additional-data access must be bounded
+  separately. Every required artifact or service must have a real public source
+  or concrete existing delivery/access interface.
+- Do not fail for repository paths, image selection, dependency versions, task
+  layout, Verifier mechanics, timeout sizing, unavailable reproduced
+  measurements, unverified runtime, pending stateful validation, or another
+  ordinary implementation decision the Task Agent can resolve conservatively.
+- A Task-Generation Readiness failure forces `Reject`.
+
 ## Non-blocking Compute Check
 
-Always report runtime separately from the eight proposal gates. Hardware
+Always report runtime separately from the nine proposal gates. Hardware
 topology and peak-count eligibility are handled by the Source Repository gate.
 
 - Record the GPU or accelerator type, peak count, and estimated wall-clock time
@@ -286,7 +307,7 @@ topology and peak-count eligibility are handled by the Source Repository gate.
 
 ## Layer 2: Quality Review
 
-Apply this layer when all eight proposal gates pass. It distinguishes `Accept`
+Apply this layer when all nine proposal gates pass. It distinguishes `Accept`
 from `Strong Accept` and must not turn a non-blocking runtime flag into a
 proposal-stage rejection.
 
@@ -333,7 +354,7 @@ change the proposal decision.
 
 Return exactly one decision:
 
-- **Reject:** At least one of the eight proposal gates fails, including because a
+- **Reject:** At least one of the nine proposal gates fails, including because a
   material ambiguity or policy exception remains unresolved.
 - **Accept:** All gates pass and the proposal is credible enough to proceed to
   baseline reproduction. Concerns and compute flags may remain.
@@ -363,6 +384,7 @@ Hard gate review:
 | Research Action Space | Pass / Fail | [Concise evidence-based reason] |
 | Evaluation Integrity | Pass / Fail | [Concise evidence-based reason] |
 | Data and Network Boundaries | Pass / Fail | [Concise evidence-based reason] |
+| Task-Generation Readiness | Pass / Fail | [Concise evidence-based reason] |
 
 Compute note:
 [Write one of: Within normal reference | Flag | Estimate incomplete.
