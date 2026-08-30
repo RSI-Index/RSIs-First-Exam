@@ -32,6 +32,7 @@ def structured_judge_output(**overrides) -> str:
                 "research_action_space",
                 "evaluation_integrity",
                 "data_and_network_boundaries",
+                "task_generation_readiness",
             )
         },
         "compute_note": {
@@ -755,6 +756,42 @@ def test_call_openai_rejects_pass_with_a_failed_gate(review):
             "proposal",
             client=SimpleNamespace(responses=FakeResponses()),
         )
+
+
+def test_task_generation_readiness_is_required_by_the_strict_judge_schema(review):
+    hard_gates = review.JUDGE_RESPONSE_FORMAT["schema"]["properties"][
+        "hard_gate_review"
+    ]
+
+    assert hard_gates["required"][-1] == "task_generation_readiness"
+    assert "task_generation_readiness" in hard_gates["properties"]
+
+
+def test_readiness_only_failure_forces_reject_and_is_rendered(review):
+    payload = json.loads(structured_judge_output(decision="Reject"))
+    payload["hard_gate_review"]["task_generation_readiness"]["status"] = "Fail"
+
+    parsed = review.parse_judge_payload(json.dumps(payload))
+    rendered = review.render_public_review(parsed)
+
+    assert "| Task-Generation Readiness | Fail |" in rendered
+    assert rendered.endswith("Decision: Reject")
+
+
+def test_missing_task_generation_readiness_result_is_rejected(review):
+    payload = json.loads(structured_judge_output())
+    del payload["hard_gate_review"]["task_generation_readiness"]
+
+    with pytest.raises(ValueError, match="hard_gate_review has an invalid shape"):
+        review.parse_judge_payload(json.dumps(payload))
+
+
+def test_pass_rejects_failed_task_generation_readiness(review):
+    payload = json.loads(structured_judge_output(decision="Pass"))
+    payload["hard_gate_review"]["task_generation_readiness"]["status"] = "Fail"
+
+    with pytest.raises(ValueError, match="requires every hard gate to pass"):
+        review.parse_judge_payload(json.dumps(payload))
 
 
 def test_call_openai_rejects_reject_decision_when_every_gate_passes(review):
