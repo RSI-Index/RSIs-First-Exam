@@ -20,11 +20,13 @@ Discussion author or a current `RSI-Index` organization Owner can answer with
 collaborator is not eligible.
 
 The same authorized users can post an exact, top-level `/reset` comment to
-discard an unpublished task attempt. Reset removes the private task State and
-the Discussion comments from the first valid `/task` after the accepted review
-through that `/reset`; the accepted Proposal and review remain. Published tasks
-cannot be reset, so their State, Discussion history, and private repository are
-left unchanged.
+discard an unpublished task attempt. For an automatic lineage, reset preserves
+the current App-authored schema-2 `Pass` review and deletes later task-workflow
+replies together with the `/reset` comment; the Proposal also remains. For a
+legacy or manual lineage, deletion begins with the first valid authored `/task`
+after the accepted review and includes `/reset`, preserving the Proposal and
+review. Published tasks cannot be reset, so their State, Discussion history,
+and private repository are left unchanged.
 
 Public ingress is a non-authoritative cost gate, not the eligibility decision.
 It checks the event action, canonical Public repository and category, stable
