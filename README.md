@@ -2,11 +2,11 @@
 
 > [!TIP]
 >
-> ### VibeRSI: from idea to a validated RSI task in under 1 hour
+> ### VibeRSI: from idea to a ready RSI task in about 1 hour
 >
 > Bring the idea and our agents handle the rest. Review, validate, and have fun!
 
-**VibeRSI** is the RSI-Index contribution pipeline. It turns your research idea into a private, ready-to-use RSI task repository through an automated workflow with only a few quick reviews and confirmations from you.
+**VibeRSI** is the RSI-Index contribution pipeline. It turns your research idea into a private, ready-to-use RSI task repository through an automated workflow, asking for your input only when a task-defining choice genuinely needs it.
 
 
 ### 1. Create a proposal
@@ -32,9 +32,8 @@ and paste in the proposal. **If the proposal is rejected, please edit the same D
 
 After your proposal is accepted, continue in the same Discussion. Post each command as a new comment; editing a comment will not trigger a new run.
 
-* `/task` starts task preparation.
-* `/task <feedback>` revises the task.
-* `/task confirm` approves and creates the task.
+* Send `/task` once. The workflow prepares, checks, and creates your private task repository automatically.
+* Only if the system asks a genuine task-defining question, reply with `/task <answer or guidance>`. Your answer automatically continues task creation.
 * `/reset` discards the task attempt before repository creation.
 
 Once the private repository is created, follow the appropriate path below.
@@ -44,7 +43,7 @@ Once the private repository is created, follow the appropriate path below.
 
 **Without GPUs**
 
-During private beta, contributors without access to the required GPUs may ask our RSI-Index team to run the experiment on their behalf. This support is temporary. At public launch, this path will no longer be accepted: contributors must run their tasks to completion and submit a complete trajectory.
+When your private task repository is available, you can clone it and inspect the complete generated task. Repository delivery completes the contribution path for contributors without the required GPUs.
 
 **With GPUs**
 
@@ -57,4 +56,4 @@ Clone the private task repository on a machine with the required GPU resources. 
 
 Please leave brief feedback on `proposal-agent` and the overall VibeRSI pipeline in [this Discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/7).
 
-After completing Steps 1–4 and submitting the required trajectory and validation logs, your task is ready for final review. Thank you for contributing to RSI-Index! 🙏
+After following the path appropriate to your hardware, your task is ready for review. Thank you for contributing to RSI-Index! 🙏
