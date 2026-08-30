@@ -5,6 +5,7 @@ PROPOSAL_AGENT = ROOT / ".agents" / "skills" / "proposal-agent"
 SKILL = PROPOSAL_AGENT / "SKILL.md"
 TEMPLATE = PROPOSAL_AGENT / "references" / "proposal-template.md"
 RUBRIC = PROPOSAL_AGENT / "references" / "task-proposal-rubric.md"
+README = ROOT / "README.md"
 
 
 def test_proposal_agent_allows_justified_fixed_protocol_retraining():
@@ -88,3 +89,24 @@ def test_reference_rubric_rejects_failed_task_generation_readiness():
     assert "task-generation readiness | pass / fail" in rubric
     assert "a task-generation readiness failure forces `reject`" in rubric
     assert "at least one of the nine proposal gates fails" in rubric
+
+
+def test_readme_describes_one_command_task_creation_with_optional_answers():
+    readme = README.read_text(encoding="utf-8")
+    normalized = " ".join(readme.lower().split())
+
+    assert "about 1 hour" in normalized
+    assert "send `/task` once" in normalized
+    assert "genuine task-defining question" in normalized
+    assert "`/task <answer or guidance>`" in readme
+    assert "automatically continues" in normalized
+    assert "`/task confirm`" not in readme
+
+    without_gpu = readme.split("**Without GPUs**", 1)[1].split("**With GPUs**", 1)[0]
+    with_gpu = readme.split("**With GPUs**", 1)[1].split("### 4.", 1)[0]
+    assert "private task repository" in without_gpu.lower()
+    assert "clone" in without_gpu.lower()
+    assert "validator" not in without_gpu.lower()
+    assert "trajectory" not in without_gpu.lower()
+    assert "clone" in with_gpu.lower()
+    assert "harbor-task-validator" in with_gpu
