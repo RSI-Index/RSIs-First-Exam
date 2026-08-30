@@ -7,10 +7,17 @@ logs.
 
 ## Request protocol
 
-The Discussion author or a current `RSI-Index` organization Owner can comment
-`/task` to request task creation, add high-level feedback with
-`/task <feedback>`, and use `/task confirm` to confirm the final version. An
-ordinary organization member or repository collaborator is not eligible.
+The standard path starts when the review workflow publishes a current
+App-authored schema-2 `Pass` marker. The workflow re-fetches the live Discussion
+and marker, then sends the private worker exactly five identifier fields:
+source repository, Discussion number, Discussion node ID, triggering marker
+node ID, and `trigger_kind=proposal_pass`. No proposal or review prose crosses
+that dispatch boundary.
+
+If automatic assumption research finds a genuine contributor-owned choice, the
+Discussion author or a current `RSI-Index` organization Owner can answer with
+`/task <answer or correction>`. An ordinary organization member or repository
+collaborator is not eligible.
 
 The same authorized users can post an exact, top-level `/reset` comment to
 discard an unpublished task attempt. Reset removes the private task State and
@@ -27,6 +34,14 @@ organization membership whose API role is `admin` (Owner). It then creates an
 identifier-only private dispatch. The private worker repeats the authoritative
 authorization and does not trust this ingress result.
 
+## Legacy and manual operation
+
+Legacy plain `/task`, `/task <feedback>`, and `/task confirm` comments remain
+parseable for existing State recovery and operator compatibility. A manual
+`workflow_dispatch` also remains available with dry-run defaulting to true.
+These are not steps in the new contributor path. Operators should prefer the
+automatic `proposal_pass` route for every new Discussion.
+
 ## Configuration
 
 Install the dispatch GitHub App for the `RSI-Index` organization and configure
@@ -42,18 +57,19 @@ organization `Members: Read-only`. Each workflow call narrows the installation
 token to the repository and permissions needed for that step; no personal token
 is used.
 
-After this cutover, edit any already-accepted Discussion once before using
-`/task`. The review workflow intentionally updates only marker comments owned
-by the current App bot. A legacy `github-actions` or personal-token marker is
-left unchanged, and the edit creates a new App-owned authoritative marker.
+Deploy the private Skills revision first, then the Public revision. This lets
+the private parser accept and verify `proposal_pass` before Public can emit it.
+After cutover, edit an already-passed Discussion once to create a current
+App-owned schema-2 marker. A legacy `github-actions` or personal-token marker is
+left unchanged.
 
 ## Private worker and outcomes
 
 The private worker owns request State, task generation, review, publishing,
 and Discussion replies. It authoritatively re-fetches the Discussion and
-command comment and reauthorizes the request: it verifies the approval marker
+triggering marker or answer comment and reauthorizes the request: it verifies the approval marker
 and App identity, Proposal hash and currentness, category and Discussion author,
-current organization Owners, and the unedited command. On a successful final
+current organization Owners, and the unedited bound authority. On a successful final
 result it creates a private repository and grants the Discussion author Write
 permission; an Owner who operated the workflow does not replace that author.
 Contributors perform full execution validation locally; Public ingress does

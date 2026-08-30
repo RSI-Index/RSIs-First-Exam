@@ -9,7 +9,8 @@ variance, or completed an agent trajectory.
 
 FrontierRSI accepts iterative research tasks related to model development in the
 broad sense. Apply the nine proposal gates, record the separate non-blocking
-compute check, and then assess proposal quality when the gates pass.
+compute check, and record proposal-specific quality observations without using
+them to select a decision tier.
 
 ## Evidence rules
 
@@ -84,8 +85,7 @@ Evaluate all nine gates before deciding. Do not stop at the first concern.
 - If a material, non-compute ambiguity genuinely cannot be resolved from the
   contributor's justification or repository evidence, fail the affected gate
   and return `Reject`.
-- If all nine gates pass, continue to Layer 2 even when the compute check is
-  flagged.
+- If all nine gates pass, return `Pass` even when the compute check is flagged.
 - A runtime flag or missing runtime estimate by itself must not produce `Reject`
   at proposal stage. Hardware topology and peak-count eligibility are evaluated
   under the Source Repository gate.
@@ -301,15 +301,16 @@ topology and peak-count eligibility are handled by the Source Repository gate.
 - Runtime over 12 hours remains non-blocking, as does an incomplete runtime
   estimate when single-node and peak-GPU eligibility are already known. When a
   runtime flag is the proposal's only concern, the final decision must still be
-  `Accept` or `Strong Accept`.
+  `Pass`.
 - The actual GPU-hour budget, concurrency approval, and strict feasibility gate
   are set after baseline reproduction and the first representative trial.
 
-## Layer 2: Quality Review
+## Proposal-specific Quality Observations
 
-Apply this layer when all nine proposal gates pass. It distinguishes `Accept`
-from `Strong Accept` and must not turn a non-blocking runtime flag into a
-proposal-stage rejection.
+After evaluating all nine proposal gates, summarize useful quality observations
+when the gates pass. These observations may describe strengths, limitations,
+or opportunities in the proposal, but they never select a canonical quality
+tier and never change the `Reject` or `Pass` decision.
 
 ### 1. Current Frontier Relevance
 
@@ -318,9 +319,9 @@ and summarize recency, breadth, and technical relevance. X topic activity is a
 useful community-interest reference signal when available.
 Frontier evidence is non-blocking: limited work, concentration within one team,
 missing X access, or incomplete search evidence must not fail a gate, trigger
-rejection, or change an otherwise valid proposal decision by itself. Use it only
-to distinguish the
-strength of otherwise credible proposals and research directions.
+rejection, or change an otherwise valid proposal decision by itself. Use it to
+describe otherwise credible proposals and research directions, never to select
+a decision tier.
 
 ### 2. Scientific Value
 
@@ -352,13 +353,17 @@ change the proposal decision.
 
 ## Final Decision
 
-Return exactly one decision:
+Apply this exact canonical rule:
 
-- **Reject:** At least one of the nine proposal gates fails, including because a
-  material ambiguity or policy exception remains unresolved.
-- **Accept:** All gates pass and the proposal is credible enough to proceed to
-  baseline reproduction. Concerns and compute flags may remain.
-- **Strong Accept:** All gates pass and the task is unusually strong and clear.
+```text
+Reject: one or more of the nine gates fail.
+Pass: all nine gates pass; compute flags remain non-blocking unless another gate fails.
+Decision: Reject | Pass
+```
+
+A material ambiguity or policy exception fails its affected gate. Proposal-specific
+quality observations may remain in the review prose but never select a canonical
+decision tier.
 
 ## Required Output Format
 
@@ -393,17 +398,18 @@ Runtime Flags and incomplete runtime estimates are explicitly non-blocking at
 proposal stage; hardware eligibility violations belong in the Source Repository
 gate.]
 
-Quality review:
-[If a proposal gate did not pass, write: Not evaluated because Layer 1 did not
-pass. Otherwise assess the six dimensions concisely.]
+Proposal-specific quality observations:
+[If a proposal gate did not pass, write: Not evaluated because one or more hard
+gates failed. Otherwise assess the six dimensions concisely without selecting a
+quality tier.]
 
-Decision: Reject | Accept | Strong Accept
+Decision: Reject | Pass
 ```
 
 The last non-empty line must contain only one selected value, for example:
 
 ```yaml
-Decision: Accept
+Decision: Pass
 ```
 
 It must match:

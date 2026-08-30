@@ -26,15 +26,20 @@ proposal before submitting it.
 ### 2. Submit the proposal
 
 Create a new [Task Ideas Discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/categories/task-ideas)
-and paste in the proposal. **If the proposal is rejected, please edit the same Discussion in response to the automated review until it is accepted.**
+and paste in the proposal. If the initial check reports REJECT, edit the same
+Discussion in response to the automated review. A new review runs on every edit.
 
-### 3. Create the task
+### 3. Automatic task building
 
-After your proposal is accepted, continue in the same Discussion. Post each command as a new comment; editing a comment will not trigger a new run.
+The standard contributor path is:
 
-* Send `/task` once. The workflow prepares, checks, and creates your private task repository automatically.
-* Only if the system asks a genuine task-defining question, reply with `/task <answer or guidance>`. Your answer automatically continues task creation.
-* `/reset` discards the task attempt before repository creation.
+1. Submit or edit the Discussion.
+2. Receive the PASS or REJECT initial check.
+3. After PASS, task building starts automatically.
+4. Send `/task <answer or correction>` only if asked a genuine task-defining
+   question; the answer resumes building automatically.
+5. The bot posts ACCEPTED when assumptions are resolved, then continues to the
+   private task repository.
 
 Once the private repository is created, follow the appropriate path below.
 
