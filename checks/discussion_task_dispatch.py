@@ -91,6 +91,7 @@ def build_dispatch_candidate(event: dict) -> dict | None:
             "discussion_number": discussion_number,
             "discussion_node_id": discussion_node_id,
             "triggering_comment_node_id": comment_node_id,
+            "trigger_kind": "comment",
         },
         "commenter_login": commenter_login,
         "is_author": discussion_author_id == comment_author_id,

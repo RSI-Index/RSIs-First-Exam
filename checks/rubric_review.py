@@ -49,8 +49,7 @@ MAX_REPOSITORY_EVIDENCE_CHARS = 250_000
 WEB_SEARCH_TOOL = {"type": "web_search", "search_context_size": "high"}
 PUBLIC_DECISIONS = (
     "Reject",
-    "Accept",
-    "Strong Accept",
+    "Pass",
 )
 GATE_FIELDS = (
     ("contributor_expertise_alignment", "Contributor Expertise Alignment"),
@@ -735,11 +734,7 @@ async def async_call_openai(instructions: str, user_input, *, client=None) -> st
     return finalize_judge_output(output_text)
 
 
-_CANONICAL_DECISIONS = {
-    "reject": "Reject",
-    "accept": "Accept",
-    "strong accept": "Strong Accept",
-}
+_CANONICAL_DECISIONS = {"reject": "Reject", "pass": "Pass"}
 _DECISION_RE = re.compile(
     r"\*{0,2}Decision:\*{0,2}\s*\*{0,2}(.+?)\*{0,2}\s*$",
     re.IGNORECASE,

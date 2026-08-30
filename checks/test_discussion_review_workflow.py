@@ -7,6 +7,11 @@ ROOT = WORKFLOW.parent.parent.parent
 CHECKOUT_SHA = "fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09"
 APP_TOKEN_SHA = "bcd2ba49218906704ab6c1aa796996da409d3eb1"
 SETUP_UV_SHA = "38f3f104447c67c051c4a08e39b64a148898af3a"
+AUTOMATIC_DISPATCH_GUARD = (
+    "steps.review.outputs.decision == 'Pass' && "
+    "steps.publish-review.outcome == 'success' && "
+    "steps.publish-review.outputs.review_comment_id != ''"
+)
 
 
 def parsed_steps() -> list[dict]:
@@ -94,7 +99,7 @@ def test_review_workflow_replaces_only_current_progress_with_generic_failure():
         "${{ steps.progress.outputs.comment_id }}"
     )
     assert steps.index(failure_token) == (
-        steps.index(step_named("Format and post or update comment")) + 1
+        steps.index(step_named("Dispatch passed proposal privately")) + 1
     )
     assert steps.index(failure) == steps.index(failure_token) + 1
     assert "Proposal review failed before completion" in failure["run"]
@@ -119,6 +124,21 @@ def test_successful_review_updates_only_the_current_runs_progress_comment():
     assert "addDiscussionComment" in publish["run"]
     assert "EXISTING_COMMENT_ID" not in publish["run"]
     assert "comments(first:" not in publish["run"]
+
+
+def test_successful_review_outputs_authoritative_comment_id_from_update_or_create():
+    publish = step_named("Format and post or update comment")
+    script = publish["run"]
+
+    assert "COMMENT_RESULT=$(gh api graphql" in script
+    assert "jq -er '.data.updateDiscussionComment.comment.id'" in script
+    assert "jq -er '.data.addDiscussionComment.comment.id'" in script
+    assert "printf 'review_comment_id=%s\\n' \"$REVIEW_COMMENT_ID\"" in script
+    superseded = script.split("Current review comment is no longer active", 1)[1].split(
+        "COMMENT_RESULT=$(gh api graphql", 1
+    )[0]
+    assert "exit 0" in superseded
+    assert "review_comment_id" not in superseded
 
 
 def test_stale_progress_lookup_paginates_and_excludes_completed_reviews():
@@ -307,3 +327,84 @@ def test_review_workflow_has_no_synthetic_decision_fallback():
     assert "withheld" not in run_review
     assert "require human review" not in run_review
     assert "Strong Reject" not in run_review
+
+
+def test_review_workflow_accepts_and_publishes_only_pass_or_reject():
+    run_review = step_named("Run rubric review")["run"]
+    publish = step_named("Format and post or update comment")["run"]
+
+    assert 'allowed_decisions = {"Reject", "Pass"}' in run_review
+    assert '"Pass")   BADGE="🟢 **PASS**"' in publish
+    assert '"Reject") BADGE="🔴 **REJECT**"' in publish
+    assert "Strong Accept" not in publish
+    assert "**Accept**" not in publish
+
+
+def test_pass_publication_starts_building_without_an_initial_task_instruction():
+    publish = step_named("Format and post or update comment")["run"]
+    pass_copy = publish.split('"Pass")', 2)[2].split(';;', 1)[0]
+
+    assert "PASS — Initial check passed. Task building starts automatically." in pass_copy
+    assert "/task" not in pass_copy
+
+
+def test_pass_dispatch_uses_separate_conditional_private_write_token():
+    steps = parsed_steps()
+    token = step_named("Create private Skills dispatch token")
+
+    assert token == {
+        "name": "Create private Skills dispatch token",
+        "id": "dispatch-token",
+        "if": AUTOMATIC_DISPATCH_GUARD,
+        "uses": f"actions/create-github-app-token@{APP_TOKEN_SHA}",
+        "with": {
+            "client-id": "${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}",
+            "private-key": "${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}",
+            "owner": "RSI-Index",
+            "repositories": "RSI-Skills",
+            "permission-contents": "write",
+        },
+    }
+    assert steps.index(step_named("Build automatic Pass dispatch request")) < steps.index(token)
+    assert step_named("Create private Skills read token")["with"]["permission-contents"] == "read"
+    assert step_named("Checkout private discussion rubric")["with"]["token"] == (
+        "${{ steps.skills-token.outputs.token }}"
+    )
+
+
+def test_pass_dispatch_builds_exact_request_and_posts_once_after_publication():
+    raw = WORKFLOW.read_text(encoding="utf-8")
+    build = step_named("Build automatic Pass dispatch request")
+    dispatch = step_named("Dispatch passed proposal privately")
+
+    assert build["if"] == AUTOMATIC_DISPATCH_GUARD
+    assert build["env"] == {
+        "REVIEW_COMMENT_NODE_ID": "${{ steps.publish-review.outputs.review_comment_id }}"
+    }
+    assert (
+        'python3 checks/proposal_pass_dispatch.py "$GITHUB_EVENT_PATH" '
+        '"$REVIEW_COMMENT_NODE_ID" proposal-pass-payload.json'
+    ) in build["run"]
+    assert '"event_type": "discussion_task_command"' in build["run"]
+    assert '"client_payload": payload' in build["run"]
+    assert dispatch["if"] == (
+        AUTOMATIC_DISPATCH_GUARD + " && steps.dispatch-token.outcome == 'success'"
+    )
+    assert dispatch["env"] == {"GH_TOKEN": "${{ steps.dispatch-token.outputs.token }}"}
+    assert "gh api --method POST /repos/RSI-Index/RSI-Skills/dispatches" in dispatch["run"]
+    assert "--input proposal-pass-request.json" in dispatch["run"]
+    assert raw.count("/repos/RSI-Index/RSI-Skills/dispatches") == 1
+
+
+def test_pass_dispatch_is_guarded_from_reject_failure_supersession_and_missing_id():
+    for name in (
+        "Build automatic Pass dispatch request",
+        "Create private Skills dispatch token",
+    ):
+        assert step_named(name)["if"] == AUTOMATIC_DISPATCH_GUARD
+
+    dispatch_condition = step_named("Dispatch passed proposal privately")["if"]
+    assert "decision == 'Pass'" in dispatch_condition
+    assert "publish-review.outcome == 'success'" in dispatch_condition
+    assert "review_comment_id != ''" in dispatch_condition
+    assert "dispatch-token.outcome == 'success'" in dispatch_condition
