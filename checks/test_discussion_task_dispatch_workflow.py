@@ -198,3 +198,23 @@ def test_legacy_commands_stay_on_existing_dispatch_but_out_of_contributor_start_
     assert "COMMAND: ${{ steps.gate.outputs.command }}" in raw
     assert "discussion_task_command" in raw
     assert "task_confirm" not in raw.lower()
+
+
+def test_operator_doc_distinguishes_automatic_and_legacy_reset_boundaries():
+    operator_doc = " ".join(
+        OPERATOR_DOC.read_text(encoding="utf-8").lower().split()
+    )
+
+    assert "for an automatic lineage" in operator_doc
+    assert (
+        "preserves the current app-authored schema-2 `pass` review" in operator_doc
+    )
+    assert (
+        "deletes later task-workflow replies together with the `/reset` comment"
+        in operator_doc
+    )
+    assert "for a legacy or manual lineage" in operator_doc
+    assert "deletion begins with the first valid authored `/task`" in operator_doc
+    assert (
+        "from the first valid `/task` after the accepted review" not in operator_doc
+    )
