@@ -365,7 +365,8 @@ def test_pass_dispatch_uses_separate_conditional_private_write_token():
             "permission-contents": "write",
         },
     }
-    assert steps.index(step_named("Build automatic Pass dispatch request")) < steps.index(token)
+    assert steps.index(step_named("Format and post or update comment")) < steps.index(token)
+    assert steps.index(token) < steps.index(step_named("Dispatch passed proposal privately"))
     assert step_named("Create private Skills read token")["with"]["permission-contents"] == "read"
     assert step_named("Checkout private discussion rubric")["with"]["token"] == (
         "${{ steps.skills-token.outputs.token }}"
@@ -374,37 +375,77 @@ def test_pass_dispatch_uses_separate_conditional_private_write_token():
 
 def test_pass_dispatch_builds_exact_request_and_posts_once_after_publication():
     raw = WORKFLOW.read_text(encoding="utf-8")
-    build = step_named("Build automatic Pass dispatch request")
     dispatch = step_named("Dispatch passed proposal privately")
 
-    assert build["if"] == AUTOMATIC_DISPATCH_GUARD
-    assert build["env"] == {
-        "REVIEW_COMMENT_NODE_ID": "${{ steps.publish-review.outputs.review_comment_id }}"
+    assert "Build automatic Pass dispatch request" not in {
+        step.get("name") for step in parsed_steps()
     }
-    assert (
-        'python3 checks/proposal_pass_dispatch.py "$GITHUB_EVENT_PATH" '
-        '"$REVIEW_COMMENT_NODE_ID" proposal-pass-payload.json'
-    ) in build["run"]
-    assert '"event_type": "discussion_task_command"' in build["run"]
-    assert '"client_payload": payload' in build["run"]
     assert dispatch["if"] == (
         AUTOMATIC_DISPATCH_GUARD + " && steps.dispatch-token.outcome == 'success'"
     )
-    assert dispatch["env"] == {"GH_TOKEN": "${{ steps.dispatch-token.outputs.token }}"}
-    assert "gh api --method POST /repos/RSI-Index/RSI-Skills/dispatches" in dispatch["run"]
-    assert "--input proposal-pass-request.json" in dispatch["run"]
+    assert dispatch["env"] == {
+        "GH_TOKEN": "${{ steps.dispatch-token.outputs.token }}",
+        "REVIEW_READ_TOKEN": "${{ steps.comment-token.outputs.token }}",
+        "REPOSITORY_OWNER": "${{ github.repository_owner }}",
+        "REPOSITORY_NAME": "${{ github.event.repository.name }}",
+        "DISCUSSION_NUMBER": "${{ github.event.discussion.number }}",
+        "REVIEW_COMMENT_NODE_ID": "${{ steps.publish-review.outputs.review_comment_id }}",
+    }
+    script = dispatch["run"]
+    assert "query($repo: String!, $owner: String!, $number: Int!, $endCursor: String)" in script
+    assert "viewer { login }" in script
+    assert "id number title body lastEditedAt category { name }" in script
+    assert "comments(first: 100, after: $endCursor)" in script
+    assert (
+        "nodes { id body author { login } viewerDidAuthor createdAt updatedAt }"
+        in script
+    )
+    assert "pageInfo { hasNextPage endCursor }" in script
+    assert "--paginate --slurp" in script
+    assert 'GH_TOKEN="$REVIEW_READ_TOKEN" gh api graphql' in script
+    assert (
+        'python3 checks/proposal_pass_dispatch.py "$GITHUB_EVENT_PATH" '
+        '"$REVIEW_COMMENT_NODE_ID" proposal-pass-live.json proposal-pass-payload.json'
+    ) in script
+    assert script.index("proposal-pass-live.json") < script.index(
+        "checks/proposal_pass_dispatch.py"
+    )
+    assert script.index("checks/proposal_pass_dispatch.py") < script.index(
+        '"event_type": "discussion_task_command"'
+    )
+    assert script.index('"event_type": "discussion_task_command"') < script.index(
+        "gh api --method POST /repos/RSI-Index/RSI-Skills/dispatches"
+    )
+    assert '"client_payload": payload' in script
+    assert "gh api --method POST /repos/RSI-Index/RSI-Skills/dispatches" in script
+    assert "--input proposal-pass-request.json" in script
     assert raw.count("/repos/RSI-Index/RSI-Skills/dispatches") == 1
 
 
 def test_pass_dispatch_is_guarded_from_reject_failure_supersession_and_missing_id():
-    for name in (
-        "Build automatic Pass dispatch request",
-        "Create private Skills dispatch token",
-    ):
-        assert step_named(name)["if"] == AUTOMATIC_DISPATCH_GUARD
+    assert step_named("Create private Skills dispatch token")["if"] == (
+        AUTOMATIC_DISPATCH_GUARD
+    )
 
     dispatch_condition = step_named("Dispatch passed proposal privately")["if"]
     assert "decision == 'Pass'" in dispatch_condition
     assert "publish-review.outcome == 'success'" in dispatch_condition
     assert "review_comment_id != ''" in dispatch_condition
     assert "dispatch-token.outcome == 'success'" in dispatch_condition
+
+
+def test_dispatch_eligibility_is_a_fresh_post_publication_fail_closed_check():
+    steps = parsed_steps()
+    publish = step_named("Format and post or update comment")
+    dispatch = step_named("Dispatch passed proposal privately")
+    script = dispatch["run"]
+
+    assert steps.index(publish) < steps.index(dispatch)
+    assert "set -euo pipefail" in script
+    assert 'if [ "$valid" != "true" ]' in script
+    assert "exit 1" in script.split('if [ "$valid" != "true" ]', 1)[1].split(
+        "fi", 1
+    )[0]
+    assert "proposal_pass_dispatch.py" in script
+    assert "proposal-pass-live.json" in script
+    assert "concurrency" not in script.lower()

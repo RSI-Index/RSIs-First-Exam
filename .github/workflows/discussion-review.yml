@@ -313,15 +313,50 @@ jobs:
           fi
           printf 'review_comment_id=%s\n' "$REVIEW_COMMENT_ID" >> "$GITHUB_OUTPUT"
 
-      - name: Build automatic Pass dispatch request
-        id: pass-payload
+      - name: Create private Skills dispatch token
+        id: dispatch-token
         if: steps.review.outputs.decision == 'Pass' && steps.publish-review.outcome == 'success' && steps.publish-review.outputs.review_comment_id != ''
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          client-id: ${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}
+          owner: RSI-Index
+          repositories: RSI-Skills
+          permission-contents: write
+
+      - name: Dispatch passed proposal privately
+        if: steps.review.outputs.decision == 'Pass' && steps.publish-review.outcome == 'success' && steps.publish-review.outputs.review_comment_id != '' && steps.dispatch-token.outcome == 'success'
         env:
+          GH_TOKEN: ${{ steps.dispatch-token.outputs.token }}
+          REVIEW_READ_TOKEN: ${{ steps.comment-token.outputs.token }}
+          REPOSITORY_OWNER: ${{ github.repository_owner }}
+          REPOSITORY_NAME: ${{ github.event.repository.name }}
+          DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
           REVIEW_COMMENT_NODE_ID: ${{ steps.publish-review.outputs.review_comment_id }}
         run: |
-          valid=$(python3 checks/proposal_pass_dispatch.py "$GITHUB_EVENT_PATH" "$REVIEW_COMMENT_NODE_ID" proposal-pass-payload.json)
+          set -euo pipefail
+          GH_TOKEN="$REVIEW_READ_TOKEN" gh api graphql \
+            -f query='query($repo: String!, $owner: String!, $number: Int!, $endCursor: String) {
+              viewer { login }
+              repository(name: $repo, owner: $owner) {
+                nameWithOwner
+                discussion(number: $number) {
+                  id number title body lastEditedAt category { name }
+                  comments(first: 100, after: $endCursor) {
+                    nodes { id body author { login } viewerDidAuthor createdAt updatedAt }
+                    pageInfo { hasNextPage endCursor }
+                  }
+                }
+              }
+            }' \
+            -f owner="$REPOSITORY_OWNER" \
+            -f repo="$REPOSITORY_NAME" \
+            -F number="$DISCUSSION_NUMBER" \
+            --paginate --slurp > proposal-pass-live.json
+
+          valid=$(python3 checks/proposal_pass_dispatch.py "$GITHUB_EVENT_PATH" "$REVIEW_COMMENT_NODE_ID" proposal-pass-live.json proposal-pass-payload.json)
           if [ "$valid" != "true" ]; then
-            echo "Published Pass did not produce a valid dispatch payload" >&2
+            echo "Published Pass is no longer the current live review authority" >&2
             exit 1
           fi
 
@@ -338,22 +373,6 @@ jobs:
               json.dump(request, output, sort_keys=True, separators=(",", ":"))
           PY
 
-      - name: Create private Skills dispatch token
-        id: dispatch-token
-        if: steps.review.outputs.decision == 'Pass' && steps.publish-review.outcome == 'success' && steps.publish-review.outputs.review_comment_id != ''
-        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
-        with:
-          client-id: ${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}
-          private-key: ${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}
-          owner: RSI-Index
-          repositories: RSI-Skills
-          permission-contents: write
-
-      - name: Dispatch passed proposal privately
-        if: steps.review.outputs.decision == 'Pass' && steps.publish-review.outcome == 'success' && steps.publish-review.outputs.review_comment_id != '' && steps.dispatch-token.outcome == 'success'
-        env:
-          GH_TOKEN: ${{ steps.dispatch-token.outputs.token }}
-        run: |
           gh api --method POST /repos/RSI-Index/RSI-Skills/dispatches \
             --input proposal-pass-request.json
 
