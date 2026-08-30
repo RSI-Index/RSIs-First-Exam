@@ -5,6 +5,7 @@ from pathlib import Path
 import yaml
 
 WORKFLOW = Path(__file__).parent.parent / ".github/workflows/discussion-task-dispatch.yml"
+README = Path(__file__).parent.parent / "README.md"
 CHECKOUT_SHA = "fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09"
 APP_TOKEN_SHA = "bcd2ba49218906704ab6c1aa796996da409d3eb1"
 
@@ -163,3 +164,15 @@ def test_dispatch_workflow_never_handles_private_or_untrusted_content():
     ):
         assert forbidden not in lower
     assert "repository:" not in lower
+
+
+def test_public_commands_keep_start_and_feedback_on_the_existing_task_dispatch():
+    _, raw = load_workflow()
+    readme = README.read_text(encoding="utf-8")
+
+    assert "`/task`" in readme
+    assert "`/task <answer or guidance>`" in readme
+    assert "`/task confirm`" not in readme
+    assert "COMMAND: ${{ steps.gate.outputs.command }}" in raw
+    assert "discussion_task_command" in raw
+    assert "task_confirm" not in raw.lower()
