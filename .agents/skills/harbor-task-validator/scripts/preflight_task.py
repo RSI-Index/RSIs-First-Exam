@@ -2,9 +2,9 @@
 """Plan or explicitly execute a post-generation Environment preflight.
 
 The default mode is read-only. Execution builds or obtains the task image and
-starts one untouched, no-egress, no-GPU container on a private internal bridge
-for Agent-led inspection. It never runs the task evaluator, training, Solution,
-or reward path.
+starts one untouched, no-egress inspection container on a private internal
+bridge without requesting a GPU workload. It never runs the task evaluator,
+training, Solution, or reward path.
 """
 
 from __future__ import annotations
@@ -292,8 +292,9 @@ def print_plan(
     print(f"Inspection WORKDIR: {workdir}")
     print(
         "Inspection container: private internal bridge (no external route), "
-        "GPUs=none, task tests mounted read-only"
+        "GPU workload not requested, task tests mounted read-only"
     )
+    print("Inspection GPU note: inherited device visibility is informational, not a gate")
     print(f"Baseline Judge GPUs: {judge_gpus}")
     timeout_text = (
         "Harness default"

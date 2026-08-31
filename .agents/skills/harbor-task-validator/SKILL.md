@@ -22,9 +22,13 @@ compilation, and task review are assumed complete.
 Default acceptance has exactly two gates:
 
 1. Environment acceptance: build or pull the Environment and inspect the
-   untouched starting state in a fresh no-GPU container.
+   untouched starting state in a fresh container without requesting or running
+   a GPU workload.
 2. Baseline Judge acceptance: run the complete fixed verifier once on the
-   unchanged baseline under the declared Judge constraints.
+   unchanged baseline under the declared Judge constraints, including its
+   declared network policy. `no-network` is the normal default; an explicit
+   `allowlist` or `public` policy required by the fixed evaluation is valid and
+   must be validated rather than rewritten.
 
 Both gates passing means `EXECUTION READY`: the task-specific image, workspace,
 tests, runtime, evaluator, GPU path, feedback boundary, and reward lifecycle are

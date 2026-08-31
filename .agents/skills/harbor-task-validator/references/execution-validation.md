@@ -9,6 +9,10 @@ out of scope.
 
 - Treat the task, image, candidate workspace, Solution, and evaluator as
   untrusted.
+- Preserve the task's declared Judge network contract. `no-network` is the
+  default; an explicit `allowlist` or `public` policy is valid when the fixed
+  evaluation requires it. Do not broaden, narrow, or silently rewrite it during
+  validation.
 - Use collision-free names. Never overwrite or reuse pre-existing Docker
   objects, run directories, or outputs without explicit authorization.
 - Record exact commands, exit status, bounded output, elapsed time, reward
@@ -64,7 +68,8 @@ The preflight must:
 - fail before mutation when Docker free space is below the approved headroom;
 - build the task Dockerfile or pull exactly the approved image;
 - reject image-declared volumes that break Harness snapshot ownership;
-- create a private internal bridge and one untouched no-GPU container;
+- create a private internal bridge and one untouched inspection container
+  without requesting GPUs or launching a GPU workload;
 - mount task-owned `tests/` read-only and honor the effective absolute WORKDIR,
   user, shared environment, and Compose shm settings; and
 - retain the image, container, and bridge for Agent-led inspection.
@@ -76,6 +81,11 @@ candidate-controlled code. Confirm that the untouched post-build workspace,
 dependencies, assets, ignored/untracked install products, generated metadata,
 compiled caches, `.egg-info`, and logs are accepted. A Git commit alone is not
 starting-state evidence.
+
+GPU device files may remain visible because of an image or host default
+runtime. Inherited device visibility is informational, not a Gate-1 failure.
+Gate 1 must not request or reserve GPUs, launch GPU processes, or materially
+consume GPU memory.
 
 When the verifier uses distributed Ray or vLLM, confirm without initializing it
 that runtime code resolves exactly one valid non-loopback Judge IPv4, exports
@@ -98,6 +108,11 @@ constraints:
 - writable disposable scratch/cache paths and an isolated verifier log
   directory; and
 - no undeclared network, secrets, host binds, or external services.
+
+For a networked Judge, verify that only the contract-declared evaluation
+service is used, exact allowlist hosts match the task when applicable, required
+runtime credential variables are available without exposing values, and no
+dependency, data, package, checkpoint, or tool fetch is hidden in evaluation.
 
 Before launch, disclose the exact GPU devices and retained output names already
 covered by the initial authorization. Capture complete bounded stdout/stderr and
