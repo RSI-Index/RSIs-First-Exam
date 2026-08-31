@@ -41,6 +41,9 @@ The standard contributor path is:
 5. The bot posts ACCEPTED when assumptions are resolved, then continues to the
    private task repository.
 
+To discard an unpublished attempt, send `/reset`. Reset cleans up that attempt
+and stops the workflow; send a plain `/task` to start a clean attempt.
+
 Once the private repository is created, follow the appropriate path below.
 
 > [!IMPORTANT]
@@ -52,7 +55,11 @@ When your private task repository is available, you can clone it and inspect the
 
 **With GPUs**
 
-Clone the private task repository on a machine with the required GPU resources. Follow the repository’s README and use the included `harbor-task-validator` skill to run the final task end to end. Upload the complete trajectory and all generated validation logs to the repository.
+Clone the private task repository on a machine with the required GPU resources.
+Follow its README and use the included `rsi-task-runner` skill to run the task
+through the bundled `RSI-Harness`. The included `harbor-task-validator` remains
+available for focused validation. Upload the complete trajectory and generated
+validation logs to the repository.
 
 > [!CAUTION]
 > We review every task for scientific soundness, rigor, and novelty, and independently reproduce submitted tasks. Proposal approval and trajectory submission do not guarantee inclusion. A task with an unreasonable, unsupported, or irreproducible design may still be rejected after trajectory submission and excluded from RSI-Index.
