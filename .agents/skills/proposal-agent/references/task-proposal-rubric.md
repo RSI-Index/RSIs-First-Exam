@@ -60,13 +60,14 @@ them to select a decision tier.
   explains why direct evaluation cannot answer the scientific question, it may
   instead use evaluation-time retraining under a fixed protocol from a submitted
   declarative configuration or manifest.
-- **Normal compute reference:** at most 8 H100-equivalent GPUs and at most 12
-  hours for one single experiment run. Runtime over 12 hours remains non-blocking
-  at proposal stage.
-- **Execution-lane eligibility:** one physical node and at most 8
-  H100-equivalent GPUs at peak for one single experiment run. Multi-node lanes
-  and lanes using more than 8 H100-equivalent GPUs are outside the currently
-  admitted task class.
+- **Normal compute reference:** Work must use at least 1 GPU; the end-to-end lane
+  uses at most 8 H100-equivalent GPUs and at most 12 hours for one single
+  experiment run. Judge may use zero GPUs when appropriate. Runtime over 12
+  hours remains non-blocking at proposal stage.
+- **Execution-lane eligibility:** Work must use at least 1 GPU, and one single
+  experiment run must fit on one physical node with at most 8 H100-equivalent
+  GPUs at peak. CPU-only Work, multi-node lanes, and lanes using more than 8
+  H100-equivalent GPUs are outside the currently admitted task class.
 - **Current execution model:** the current RSI-Harness uses a shared
   Base/Work/Judge environment. Judge evaluates the Work snapshot, and task-owned
   tests are injected Judge-only; this is not an independent clean-Base verifier.
@@ -121,10 +122,12 @@ Evaluate all nine gates before deciding. Do not stop at the first concern.
   concrete existing delivery/access interface usable by the current task
   workflow. A vague statement that an operator will pre-provision something
   later is insufficient.
-- The selected execution lane must fit on a single physical node and use at most
-  8 H100-equivalent GPUs at peak. A lane that inherently requires multi-node
-  execution or more than 8 H100-equivalent GPUs fails this gate unless the
-  proposal already selects a faithful, repository-supported single-node lane.
+- Work must use at least 1 GPU. The selected execution lane must fit on a single
+  physical node and use at most 8 H100-equivalent GPUs at peak; Judge may use
+  zero GPUs when appropriate. A CPU-only Work lane, a lane that inherently
+  requires multi-node execution, or a lane requiring more than 8 H100-equivalent
+  GPUs fails this gate unless the proposal already selects a faithful,
+  repository-supported eligible lane.
 
 ### 3. Model-Development AutoResearch Scope
 
@@ -267,7 +270,7 @@ Evaluate all nine gates before deciding. Do not stop at the first concern.
   research question, baseline, evaluation or reward, action space, data
   boundary, network boundary, or compute contract.
 - Existing proposal fields must establish that candidate-producing compute runs
-  in Work by default; Judge reloads and evaluates the complete materialized
+  in Work by default and Work uses at least 1 GPU; Judge reloads and evaluates the complete materialized
   candidate snapshot; normal evaluation is candidate-only; Solution
   materializes the traceable baseline without training or evaluation;
   candidate-invalid results are unscored unless a finite scalar was selected;
@@ -299,9 +302,9 @@ topology and peak-count eligibility are handled by the Source Repository gate.
   execution failure is sufficient when relevant.
 - If runtime exceeds 12 hours, write a clear `Flag` and state the estimate. The
   runtime flag is retained for resource review after baseline reproduction.
-- Multi-node execution or more than 8 H100-equivalent GPUs is not a non-blocking
-  compute flag; it fails the Source Repository gate as an ineligible execution
-  lane.
+- CPU-only Work, multi-node execution, or more than 8 H100-equivalent GPUs is
+  not a non-blocking compute flag; it fails the Source Repository gate as an
+  ineligible execution lane.
 - If the estimate is absent or still approximate, write `Estimate incomplete`
   and state what is missing.
 - Runtime over 12 hours remains non-blocking, as does an incomplete runtime

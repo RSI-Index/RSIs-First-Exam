@@ -32,13 +32,14 @@ runtime, or final verifier behavior.
 | Workspace | May the agent use external services? | [Record web search separately from each external service. For each service, state No or list its purpose, data flow, boundary, and concrete existing delivery/access interface usable by the current workflow; contributor decides and justifies] |
 | Workspace | May the agent construct or collect additional data? | [State whether additional-data access is disabled, or define the allowed operations and scope separately from web and service access; contributor decides] |
 | Workspace | Leakage and reward-hacking safeguards | [Concrete safeguards for every enabled access or data path; proposal agent drafts, contributor confirms] |
-| Compute Feasibility | GPU type and number per single experiment run | [Contributor estimate, including physical-node count; when Work candidate production and Judge evaluation differ, give each phase's peak hardware as well as the end-to-end peak for one fixed candidate] |
+| Compute Feasibility | GPU type and number per single experiment run | [Contributor estimate, including physical-node count; Work must use at least 1 GPU, while Judge may use zero GPUs when appropriate; when Work candidate production and Judge evaluation differ, give each phase's peak hardware as well as the end-to-end peak for one fixed candidate] |
 | Compute Feasibility | Estimated runtime per single experiment run | [Contributor estimate; when Work candidate production and Judge evaluation differ, give each phase's wall time and the end-to-end wall time; distinguish all of them from full trajectory time] |
 | Compute Feasibility | Early-stopping signals / lower-cost proxy experiments | [For significantly over-reference runs, repository-supported plan chosen by contributor; for ordinary runs, N/A or clear failure termination only] |
 
-The admitted lane must fit on a single physical node and use at most 8
-H100-equivalent GPUs at peak. Multi-node or larger-peak lanes are rejected unless
-the contributor selects a faithful repository-supported single-node lane.
+The admitted lane must use at least 1 GPU in Work, fit on a single physical node,
+and use at most 8 H100-equivalent GPUs at peak. Judge may use zero GPUs when
+appropriate. CPU-only Work, multi-node, or larger-peak lanes are rejected unless
+the contributor selects a faithful repository-supported eligible lane.
 Runtime over 12 hours remains a non-blocking resource-review flag after baseline
 reproduction. Early-stop or proxy advice is reserved for long-runtime or
 comparably material repository-supported cost.
