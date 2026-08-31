@@ -1,0 +1,1 @@
+{"status":"candidate_invalid","errors":[{"code":"unexpected_path","path":"/workspace/__pycache__","field":"path","condition":"Only submission.py and notes.md may exist in the workspace snapshot.","expected":["notes.md","submission.py"],"actual":"__pycache__","hint":"Remove generated files, caches, logs, and undeclared artifacts before submission."}]}
