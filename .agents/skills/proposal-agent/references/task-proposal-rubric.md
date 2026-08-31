@@ -173,6 +173,9 @@ Evaluate all nine gates before deciding. Do not stop at the first concern.
   unscored or receives an explicitly defined finite scalar. Candidate-invalid,
   infrastructure, timeout, and incomplete outcomes default to unscored unless
   the contributor explicitly defines otherwise.
+- For executable candidates, the declared behavior must cover attributable
+  compile failure, illegal memory access, and candidate process crash while
+  leaving ambiguous or evaluator/environment failures as infrastructure.
 - The contributor must give a reasonable explanation for why useful improvement
   or discovery space exists and why a meaningful gain should be distinguishable
   from ordinary metric noise.
@@ -286,6 +289,9 @@ topology and peak-count eligibility are handled by the Source Repository gate.
 - Record the GPU or accelerator type, peak count, and estimated wall-clock time
   for one scoreable candidate run when provided. Distinguish a single run from
   the full multi-trial agent trajectory.
+- When Work candidate production and Judge evaluation differ, record each
+  phase's peak hardware and wall time separately, plus the end-to-end peak and
+  wall time.
 - Request or recommend early stopping and lower-cost proxies only when a run
   significantly exceeds the normal reference or repository evidence shows
   comparably material cost. Do not treat an absent proxy plan as a concern for
