@@ -611,7 +611,7 @@ def test_build_judge_input_uses_json_for_all_untrusted_input(review):
     assert content[1] == image
 
 
-def test_call_openai_always_uses_fixed_terra_model_and_high_reasoning(review):
+def test_call_openai_always_uses_fixed_terra_model_and_medium_reasoning(review):
     calls = []
 
     class FakeResponses:
@@ -628,7 +628,7 @@ def test_call_openai_always_uses_fixed_terra_model_and_high_reasoning(review):
     assert len(calls) == 1
     call = calls[0]
     assert call["model"] == "gpt-5.6-terra"
-    assert call["reasoning"] == {"effort": "high"}
+    assert call["reasoning"] == {"effort": "medium"}
     assert "rubric" in call["instructions"]
     assert "confidential" in call["instructions"].lower()
     assert "never quote" in call["instructions"].lower()
@@ -723,7 +723,7 @@ def test_public_renderer_makes_model_markdown_inert(review):
     assert r"\`code\`" in rendered
 
 
-def test_call_openai_rejects_oversized_structured_output(review):
+def test_call_openai_publishes_long_structured_output(review):
     oversized = structured_judge_output(quality_review="x" * 5000)
 
     class FakeResponses:
@@ -731,12 +731,26 @@ def test_call_openai_rejects_oversized_structured_output(review):
         def create(**kwargs):
             return SimpleNamespace(status="completed", output_text=oversized)
 
-    with pytest.raises(ValueError, match="quality_review exceeds"):
-        review.call_openai(
-            "rubric",
-            "proposal",
-            client=SimpleNamespace(responses=FakeResponses()),
-        )
+    result = review.call_openai(
+        "rubric",
+        "proposal",
+        client=SimpleNamespace(responses=FakeResponses()),
+    )
+
+    assert "x" * 5000 in result
+    assert result.endswith("Decision: Pass")
+
+
+def test_parse_judge_payload_accepts_long_hard_gate_evidence(review):
+    payload = json.loads(structured_judge_output())
+    long_evidence = "evaluation evidence " * 100
+    payload["hard_gate_review"]["evaluation_integrity"]["evidence"] = long_evidence
+
+    parsed = review.parse_judge_payload(json.dumps(payload))
+
+    assert parsed["hard_gate_review"]["evaluation_integrity"]["evidence"] == (
+        long_evidence
+    )
 
 
 def test_call_openai_rejects_pass_with_a_failed_gate(review):

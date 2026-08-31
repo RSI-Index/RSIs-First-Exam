@@ -39,7 +39,7 @@ DEFAULT_RUBRIC_FILE = (
     / "task-proposal.md"
 )
 JUDGE_MODEL = "gpt-5.6-terra"
-JUDGE_REASONING_EFFORT = "high"
+JUDGE_REASONING_EFFORT = "medium"
 JUDGE_MAX_OUTPUT_TOKENS = 32_768
 MAX_IMAGE_BYTES = 5 * 1024 * 1024
 MAX_REPOSITORY_FILES = 12
@@ -125,13 +125,6 @@ JUDGE_RESPONSE_FORMAT = {
             "quality_review": {"type": "string"},
         },
     },
-}
-_OUTPUT_FIELD_LIMITS = {
-    "proposal_summary": 1000,
-    "evidence": 1600,
-    "gate_evidence": 900,
-    "compute_details": 800,
-    "quality_review": 1800,
 }
 _MARKDOWN_ESCAPE_RE = re.compile(r"([\\`*_{}\[\]()#+\-.!|~])")
 
@@ -537,11 +530,9 @@ def build_judge_instructions(rubric: str) -> str:
     )
 
 
-def _bounded_text(value, label: str, limit: int) -> str:
+def _require_text(value, label: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{label} must be a non-empty string")
-    if len(value) > limit:
-        raise ValueError(f"{label} exceeds {limit} characters")
     return value.strip()
 
 
@@ -552,7 +543,7 @@ def _require_exact_keys(value, expected: set[str], label: str) -> dict:
 
 
 def parse_judge_payload(output_text: str) -> dict:
-    """Parse and bound the structured judge response before publication."""
+    """Parse and validate the structured judge response before publication."""
     payload = json.loads(output_text)
     top_level = {
         "decision",
@@ -565,11 +556,7 @@ def parse_judge_payload(output_text: str) -> dict:
     payload = _require_exact_keys(payload, top_level, "judge response")
     if payload["decision"] not in PUBLIC_DECISIONS:
         raise ValueError("invalid decision")
-    _bounded_text(
-        payload["proposal_summary"],
-        "proposal_summary",
-        _OUTPUT_FIELD_LIMITS["proposal_summary"],
-    )
+    _require_text(payload["proposal_summary"], "proposal_summary")
 
     evidence_keys = {
         "contributor_public_expertise",
@@ -580,11 +567,7 @@ def parse_judge_payload(output_text: str) -> dict:
         payload["evidence_reviewed"], evidence_keys, "evidence_reviewed"
     )
     for name in evidence_keys:
-        _bounded_text(
-            evidence[name],
-            f"evidence_reviewed.{name}",
-            _OUTPUT_FIELD_LIMITS["evidence"],
-        )
+        _require_text(evidence[name], f"evidence_reviewed.{name}")
 
     gate_keys = {name for name, _ in GATE_FIELDS}
     gates = _require_exact_keys(
@@ -594,11 +577,7 @@ def parse_judge_payload(output_text: str) -> dict:
         gate = _require_exact_keys(gates[name], {"status", "evidence"}, name)
         if gate["status"] not in GATE_STATUSES:
             raise ValueError(f"invalid status for {name}")
-        _bounded_text(
-            gate["evidence"],
-            f"hard_gate_review.{name}.evidence",
-            _OUTPUT_FIELD_LIMITS["gate_evidence"],
-        )
+        _require_text(gate["evidence"], f"hard_gate_review.{name}.evidence")
     failed_gate_present = any(gate["status"] == "Fail" for gate in gates.values())
     if payload["decision"] == "Reject" and not failed_gate_present:
         raise ValueError("Reject requires at least one failed hard gate")
@@ -610,16 +589,8 @@ def parse_judge_payload(output_text: str) -> dict:
     )
     if compute["status"] not in COMPUTE_STATUSES:
         raise ValueError("invalid compute status")
-    _bounded_text(
-        compute["details"],
-        "compute_note.details",
-        _OUTPUT_FIELD_LIMITS["compute_details"],
-    )
-    _bounded_text(
-        payload["quality_review"],
-        "quality_review",
-        _OUTPUT_FIELD_LIMITS["quality_review"],
-    )
+    _require_text(compute["details"], "compute_note.details")
+    _require_text(payload["quality_review"], "quality_review")
     return payload
 
 
