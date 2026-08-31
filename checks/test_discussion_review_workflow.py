@@ -57,6 +57,7 @@ def test_review_workflow_supersedes_only_unfinished_reviews_then_posts_fresh_pro
     assert "<!-- rubric-review-status:running -->" in progress["run"]
     assert "<!-- rubric-review-status:superseded -->" in progress["run"]
     assert "Proposal review is running" in progress["run"]
+    assert "usually takes about 1 minute" in progress["run"]
     assert "This comment will update when the review finishes" not in progress["run"]
     assert "updateDiscussionComment" in progress["run"]
     assert "addDiscussionComment" in progress["run"]
@@ -345,6 +346,7 @@ def test_pass_publication_starts_building_without_an_initial_task_instruction():
     pass_copy = publish.split('"Pass")', 2)[2].split(';;', 1)[0]
 
     assert "PASS — Initial check passed. Task building starts automatically." in pass_copy
+    assert "Minor revisions may still be needed in some cases." in pass_copy
     assert "/task" not in pass_copy
 
 
@@ -385,31 +387,13 @@ def test_pass_dispatch_builds_exact_request_and_posts_once_after_publication():
     )
     assert dispatch["env"] == {
         "GH_TOKEN": "${{ steps.dispatch-token.outputs.token }}",
-        "REVIEW_READ_TOKEN": "${{ steps.comment-token.outputs.token }}",
-        "REPOSITORY_OWNER": "${{ github.repository_owner }}",
-        "REPOSITORY_NAME": "${{ github.event.repository.name }}",
-        "DISCUSSION_NUMBER": "${{ github.event.discussion.number }}",
         "REVIEW_COMMENT_NODE_ID": "${{ steps.publish-review.outputs.review_comment_id }}",
     }
     script = dispatch["run"]
-    assert "query($repo: String!, $owner: String!, $number: Int!, $endCursor: String)" in script
-    assert "viewer { login }" in script
-    assert "id number title body lastEditedAt category { name }" in script
-    assert "comments(first: 100, after: $endCursor)" in script
-    assert (
-        "nodes { id body author { login } viewerDidAuthor createdAt updatedAt }"
-        in script
-    )
-    assert "pageInfo { hasNextPage endCursor }" in script
-    assert "--paginate --slurp" in script
-    assert 'GH_TOKEN="$REVIEW_READ_TOKEN" gh api graphql' in script
     assert (
         'python3 checks/proposal_pass_dispatch.py "$GITHUB_EVENT_PATH" '
-        '"$REVIEW_COMMENT_NODE_ID" proposal-pass-live.json proposal-pass-payload.json'
+        '"$REVIEW_COMMENT_NODE_ID" proposal-pass-payload.json'
     ) in script
-    assert script.index("proposal-pass-live.json") < script.index(
-        "checks/proposal_pass_dispatch.py"
-    )
     assert script.index("checks/proposal_pass_dispatch.py") < script.index(
         '"event_type": "discussion_task_command"'
     )
@@ -419,6 +403,8 @@ def test_pass_dispatch_builds_exact_request_and_posts_once_after_publication():
     assert '"client_payload": payload' in script
     assert "gh api --method POST /repos/RSI-Index/RSI-Skills/dispatches" in script
     assert "--input proposal-pass-request.json" in script
+    assert "proposal-pass-live.json" not in script
+    assert "viewerDidAuthor" not in script
     assert raw.count("/repos/RSI-Index/RSI-Skills/dispatches") == 1
 
 
@@ -434,7 +420,7 @@ def test_pass_dispatch_is_guarded_from_reject_failure_supersession_and_missing_i
     assert "dispatch-token.outcome == 'success'" in dispatch_condition
 
 
-def test_dispatch_eligibility_is_a_fresh_post_publication_fail_closed_check():
+def test_dispatch_eligibility_relies_on_the_successful_current_run_publication():
     steps = parsed_steps()
     publish = step_named("Format and post or update comment")
     dispatch = step_named("Dispatch passed proposal privately")
@@ -447,5 +433,5 @@ def test_dispatch_eligibility_is_a_fresh_post_publication_fail_closed_check():
         "fi", 1
     )[0]
     assert "proposal_pass_dispatch.py" in script
-    assert "proposal-pass-live.json" in script
-    assert "concurrency" not in script.lower()
+    assert "proposal-pass-live.json" not in script
+    assert "viewerDidAuthor" not in script

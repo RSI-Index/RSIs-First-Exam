@@ -64,7 +64,7 @@ jobs:
           <!-- rubric-review-status:running -->
           ## 📋 Task Proposal Rubric Review
 
-          ⏳ Proposal review is running.
+          ⏳ Proposal review is running. This usually takes about 1 minute.
           COMMENT_EOF
           )
 
@@ -238,7 +238,7 @@ jobs:
 
           case "$DECISION" in
             "Pass")
-              NEXT_STEP="> 🤖 **PASS — Initial check passed. Task building starts automatically.**"
+              NEXT_STEP="> 🤖 **PASS — Initial check passed. Task building starts automatically. Minor revisions may still be needed in some cases.**"
               ;;
             *)
               NEXT_STEP="> 🤖 This automated recommendation is not eligible for task dispatch. Edit your proposal to trigger a fresh review. Judged against the private task proposal rubric; ask a maintainer if a point is unclear."
@@ -328,35 +328,12 @@ jobs:
         if: steps.review.outputs.decision == 'Pass' && steps.publish-review.outcome == 'success' && steps.publish-review.outputs.review_comment_id != '' && steps.dispatch-token.outcome == 'success'
         env:
           GH_TOKEN: ${{ steps.dispatch-token.outputs.token }}
-          REVIEW_READ_TOKEN: ${{ steps.comment-token.outputs.token }}
-          REPOSITORY_OWNER: ${{ github.repository_owner }}
-          REPOSITORY_NAME: ${{ github.event.repository.name }}
-          DISCUSSION_NUMBER: ${{ github.event.discussion.number }}
           REVIEW_COMMENT_NODE_ID: ${{ steps.publish-review.outputs.review_comment_id }}
         run: |
           set -euo pipefail
-          GH_TOKEN="$REVIEW_READ_TOKEN" gh api graphql \
-            -f query='query($repo: String!, $owner: String!, $number: Int!, $endCursor: String) {
-              viewer { login }
-              repository(name: $repo, owner: $owner) {
-                nameWithOwner
-                discussion(number: $number) {
-                  id number title body lastEditedAt category { name }
-                  comments(first: 100, after: $endCursor) {
-                    nodes { id body author { login } viewerDidAuthor createdAt updatedAt }
-                    pageInfo { hasNextPage endCursor }
-                  }
-                }
-              }
-            }' \
-            -f owner="$REPOSITORY_OWNER" \
-            -f repo="$REPOSITORY_NAME" \
-            -F number="$DISCUSSION_NUMBER" \
-            --paginate --slurp > proposal-pass-live.json
-
-          valid=$(python3 checks/proposal_pass_dispatch.py "$GITHUB_EVENT_PATH" "$REVIEW_COMMENT_NODE_ID" proposal-pass-live.json proposal-pass-payload.json)
+          valid=$(python3 checks/proposal_pass_dispatch.py "$GITHUB_EVENT_PATH" "$REVIEW_COMMENT_NODE_ID" proposal-pass-payload.json)
           if [ "$valid" != "true" ]; then
-            echo "Published Pass is no longer the current live review authority" >&2
+            echo "Published Pass did not produce a valid dispatch payload" >&2
             exit 1
           fi
 
