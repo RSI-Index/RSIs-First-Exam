@@ -611,7 +611,7 @@ def test_build_judge_input_uses_json_for_all_untrusted_input(review):
     assert content[1] == image
 
 
-def test_call_openai_always_uses_fixed_terra_model_and_medium_reasoning(review):
+def test_call_openai_always_uses_fixed_terra_model_and_high_reasoning(review):
     calls = []
 
     class FakeResponses:
@@ -628,7 +628,7 @@ def test_call_openai_always_uses_fixed_terra_model_and_medium_reasoning(review):
     assert len(calls) == 1
     call = calls[0]
     assert call["model"] == "gpt-5.6-terra"
-    assert call["reasoning"] == {"effort": "medium"}
+    assert call["reasoning"] == {"effort": "high"}
     assert "rubric" in call["instructions"]
     assert "confidential" in call["instructions"].lower()
     assert "never quote" in call["instructions"].lower()
