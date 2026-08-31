@@ -26,7 +26,8 @@ replies together with the `/reset` comment; the Proposal also remains. For a
 legacy or manual lineage, deletion begins with the first valid authored `/task`
 after the accepted review and includes `/reset`, preserving the Proposal and
 review. Published tasks cannot be reset, so their State, Discussion history,
-and private repository are left unchanged.
+and private repository are left unchanged. Reset stops the workflow. After a
+successful unpublished reset, send a new plain `/task` to start a clean attempt.
 
 Public ingress is a non-authoritative cost gate, not the eligibility decision.
 It checks the event action, canonical Public repository and category, stable
@@ -41,8 +42,9 @@ authorization and does not trust this ingress result.
 Legacy plain `/task`, `/task <feedback>`, and `/task confirm` comments remain
 parseable for existing State recovery and operator compatibility. A manual
 `workflow_dispatch` also remains available with dry-run defaulting to true.
-These are not steps in the new contributor path. Operators should prefer the
-automatic `proposal_pass` route for every new Discussion.
+For contributors, a new plain `/task` is used only to start a clean attempt
+after `/reset`; it is not required on the normal automatic path. Operators
+should prefer the automatic `proposal_pass` route for every new Discussion.
 
 ## Configuration
 
