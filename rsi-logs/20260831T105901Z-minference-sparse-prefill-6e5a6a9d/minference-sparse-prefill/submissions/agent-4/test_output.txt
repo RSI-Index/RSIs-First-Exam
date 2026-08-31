@@ -1,0 +1,1 @@
+{"status":"candidate_invalid","errors":[{"code":"numerical_mismatch","path":"/workspace/submission.py","field":"out","condition":"Every reserved full-size output must match the frozen source-equivalent fallback within the fixed bf16 envelope.","hint":"Preserve the full vertical-plus-slash budget, causal union, stable online softmax, and every head/row."}]}
