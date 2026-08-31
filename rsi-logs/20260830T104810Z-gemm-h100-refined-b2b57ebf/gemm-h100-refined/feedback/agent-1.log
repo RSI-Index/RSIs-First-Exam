@@ -1,0 +1,1 @@
+{"aggregation": "median_tflops", "correctness": "passed", "median_tflops": 252.876, "reward": 252.876, "selected_version": "gemm_v006_wgmma_rs_swizzle.cu", "status": "ok", "valid_repeats": 5}
