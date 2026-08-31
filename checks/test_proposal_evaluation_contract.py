@@ -176,3 +176,5 @@ def test_readme_describes_automatic_task_creation_with_only_requested_answers():
     assert "trajectory" not in without_gpu.lower()
     assert "clone" in with_gpu.lower()
     assert "harbor-task-validator" in with_gpu
+    assert "rsi-task-runner" in with_gpu
+    assert "rsi-harness" in with_gpu.lower()

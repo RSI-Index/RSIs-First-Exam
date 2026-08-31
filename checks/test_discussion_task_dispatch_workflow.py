@@ -185,16 +185,17 @@ def test_dispatch_workflow_never_handles_private_or_untrusted_content():
     assert "repository:" not in lower
 
 
-def test_legacy_commands_stay_on_existing_dispatch_but_out_of_contributor_start_path():
+def test_plain_task_is_documented_only_for_clean_restart_after_reset():
     _, raw = load_workflow()
     readme = README.read_text(encoding="utf-8")
     operator_doc = OPERATOR_DOC.read_text(encoding="utf-8")
 
-    assert "`/task`" not in readme
+    assert "send a plain `/task` to start a clean attempt" in readme
     assert "`/task <answer or correction>`" in readme
     assert "`/task confirm`" not in readme
     assert "Legacy plain `/task`" in operator_doc
     assert "`/task confirm`" in operator_doc
+    assert "send a new plain `/task` to start a clean attempt" in operator_doc
     assert "COMMAND: ${{ steps.gate.outputs.command }}" in raw
     assert "discussion_task_command" in raw
     assert "task_confirm" not in raw.lower()
@@ -218,3 +219,4 @@ def test_operator_doc_distinguishes_automatic_and_legacy_reset_boundaries():
     assert (
         "from the first valid `/task` after the accepted review" not in operator_doc
     )
+    assert "reset stops the workflow" in operator_doc
