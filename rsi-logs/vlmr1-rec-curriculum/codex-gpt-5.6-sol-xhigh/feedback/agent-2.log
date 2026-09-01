@@ -1,0 +1,46 @@
+WARNING: Overriding HOME environment variable with APPTAINERENV_HOME is not permitted
+INFO:    gocryptfs not found, will not be able to use gocryptfs
+contract_status=passed
+curriculum seed=0 round=1 rows=2400 iou=0 format=0 both=2400 builder_seconds=4.3
+aggregate seed=0 round=1 lisa=64.2340 in_domain=85.6500
+curriculum seed=0 round=2 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.5
+aggregate seed=0 round=2 lisa=64.9578 in_domain=85.5167
+curriculum seed=0 round=3 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.4
+aggregate seed=0 round=3 lisa=64.8372 in_domain=85.3833
+curriculum seed=0 round=4 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.4
+aggregate seed=0 round=4 lisa=65.0784 in_domain=85.7000
+curriculum seed=0 round=5 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.5
+aggregate seed=0 round=5 lisa=64.8975 in_domain=85.6000
+curriculum seed=0 round=6 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.6
+aggregate seed=0 round=6 lisa=63.7515 in_domain=85.9000
+curriculum seed=1 round=1 rows=2400 iou=0 format=0 both=2400 builder_seconds=4.1
+aggregate seed=1 round=1 lisa=64.4753 in_domain=85.4167
+curriculum seed=1 round=2 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.6
+aggregate seed=1 round=2 lisa=64.4150 in_domain=85.2500
+curriculum seed=1 round=3 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.5
+aggregate seed=1 round=3 lisa=63.5706 in_domain=85.8667
+curriculum seed=1 round=4 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.5
+aggregate seed=1 round=4 lisa=64.2340 in_domain=84.9500
+curriculum seed=1 round=5 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.5
+aggregate seed=1 round=5 lisa=64.8975 in_domain=85.5000
+curriculum seed=1 round=6 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.5
+aggregate seed=1 round=6 lisa=66.0434 in_domain=84.1167
+curriculum seed=2 round=1 rows=2400 iou=0 format=0 both=2400 builder_seconds=4.2
+aggregate seed=2 round=1 lisa=63.6309 in_domain=85.2667
+curriculum seed=2 round=2 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.5
+aggregate seed=2 round=2 lisa=64.0531 in_domain=84.5000
+curriculum seed=2 round=3 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.5
+aggregate seed=2 round=3 lisa=64.1134 in_domain=85.2500
+curriculum seed=2 round=4 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.4
+aggregate seed=2 round=4 lisa=64.5959 in_domain=84.8667
+curriculum seed=2 round=5 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.5
+aggregate seed=2 round=5 lisa=64.8975 in_domain=84.6833
+curriculum seed=2 round=6 rows=2400 iou=0 format=0 both=2400 builder_seconds=8.5
+aggregate seed=2 round=6 lisa=63.9324 in_domain=85.4500
+round_mean round=1 lisa=64.1134 in_domain=85.4444
+round_mean round=2 lisa=64.4753 in_domain=85.0889
+round_mean round=3 lisa=64.1737 in_domain=85.5000
+round_mean round=4 lisa=64.6361 in_domain=85.1722
+round_mean round=5 lisa=64.8975 in_domain=85.2611
+round_mean round=6 lisa=64.5758 in_domain=85.1556
+terminal auc_mean=64.4786 slope=0.115458 guard=passed floor=83.8553

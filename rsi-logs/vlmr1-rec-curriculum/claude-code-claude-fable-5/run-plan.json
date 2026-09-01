@@ -1,0 +1,284 @@
+{
+  "gpu_plan": {
+    "authorized_pool": {
+      "devices": [
+        {
+          "index": 0,
+          "name": "LSF allocated GPU",
+          "uuid": "0"
+        },
+        {
+          "index": 1,
+          "name": "LSF allocated GPU",
+          "uuid": "5"
+        },
+        {
+          "index": 2,
+          "name": "LSF allocated GPU",
+          "uuid": "6"
+        },
+        {
+          "index": 3,
+          "name": "LSF allocated GPU",
+          "uuid": "7"
+        },
+        {
+          "index": 4,
+          "name": "LSF allocated GPU",
+          "uuid": "1"
+        },
+        {
+          "index": 5,
+          "name": "LSF allocated GPU",
+          "uuid": "2"
+        },
+        {
+          "index": 6,
+          "name": "LSF allocated GPU",
+          "uuid": "3"
+        },
+        {
+          "index": 7,
+          "name": "LSF allocated GPU",
+          "uuid": "4"
+        }
+      ]
+    },
+    "judge": {
+      "devices": [
+        {
+          "index": 0,
+          "name": "LSF allocated GPU",
+          "uuid": "0"
+        },
+        {
+          "index": 1,
+          "name": "LSF allocated GPU",
+          "uuid": "5"
+        },
+        {
+          "index": 2,
+          "name": "LSF allocated GPU",
+          "uuid": "6"
+        },
+        {
+          "index": 3,
+          "name": "LSF allocated GPU",
+          "uuid": "7"
+        },
+        {
+          "index": 4,
+          "name": "LSF allocated GPU",
+          "uuid": "1"
+        },
+        {
+          "index": 5,
+          "name": "LSF allocated GPU",
+          "uuid": "2"
+        },
+        {
+          "index": 6,
+          "name": "LSF allocated GPU",
+          "uuid": "3"
+        },
+        {
+          "index": 7,
+          "name": "LSF allocated GPU",
+          "uuid": "4"
+        }
+      ]
+    },
+    "judge_mode": "release-all",
+    "work": {
+      "devices": [
+        {
+          "index": 0,
+          "name": "LSF allocated GPU",
+          "uuid": "0"
+        },
+        {
+          "index": 1,
+          "name": "LSF allocated GPU",
+          "uuid": "5"
+        },
+        {
+          "index": 2,
+          "name": "LSF allocated GPU",
+          "uuid": "6"
+        },
+        {
+          "index": 3,
+          "name": "LSF allocated GPU",
+          "uuid": "7"
+        },
+        {
+          "index": 4,
+          "name": "LSF allocated GPU",
+          "uuid": "1"
+        },
+        {
+          "index": 5,
+          "name": "LSF allocated GPU",
+          "uuid": "2"
+        },
+        {
+          "index": 6,
+          "name": "LSF allocated GPU",
+          "uuid": "3"
+        },
+        {
+          "index": 7,
+          "name": "LSF allocated GPU",
+          "uuid": "4"
+        }
+      ]
+    }
+  },
+  "images": {
+    "base_digest": "sha256:f6eba308505acfca96c1091592d56c42b2c59ff5b428e29c739bc5e3f79b99bc",
+    "base_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/f6eba308505acfca96c1091592d56c42b2c59ff5b428e29c739bc5e3f79b99bc.sif",
+    "judge_digest": "sha256:f6eba308505acfca96c1091592d56c42b2c59ff5b428e29c739bc5e3f79b99bc",
+    "judge_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/f6eba308505acfca96c1091592d56c42b2c59ff5b428e29c739bc5e3f79b99bc.sif",
+    "judge_user": null,
+    "rootfs_snapshot_mode": "split-workdir",
+    "work_digest": "sha256:f6eba308505acfca96c1091592d56c42b2c59ff5b428e29c739bc5e3f79b99bc",
+    "work_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/f6eba308505acfca96c1091592d56c42b2c59ff5b428e29c739bc5e3f79b99bc.sif",
+    "work_user": null,
+    "workdir": "/workspace"
+  },
+  "paths": {
+    "logs": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/logs",
+    "root": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260828T201044Z-vlmr1-rec-curriculum-d0edcd6a",
+    "workspace": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260828T201044Z-vlmr1-rec-curriculum-d0edcd6a/workspace"
+  },
+  "rootfs_snapshot_mode": "split-workdir",
+  "schema_version": 2,
+  "snapshot_kind": "bluevela-apptainer-engine",
+  "task": {
+    "agent": {
+      "environment": [
+        [
+          "HF_HUB_OFFLINE",
+          "1"
+        ],
+        [
+          "HOME",
+          "/root"
+        ],
+        [
+          "TOKENIZERS_PARALLELISM",
+          "false"
+        ],
+        [
+          "TRANSFORMERS_OFFLINE",
+          "1"
+        ],
+        [
+          "WANDB_DISABLED",
+          "true"
+        ]
+      ],
+      "install_stop_hook": true,
+      "model": "claude-fable-5",
+      "name": "claude-code",
+      "network": {
+        "allowlist": [],
+        "mode": "no-network"
+      },
+      "reasoning_effort": null,
+      "secret_env_names": [],
+      "timeout_seconds": 864000.0,
+      "user": null
+    },
+    "environment_digest": "0da62bd758c711526b19384294bd4aece33311c7bf4d582f005abf9876858559",
+    "gpu_requirement": {
+      "count": 8,
+      "name": null
+    },
+    "instruction": "# VLM-R1 self-curriculum research\n\nImprove referring-expression grounding by designing a history-aware curriculum policy for a fixed six-round GRPO experiment. Every round trains a fresh copy of the same protected base model, so progress must come from the curriculum policy rather than continued training.\n\n## Workspace\n\nThe starting workspace contains the required entry point `/workspace/improver/build_curriculum.py` and an empty `/workspace/notes` directory. The public training pool, its images, and the most recent policy history are passed to the builder at evaluation time. Private evaluation annotations are never placed in the workspace.\n\nThe Judge invokes your entry point as:\n\n```text\npython -I /opt/vlmr1-task/builder_runner.py /workspace/improver/build_curriculum.py \\\n  --pool /path/to/public/train-jsonl \\\n  --images /path/to/public/train2014 \\\n  --history-root /path/to/prior/policies \\\n  --round-index 1 \\\n  --seed 0 \\\n  --out /path/to/curriculum.jsonl\n```\n\n`--round-index` is one through six. `--seed` is one of `0`, `1`, or `2`. The history root is empty in round one; later it contains read-only model directories named `round-N`, retaining at most the two immediately preceding policies. Those policies are inference-only inputs to your builder. The builder has one GPU, a 3,600-second wall-clock limit, no network, and a non-privileged account. It must write exactly one JSON object per line to `--out`, exit zero, and leave its output file at or below 512 MiB.\n\nEach output row must be grounded in one public pool row and contain:\n\n- `_rsi_source`: `filename.jsonl:line`, with a one-based source line;\n- `_rsi_reward_route`: one of `iou`, `format`, or `both`;\n- `image`: exactly the source row's public training-image path;\n- `conversations`: exactly two messages, first `human`, second `gpt`;\n- the source row's exact `gpt` box value; and\n- `_rsi_generator`: a short nonempty provenance string when you change the human referring expression, or an omitted/null value when you preserve it.\n\nThe human value must begin with exactly one `<image>` marker and be no longer than 4,096 characters. At least 16 rows and no more than 500,000 rows are accepted.\n\n## Reference baseline\n\nThe required baseline is the pass-through builder already materialized in the workspace. It emits the complete public training pool unchanged and routes every example through both fixed rewards.\n\n| Baseline | Reported result | Status | Comparison |\n| --- | --- | --- | --- |\n| Pass-through curriculum, fixed 150-step protocol | No public 150-step result was reported | Materialized and structurally valid; not re-run by Judge | Candidate reward is absolute; no live baseline subtraction or normalization |\n\n## Research loop\n\nThis is iterative autoresearch inside a single submission. For each of three fixed seed chains, the Judge calls your builder, trains the emitted curriculum for 150 optimizer steps from the exact base, evaluates the resulting policy, and then exposes at most the two preceding policy directories to the next builder call. Repeat this internal loop for six rounds. You can use prior policies for inference, curriculum selection, ordering, repetition, reward routing, or source-grounded expression rewriting; do not continue training them.\n\nExplore and validate the builder locally with lightweight source/pool checks during Work. The complete eighteen-run experiment occurs only after submission, so favor deterministic policies, explicit resource bounds, and safe fallbacks.\n\n## What you may change\n\nYou may add or edit regular UTF-8 text source files under `/workspace/improver/**` and research notes under `/workspace/notes/**`. Accepted suffixes are `.py`, `.md`, `.txt`, `.toml`, `.yaml`, `.yml`, `.json`, `.sh`, and `.cfg`. Keep the required main entry point. Rewriting a referring expression is allowed only when it continues to describe the same public source image and fixed source box, and `_rsi_generator` records how it was produced.\n\nSelection, ordering, repetition, round/seed conditioning, history-based inference, and the per-row `iou`/`format`/`both` route are in scope. Submitted files together must remain below 20 MiB.\n\n## What stays fixed\n\nThe protected VLM-R1 checkout, base weights, processor, public training pool, image assets, private annotations, trainer, reward functions, optimizer configuration, and evaluation protocol stay fixed. Each run uses eight GPUs, 128 completions per optimizer step, eight generations per prompt, maximum completion length 2,048, and exactly 150 optimizer steps. Training hyperparameters are not candidate inputs.\n\nPrivate-only evaluation annotations and private image-expression pairs that are not already present in the public pool must not be embedded in submitted files or emitted curricula. Public train rows remain valid even when the upstream dataset happens to reuse an image or expression across its own splits. Symlinks, special files, binary payloads, cached bytecode, checkpoints, model weights, generated curricula, downloaded data, and scratch outputs are not valid submission contents.\n\n## Evaluation and feedback\n\nThe fixed private evaluation covers LISA plus the RefCOCO, RefCOCO+, and RefCOCOg validation sets. The scalar `reward` is the mean of the six round-level LISA accuracies, each itself averaged over the three seeds, divided by 100. It is an absolute candidate-only result.\n\nThe reward is zero if any round's three-seed mean over the three in-domain validation sets is below `83.8553`, or if the candidate violates a recognized submission contract. Infrastructure failures and incomplete experiments produce no reward file. A quality-guard failure is a valid terminal research outcome with reward zero.\n\nAfter a completed evaluation, stdout reports only contract status, structured candidate-contract diagnostics, curriculum row/route counts, builder runtimes, per-round/per-seed aggregate LISA and in-domain accuracies, round means, the six-round area-under-learning-curve mean, the least-squares slope, and the guard outcome. Candidate diagnostics identify the absolute submitted path, field, failed condition, expected shape, safe actual type/size, and a corrective hint; hidden-boundary rejection is reported only at whole-file granularity. Diagnostics never include candidate contents, matching row positions, private examples, individual predictions, or raw tracebacks.\n\n## Submission checklist\n\n- Keep `/workspace/improver/build_curriculum.py` callable with every required argument.\n- Ensure every emitted row satisfies its public-source pointer, fixed-image, fixed-box, provenance, and reward-route contracts.\n- Keep only regular text sources in `/workspace/improver/**` and `/workspace/notes/**`; remove caches, outputs, generated data, and checkpoints.\n- Stop or release GPU processes before submission.\n- Use `rsi-submit` only when ready for the full fixed evaluation. This task permits one submission; that call may block for up to the 150-hour Judge bound inside the 240-hour total Agent bound.\n",
+    "instruction_digest": "21db69f124c123f7597c90ee060826585f578c36726b3972d4eb29c52b91ef03",
+    "score_direction": "maximize",
+    "service": {
+      "build_context": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260828T201044Z-vlmr1-rec-curriculum-d0edcd6a/control/task/environment",
+      "build_timeout_seconds": 21600.0,
+      "cpus": 32,
+      "environment": [
+        [
+          "HF_HUB_OFFLINE",
+          "1"
+        ],
+        [
+          "HOME",
+          "/root"
+        ],
+        [
+          "TOKENIZERS_PARALLELISM",
+          "false"
+        ],
+        [
+          "TRANSFORMERS_OFFLINE",
+          "1"
+        ],
+        [
+          "WANDB_DISABLED",
+          "true"
+        ]
+      ],
+      "gpu_requirement": {
+        "count": 8,
+        "name": null
+      },
+      "image": null,
+      "memory_mb": 524288,
+      "network_mode": "no-network",
+      "shm_size": "64g",
+      "storage_mb": 307200,
+      "user": null,
+      "workdir": "/workspace"
+    },
+    "source_digest": "0b7b0f034de93e4dc66674d65bfb68b9f76b6a77b9422392b8e5aaf3cd2a9180",
+    "source_dir": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260828T201044Z-vlmr1-rec-curriculum-d0edcd6a/control/task",
+    "task_id": "vlmr1-rec-curriculum",
+    "tests_digest": "0e65d5dec878b325db283c7ed65d78f03a7893ff650c0f314563305877fdb4ca",
+    "verifier": {
+      "command": [
+        "/bin/bash",
+        "/tests/test.sh"
+      ],
+      "environment": [
+        [
+          "HF_HUB_OFFLINE",
+          "1"
+        ],
+        [
+          "HOME",
+          "/root"
+        ],
+        [
+          "TOKENIZERS_PARALLELISM",
+          "false"
+        ],
+        [
+          "TRANSFORMERS_OFFLINE",
+          "1"
+        ],
+        [
+          "WANDB_DISABLED",
+          "true"
+        ]
+      ],
+      "gpu_count": 8,
+      "network": {
+        "allowlist": [],
+        "mode": "no-network"
+      },
+      "output_limit_bytes": 1000000,
+      "primary_reward": "reward",
+      "secret_env_names": [],
+      "timeout_seconds": 540000.0,
+      "user": null
+    },
+    "workdir": "/workspace"
+  },
+  "workdir": "/workspace"
+}

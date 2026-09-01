@@ -92,6 +92,64 @@ def test_compiles_namespaced_verifier_gpu_count(tmp_path):
     assert definition.verifier.gpu_count == 4
 
 
+def test_compiles_portable_cluster_asset_requirements(tmp_path):
+    task = write_harbor_task(
+        tmp_path,
+        task_toml=DEFAULT_TASK_TOML
+        + """
+
+[[metadata.rsi_harness.assets]]
+path = "/rsi-data/data/train/manifest.json"
+phase = "work"
+kind = "file"
+min_bytes = 1
+
+[[metadata.rsi_harness.assets]]
+path = "/rsi-data/data/paloma"
+phase = "judge"
+kind = "directory"
+min_entries = 1
+""",
+    )
+
+    definition = HarborTaskCompiler().compile(task, CompileOptions())
+
+    assert tuple(item.model_dump(mode="json") for item in definition.assets) == (
+        {
+            "path": "/rsi-data/data/train/manifest.json",
+            "phase": "work",
+            "kind": "file",
+            "min_bytes": 1,
+            "min_entries": 0,
+        },
+        {
+            "path": "/rsi-data/data/paloma",
+            "phase": "judge",
+            "kind": "directory",
+            "min_bytes": 0,
+            "min_entries": 1,
+        },
+    )
+
+
+@pytest.mark.parametrize(
+    "metadata",
+    (
+        '[[metadata.rsi_harness.assets]]\npath = "relative"\nphase = "work"',
+        '[[metadata.rsi_harness.assets]]\npath = "/x"\nphase = "other"',
+        '[metadata.rsi_harness]\nassets = "not-a-list"',
+    ),
+)
+def test_rejects_invalid_cluster_asset_requirements(tmp_path, metadata):
+    task = write_harbor_task(
+        tmp_path,
+        task_toml=DEFAULT_TASK_TOML + "\n" + metadata + "\n",
+    )
+
+    with pytest.raises(UnsupportedTaskError, match="metadata.rsi_harness.assets"):
+        HarborTaskCompiler().compile(task, CompileOptions())
+
+
 def test_missing_verifier_gpu_metadata_defaults_to_zero(tmp_path):
     """Tasks without the extension must not reserve a verifier GPU."""
     definition = HarborTaskCompiler().compile(
