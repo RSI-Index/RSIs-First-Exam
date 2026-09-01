@@ -4,6 +4,7 @@ import importlib.util
 import json
 import subprocess
 import sys
+import threading
 from pathlib import Path
 
 import pytest
@@ -162,3 +163,90 @@ def test_malformed_active_hook_is_diagnostic_and_status_stays_unbound(tmp_path: 
     assert status.stdout.strip() == "unbound"
     with pytest.raises(module.ProposalSessionError, match="binding"):
         module.load_binding(checkout)
+
+
+def test_non_stop_hook_event_is_a_silent_no_op(tmp_path: Path) -> None:
+    checkout = init_git_checkout(tmp_path)
+    module.activate(checkout)
+
+    result = invoke(
+        "hook",
+        "--platform",
+        "codex",
+        "--checkout",
+        str(checkout),
+        input=json.dumps({"hook_event_name": "Notification"}),
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == result.stderr == ""
+    assert invoke("status", "--checkout", str(checkout)).stdout.strip() == "unbound"
+
+
+def test_foreign_bound_session_with_invalid_paths_is_a_silent_no_op(tmp_path: Path) -> None:
+    checkout = init_git_checkout(tmp_path)
+    transcript = write_transcript(tmp_path / "bound.jsonl")
+    module.activate(checkout)
+    assert module.capture_hook(checkout, "codex", hook("bound", transcript, checkout))
+
+    foreign = hook("foreign", tmp_path / "missing.jsonl", tmp_path / "outside")
+    result = invoke(
+        "hook",
+        "--platform",
+        "codex",
+        "--checkout",
+        str(checkout),
+        input=json.dumps(foreign),
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == result.stderr == ""
+    assert module.load_binding(checkout).session_id == "bound"
+
+
+def test_concurrent_first_hooks_bind_exactly_one_session(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    checkout = init_git_checkout(tmp_path)
+    first = write_transcript(tmp_path / "first.jsonl")
+    second = write_transcript(tmp_path / "second.jsonl")
+    module.activate(checkout)
+
+    original_load = module._load_existing_binding
+    load_count = 0
+    count_lock = threading.Lock()
+    both_loads_started = threading.Event()
+
+    def synchronized_load(state_dir: Path, checkout_root: Path):
+        nonlocal load_count
+        binding = original_load(state_dir, checkout_root)
+        with count_lock:
+            load_count += 1
+            if load_count == 2:
+                both_loads_started.set()
+        both_loads_started.wait(timeout=0.25)
+        return binding
+
+    monkeypatch.setattr(module, "_load_existing_binding", synchronized_load)
+    start = threading.Barrier(3)
+    results: list[bool | None] = [None, None]
+
+    def capture(index: int, session_id: str, transcript: Path) -> None:
+        start.wait()
+        results[index] = module.capture_hook(
+            checkout, "codex", hook(session_id, transcript, checkout)
+        )
+
+    threads = [
+        threading.Thread(target=capture, args=(0, "first", first)),
+        threading.Thread(target=capture, args=(1, "second", second)),
+    ]
+    for thread in threads:
+        thread.start()
+    start.wait()
+    for thread in threads:
+        thread.join(timeout=5)
+
+    assert all(not thread.is_alive() for thread in threads)
+    assert sorted(results) == [False, True]
+    assert module.load_binding(checkout).session_id in {"first", "second"}
