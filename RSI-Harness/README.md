@@ -105,10 +105,12 @@ The Engine reads the task's image or Dockerfile, timeouts, environment,
 network mode, users, verifier, and GPU requirements automatically. Run
 `rsi-harness run --help` for all optional controls.
 
-`--reasoning-effort` is a generic per-run Agent option. Codex currently
-supports `minimal`, `low`, `medium`, `high`, and `xhigh`; an Agent or value
-that is not supported is rejected before Docker resources are created. If the
-option is omitted, the Agent keeps its configured default.
+`--reasoning-effort` is a generic per-run Agent option. Codex supports
+`minimal`, `low`, `medium`, `high`, and `xhigh`; Claude Code supports `low`,
+`medium`, `high`, `xhigh`, and `max`, translated to its native `--effort`
+flag. An Agent or value that is not supported is rejected before Docker
+resources are created. If the option is omitted, the Agent keeps its configured
+default.
 
 Use `--disable-stop-hook` when the Agent should exit normally without the
 RSI Loop stop hook.
