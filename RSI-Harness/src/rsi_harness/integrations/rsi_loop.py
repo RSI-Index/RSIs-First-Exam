@@ -28,9 +28,12 @@ from rsi_loop.harness.config import RSILoopConfig
 
 _CONTAINER_PROMPT_PATH = PurePosixPath("/tmp/rsi-agent-prompt.md")
 _CONTROL_ENV_KEYS = ("RSI_JUDGE_URL", "RSI_TOKEN")
-_CODEX_REASONING_EFFORTS = frozenset(
-    {"minimal", "low", "medium", "high", "xhigh"}
-)
+_CODEX_REASONING_EFFORTS = frozenset({"minimal", "low", "medium", "high", "xhigh"})
+_CLAUDE_CODE_REASONING_EFFORTS = frozenset({"low", "medium", "high", "xhigh", "max"})
+_REASONING_EFFORTS = {
+    "codex": ("Codex", _CODEX_REASONING_EFFORTS),
+    "claude-code": ("Claude Code", _CLAUDE_CODE_REASONING_EFFORTS),
+}
 
 
 def validate_agent_reasoning_effort(
@@ -40,14 +43,14 @@ def validate_agent_reasoning_effort(
 
     if reasoning_effort is None:
         return
-    if agent_name != "codex":
+    agent_support = _REASONING_EFFORTS.get(agent_name)
+    if agent_support is None:
+        raise SetupError(f"Agent {agent_name!r} does not support reasoning effort")
+    display_name, supported_efforts = agent_support
+    if reasoning_effort not in supported_efforts:
+        supported = ", ".join(sorted(supported_efforts))
         raise SetupError(
-            f"Agent {agent_name!r} does not support reasoning effort"
-        )
-    if reasoning_effort not in _CODEX_REASONING_EFFORTS:
-        supported = ", ".join(sorted(_CODEX_REASONING_EFFORTS))
-        raise SetupError(
-            f"unsupported Codex reasoning effort {reasoning_effort!r}; "
+            f"unsupported {display_name} reasoning effort {reasoning_effort!r}; "
             f"choose one of: {supported}"
         )
 
@@ -58,11 +61,21 @@ def _apply_reasoning_effort(
     validate_agent_reasoning_effort(agent_name, reasoning_effort)
     if reasoning_effort is None:
         return command
-    marker = "codex exec"
-    if marker not in command:
-        raise SetupError("RSI Loop Codex command cannot accept reasoning effort")
-    override = shlex.quote(f'model_reasoning_effort="{reasoning_effort}"')
-    return command.replace(marker, f"{marker} -c {override}", 1)
+    if agent_name == "codex":
+        marker = "codex exec"
+        if marker not in command:
+            raise SetupError("RSI Loop Codex command cannot accept reasoning effort")
+        override = shlex.quote(f'model_reasoning_effort="{reasoning_effort}"')
+        return command.replace(marker, f"{marker} -c {override}", 1)
+    if agent_name == "claude-code":
+        marker = "claude "
+        if not command.startswith(marker):
+            raise SetupError(
+                "RSI Loop Claude Code command cannot accept reasoning effort"
+            )
+        effort = shlex.quote(reasoning_effort)
+        return f"claude --effort {effort} {command[len(marker) :]}"
+    raise AssertionError("validated Agent reasoning support is incomplete")
 
 
 def rsi_loop_runtime_secret_values(config: RSILoopConfig) -> set[str]:
