@@ -14,6 +14,8 @@ import pytest
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPT = ROOT / ".agents/skills/proposal-agent/scripts/proposal_session.py"
+CODEX_HOOKS = ROOT / ".codex/hooks.json"
+CLAUDE_SETTINGS = ROOT / ".claude/settings.json"
 SPEC = importlib.util.spec_from_file_location("proposal_session", SCRIPT)
 assert SPEC is not None and SPEC.loader is not None
 module = importlib.util.module_from_spec(SPEC)
@@ -50,6 +52,46 @@ def invoke(*args: str, input: str = "") -> subprocess.CompletedProcess[str]:
         text=True,
         check=False,
     )
+
+
+def configured_stop_hook(path: Path) -> dict[str, object]:
+    config = json.loads(path.read_text(encoding="utf-8"))
+    stop_handlers = config["hooks"]["Stop"]
+    assert len(stop_handlers) == 1
+    commands = stop_handlers[0]["hooks"]
+    assert len(commands) == 1
+    return commands[0]
+
+
+def test_project_hooks_invoke_the_canonical_helper_for_each_client() -> None:
+    root_command = (
+        'python3 "$(git rev-parse --show-toplevel)/.agents/skills/proposal-agent/'
+        'scripts/proposal_session.py" hook --platform codex --checkout '
+        '"$(git rev-parse --show-toplevel)"'
+    )
+    assert configured_stop_hook(CODEX_HOOKS) == {
+        "type": "command",
+        "command": root_command,
+    }
+    assert configured_stop_hook(CLAUDE_SETTINGS) == {
+        "type": "command",
+        "command": "python3",
+        "args": [
+            "${CLAUDE_PROJECT_DIR}/.agents/skills/proposal-agent/scripts/proposal_session.py",
+            "hook",
+            "--platform",
+            "claude-code",
+            "--checkout",
+            "${CLAUDE_PROJECT_DIR}",
+        ],
+    }
+
+
+def test_claude_skill_alias_resolves_to_the_canonical_skill_directory() -> None:
+    alias = ROOT / ".claude/skills"
+    assert alias.is_symlink()
+    assert alias.readlink() == Path("../.agents/skills")
+    assert alias.resolve() == (ROOT / ".agents/skills").resolve()
 
 
 def activated_binding(

@@ -11,23 +11,27 @@
 
 ### 1. Create a proposal
 
-Clone this repository and open it in Codex:
+Clone this repository, then start a fresh Codex or Claude Code session from the
+repository root:
 
 ```bash
 git clone https://github.com/RSI-Index/RSI-Index-Public.git
 cd RSI-Index-Public
 ```
 
-Ask Codex to use [proposal-agent](.agents/skills/proposal-agent/SKILL.md). It
-will help you define the research question, baseline, evaluation, scope, and
-compute requirements, then generate an RSI task proposal. Review the completed
-proposal before submitting it.
+Ask the client to use [proposal-agent](.agents/skills/proposal-agent/SKILL.md).
+Use that one session for one proposal. The agent will help you define the
+research question, baseline, evaluation, scope, and compute requirements, then
+generate an RSI task proposal. Review the completed proposal before confirming
+it.
 
 ### 2. Submit the proposal
 
-Create a new [Task Ideas Discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/categories/task-ideas)
-and paste in the proposal. If the initial check reports REJECT, edit the same
-Discussion in response to the automated review. A new review runs on every edit.
+After you confirm the proposal, `proposal-agent` creates the
+[Task Ideas Discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/categories/task-ideas)
+from the confirmed file. Return to the original session when review feedback
+arrives; the agent fetches the current Discussion, helps revise the proposal,
+and updates the same Discussion. A new review runs on every edit.
 
 ### 3. Automatic task building
 
@@ -40,6 +44,12 @@ The standard contributor path is:
    question; the answer resumes building automatically.
 5. The bot posts ACCEPTED when assumptions are resolved, then continues to the
    private task repository.
+
+At ACCEPTED, keep the instruction with your original session:
+
+> Keep this agent session to address any feedback or revisions that may arise.
+> Once the private task repository is ready, return here and ask me to upload
+> this session's required trajectory and Discussion record.
 
 To discard an unpublished attempt, send `/reset`. Reset cleans up that attempt
 and stops the workflow; send a plain `/task` to start a clean attempt.
@@ -60,15 +70,19 @@ commands.
 
 **Without GPUs**
 
-When your private task repository is available, no further execution is
-required. You can clone it and inspect the complete generated task, but
-repository delivery completes the contribution path for contributors without
-the required GPUs.
+When your private task repository is available, return to the original
+proposal-agent session and ask it to upload the required proposal trajectory
+and Discussion record. After the agent reports the private repository and
+upload commit SHA, no task execution is required. You can clone the repository
+and inspect the complete generated task, but that upload completes the
+no-GPU contribution path.
 
 **With GPUs**
 
-Clone the private task repository on a machine with the required GPU resources,
-then follow its README:
+First return to the original proposal-agent session and ask it to upload the
+required proposal trajectory and Discussion record. After it reports the
+private repository and upload commit SHA, clone that repository on a machine
+with the required GPU resources and follow its README:
 
 1. Invoke the bundled validator skill to perform real environment validation:
 
@@ -83,7 +97,8 @@ then follow its README:
    $rsi-task-runner
    ```
 
-3. Upload the completed trajectory to the private task repository.
+3. Upload the separate completed experiment trajectory to the private task
+   repository.
 
 > [!CAUTION]
 > We review every task for scientific soundness, rigor, and novelty, and independently reproduce submitted tasks. Proposal approval and trajectory submission do not guarantee inclusion. A task with an unreasonable, unsupported, or irreproducible design may still be rejected after trajectory submission and excluded from RSI-Index.
