@@ -1,0 +1,1 @@
+{"aggregation": "median_tflops", "correctness": "passed", "median_tflops": 283.872, "reward": 283.872, "selected_version": "gemm_v013_wgmma_cp_b_overlap.cu", "status": "ok", "valid_repeats": 5}

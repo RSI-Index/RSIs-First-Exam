@@ -6,18 +6,17 @@ import os
 import re
 from dataclasses import dataclass
 
-
 _MARKER_PREFIX = "<!-- rsi-proposal-review:"
 _MARKER_PATTERN = re.compile(r"<!-- rsi-proposal-review:(.*?) -->")
 _REQUIRED_KEYS = {"decision", "discussion_node_id", "proposal_sha256", "schema"}
-_CANONICAL_DECISIONS = {
-    "Strong Reject",
-    "Reject",
-    "require human review",
-    "Accept",
-    "Strong Accept",
+_SCHEMA_DECISIONS = {
+    1: frozenset({"Reject", "Accept", "Strong Accept"}),
+    2: frozenset({"Reject", "Pass"}),
 }
-_ELIGIBLE_DECISIONS = {"Accept", "Strong Accept"}
+_ELIGIBLE_DECISIONS = {
+    1: frozenset({"Accept", "Strong Accept"}),
+    2: frozenset({"Pass"}),
+}
 _SHA256_PATTERN = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -30,7 +29,7 @@ class ReviewMarker:
 
     @property
     def eligible(self) -> bool:
-        return self.decision in _ELIGIBLE_DECISIONS
+        return self.decision in _ELIGIBLE_DECISIONS.get(self.schema, frozenset())
 
 
 def canonical_proposal_bytes(title: str, body: str) -> bytes:
@@ -54,9 +53,9 @@ def _is_valid_marker_values(
 ) -> bool:
     return (
         type(schema) is int
-        and schema == 1
+        and schema in _SCHEMA_DECISIONS
         and isinstance(decision, str)
-        and decision in _CANONICAL_DECISIONS
+        and decision in _SCHEMA_DECISIONS[schema]
         and isinstance(proposal_sha256, str)
         and _SHA256_PATTERN.fullmatch(proposal_sha256) is not None
         and isinstance(discussion_node_id, str)
@@ -78,7 +77,7 @@ def render_review_marker(
     proposal_sha256: str,
     discussion_node_id: str,
 ) -> str:
-    if not _is_valid_marker_values(1, decision, proposal_sha256, discussion_node_id):
+    if not _is_valid_marker_values(2, decision, proposal_sha256, discussion_node_id):
         raise ValueError("review marker values must be canonical")
 
     payload = json.dumps(
@@ -86,7 +85,7 @@ def render_review_marker(
             "decision": decision,
             "discussion_node_id": discussion_node_id,
             "proposal_sha256": proposal_sha256,
-            "schema": 1,
+            "schema": 2,
         },
         ensure_ascii=False,
         sort_keys=True,

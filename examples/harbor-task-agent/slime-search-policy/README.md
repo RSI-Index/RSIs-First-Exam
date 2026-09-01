@@ -53,7 +53,7 @@ Docker build cache.
 ## Authoring validation
 
 ```bash
-python3 /absolute/path/to/harbor-task-refiner/scripts/validate_task.py \
+python3 /absolute/path/to/private-task-authoring-validator/validate_task.py \
   /absolute/path/to/slime-search-policy \
   --harness-root /absolute/path/to/RSI-Harness
 ```

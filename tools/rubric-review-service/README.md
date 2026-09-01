@@ -63,8 +63,9 @@ The proposal must include `Contributor full name`. The judge uses web search to
 check public expertise alignment and review recent frontier activity in the
 rolling six-month window. Frontier evidence, including X topic activity, is a
 non-blocking quality signal rather than a publication-count gate. Ambiguous
-contributor identity produces `require human review`; incomplete frontier search
-is recorded as a limitation and does not change the decision by itself.
+contributor identity fails the expertise gate rather than being guessed;
+incomplete frontier search is recorded as a limitation and does not change the
+decision by itself. Decisions are exactly `Reject`, `Accept`, or `Strong Accept`.
 
 ### Health check
 

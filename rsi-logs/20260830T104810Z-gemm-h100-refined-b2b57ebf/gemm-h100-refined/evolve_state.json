@@ -1,0 +1,56 @@
+{
+  "best_round": "agent-5",
+  "best_score": 333.09,
+  "submissions": [
+    {
+      "at": 1788088032.58286,
+      "kind": "agent",
+      "rewards": {
+        "reward": 252.876
+      },
+      "round": "agent-1",
+      "score": 252.876,
+      "status": "completed"
+    },
+    {
+      "at": 1788088370.529012,
+      "kind": "agent",
+      "rewards": {
+        "reward": 283.872
+      },
+      "round": "agent-2",
+      "score": 283.872,
+      "status": "completed"
+    },
+    {
+      "at": 1788088832.247297,
+      "kind": "agent",
+      "rewards": {
+        "reward": 316.483
+      },
+      "round": "agent-3",
+      "score": 316.483,
+      "status": "completed"
+    },
+    {
+      "at": 1788089120.064145,
+      "kind": "agent",
+      "rewards": {
+        "reward": 332.841
+      },
+      "round": "agent-4",
+      "score": 332.841,
+      "status": "completed"
+    },
+    {
+      "at": 1788089244.119238,
+      "kind": "agent",
+      "rewards": {
+        "reward": 333.09
+      },
+      "round": "agent-5",
+      "score": 333.09,
+      "status": "completed"
+    }
+  ]
+}

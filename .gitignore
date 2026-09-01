@@ -46,3 +46,7 @@ tmp.sh
 todo
 bakeart_v2.0_schema_cpu_simplified
 concurrent-agent-serving-optimizer-qwen36-27b
+
+# Local Superpowers planning and orchestration artifacts
+superpowers/
+.superpowers/

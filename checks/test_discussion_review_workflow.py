@@ -7,6 +7,11 @@ ROOT = WORKFLOW.parent.parent.parent
 CHECKOUT_SHA = "fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09"
 APP_TOKEN_SHA = "bcd2ba49218906704ab6c1aa796996da409d3eb1"
 SETUP_UV_SHA = "38f3f104447c67c051c4a08e39b64a148898af3a"
+AUTOMATIC_DISPATCH_GUARD = (
+    "steps.review.outputs.decision == 'Pass' && "
+    "steps.publish-review.outcome == 'success' && "
+    "steps.publish-review.outputs.review_comment_id != ''"
+)
 
 
 def parsed_steps() -> list[dict]:
@@ -52,6 +57,7 @@ def test_review_workflow_supersedes_only_unfinished_reviews_then_posts_fresh_pro
     assert "<!-- rubric-review-status:running -->" in progress["run"]
     assert "<!-- rubric-review-status:superseded -->" in progress["run"]
     assert "Proposal review is running" in progress["run"]
+    assert "usually takes about 1 minute" in progress["run"]
     assert "This comment will update when the review finishes" not in progress["run"]
     assert "updateDiscussionComment" in progress["run"]
     assert "addDiscussionComment" in progress["run"]
@@ -94,7 +100,7 @@ def test_review_workflow_replaces_only_current_progress_with_generic_failure():
         "${{ steps.progress.outputs.comment_id }}"
     )
     assert steps.index(failure_token) == (
-        steps.index(step_named("Format and post or update comment")) + 1
+        steps.index(step_named("Dispatch passed proposal privately")) + 1
     )
     assert steps.index(failure) == steps.index(failure_token) + 1
     assert "Proposal review failed before completion" in failure["run"]
@@ -119,6 +125,21 @@ def test_successful_review_updates_only_the_current_runs_progress_comment():
     assert "addDiscussionComment" in publish["run"]
     assert "EXISTING_COMMENT_ID" not in publish["run"]
     assert "comments(first:" not in publish["run"]
+
+
+def test_successful_review_outputs_authoritative_comment_id_from_update_or_create():
+    publish = step_named("Format and post or update comment")
+    script = publish["run"]
+
+    assert "COMMENT_RESULT=$(gh api graphql" in script
+    assert "jq -er '.data.updateDiscussionComment.comment.id'" in script
+    assert "jq -er '.data.addDiscussionComment.comment.id'" in script
+    assert "printf 'review_comment_id=%s\\n' \"$REVIEW_COMMENT_ID\"" in script
+    superseded = script.split("Current review comment is no longer active", 1)[1].split(
+        "COMMENT_RESULT=$(gh api graphql", 1
+    )[0]
+    assert "exit 0" in superseded
+    assert "review_comment_id" not in superseded
 
 
 def test_stale_progress_lookup_paginates_and_excludes_completed_reviews():
@@ -297,12 +318,120 @@ def test_review_workflow_renders_and_appends_the_canonical_marker():
     assert format_comment["run"].count('-f body="$BODY"') == 2
 
 
-def test_review_workflow_replaces_withheld_output_before_publication():
+def test_review_workflow_has_no_synthetic_decision_fallback():
     steps = {step.get("name"): step for step in parsed_steps()}
     run_review = steps["Run rubric review"]["run"]
 
-    assert 'publication_guard = result.get("publication_guard")' in run_review
-    assert 'if publication_guard == "withheld":' in run_review
-    assert 'decision = "require human review"' in run_review
-    assert "Automated review output was withheld" in run_review
-    assert 'elif publication_guard != "pass":' in run_review
+    assert 'decision = result.get("decision")' in run_review
+    assert 'review = result.get("review")' in run_review
+    assert "publication_guard" not in run_review
+    assert "withheld" not in run_review
+    assert "require human review" not in run_review
+    assert "Strong Reject" not in run_review
+
+
+def test_review_workflow_accepts_and_publishes_only_pass_or_reject():
+    run_review = step_named("Run rubric review")["run"]
+    publish = step_named("Format and post or update comment")["run"]
+
+    assert 'allowed_decisions = {"Reject", "Pass"}' in run_review
+    assert '"Pass")   BADGE="🟢 **PASS**"' in publish
+    assert '"Reject") BADGE="🔴 **REJECT**"' in publish
+    assert "Strong Accept" not in publish
+    assert "**Accept**" not in publish
+
+
+def test_pass_publication_starts_building_without_an_initial_task_instruction():
+    publish = step_named("Format and post or update comment")["run"]
+    pass_copy = publish.split('"Pass")', 2)[2].split(';;', 1)[0]
+
+    assert "PASS — Initial check passed. Task building starts automatically." in pass_copy
+    assert "Minor revisions may still be needed in some cases." in pass_copy
+    assert "/task" not in pass_copy
+
+
+def test_pass_dispatch_uses_separate_conditional_private_write_token():
+    steps = parsed_steps()
+    token = step_named("Create private Skills dispatch token")
+
+    assert token == {
+        "name": "Create private Skills dispatch token",
+        "id": "dispatch-token",
+        "if": AUTOMATIC_DISPATCH_GUARD,
+        "uses": f"actions/create-github-app-token@{APP_TOKEN_SHA}",
+        "with": {
+            "client-id": "${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}",
+            "private-key": "${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}",
+            "owner": "RSI-Index",
+            "repositories": "RSI-Skills",
+            "permission-contents": "write",
+        },
+    }
+    assert steps.index(step_named("Format and post or update comment")) < steps.index(token)
+    assert steps.index(token) < steps.index(step_named("Dispatch passed proposal privately"))
+    assert step_named("Create private Skills read token")["with"]["permission-contents"] == "read"
+    assert step_named("Checkout private discussion rubric")["with"]["token"] == (
+        "${{ steps.skills-token.outputs.token }}"
+    )
+
+
+def test_pass_dispatch_builds_exact_request_and_posts_once_after_publication():
+    raw = WORKFLOW.read_text(encoding="utf-8")
+    dispatch = step_named("Dispatch passed proposal privately")
+
+    assert "Build automatic Pass dispatch request" not in {
+        step.get("name") for step in parsed_steps()
+    }
+    assert dispatch["if"] == (
+        AUTOMATIC_DISPATCH_GUARD + " && steps.dispatch-token.outcome == 'success'"
+    )
+    assert dispatch["env"] == {
+        "GH_TOKEN": "${{ steps.dispatch-token.outputs.token }}",
+        "REVIEW_COMMENT_NODE_ID": "${{ steps.publish-review.outputs.review_comment_id }}",
+    }
+    script = dispatch["run"]
+    assert (
+        'python3 checks/proposal_pass_dispatch.py "$GITHUB_EVENT_PATH" '
+        '"$REVIEW_COMMENT_NODE_ID" proposal-pass-payload.json'
+    ) in script
+    assert script.index("checks/proposal_pass_dispatch.py") < script.index(
+        '"event_type": "discussion_task_command"'
+    )
+    assert script.index('"event_type": "discussion_task_command"') < script.index(
+        "gh api --method POST /repos/RSI-Index/RSI-Skills/dispatches"
+    )
+    assert '"client_payload": payload' in script
+    assert "gh api --method POST /repos/RSI-Index/RSI-Skills/dispatches" in script
+    assert "--input proposal-pass-request.json" in script
+    assert "proposal-pass-live.json" not in script
+    assert "viewerDidAuthor" not in script
+    assert raw.count("/repos/RSI-Index/RSI-Skills/dispatches") == 1
+
+
+def test_pass_dispatch_is_guarded_from_reject_failure_supersession_and_missing_id():
+    assert step_named("Create private Skills dispatch token")["if"] == (
+        AUTOMATIC_DISPATCH_GUARD
+    )
+
+    dispatch_condition = step_named("Dispatch passed proposal privately")["if"]
+    assert "decision == 'Pass'" in dispatch_condition
+    assert "publish-review.outcome == 'success'" in dispatch_condition
+    assert "review_comment_id != ''" in dispatch_condition
+    assert "dispatch-token.outcome == 'success'" in dispatch_condition
+
+
+def test_dispatch_eligibility_relies_on_the_successful_current_run_publication():
+    steps = parsed_steps()
+    publish = step_named("Format and post or update comment")
+    dispatch = step_named("Dispatch passed proposal privately")
+    script = dispatch["run"]
+
+    assert steps.index(publish) < steps.index(dispatch)
+    assert "set -euo pipefail" in script
+    assert 'if [ "$valid" != "true" ]' in script
+    assert "exit 1" in script.split('if [ "$valid" != "true" ]', 1)[1].split(
+        "fi", 1
+    )[0]
+    assert "proposal_pass_dispatch.py" in script
+    assert "proposal-pass-live.json" not in script
+    assert "viewerDidAuthor" not in script

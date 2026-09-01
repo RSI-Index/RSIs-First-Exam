@@ -1,3 +1,5 @@
+import { parseJudgeResult } from "./judge-result.ts";
+
 export interface Env {
   JUDGE_API_KEY: string;
   RUBRICS: KVNamespace;
@@ -10,11 +12,6 @@ const TASK_PROPOSAL_REVIEW_PATH = "/v1/reviews/task-proposal";
 
 type EvaluateRequest = {
   proposal?: unknown;
-};
-
-type JudgeResult = {
-  decision: "Strong Reject" | "Reject" | "require human review" | "Accept" | "Strong Accept";
-  review: string;
 };
 
 function json(body: unknown, status = 200): Response {
@@ -136,7 +133,7 @@ export default {
               properties: {
                 decision: {
                   type: "string",
-                  enum: ["Strong Reject", "Reject", "require human review", "Accept", "Strong Accept"],
+                  enum: ["Reject", "Accept", "Strong Accept"],
                 },
                 review: { type: "string" },
               },
@@ -153,11 +150,14 @@ export default {
       return json({ error: "OpenAI judge request failed", status: response.status }, 502);
     }
     const responseBody = await response.json() as Record<string, unknown>;
+    if (responseBody.status !== "completed") {
+      return json({ error: "OpenAI returned an incomplete response" }, 502);
+    }
     const text = outputText(responseBody);
     if (!text) return json({ error: "OpenAI returned no review text" }, 502);
     try {
-      const result = JSON.parse(text) as JudgeResult;
-      if (!result.review?.trim() || !result.decision) throw new Error("invalid judge result");
+      const result = parseJudgeResult(JSON.parse(text));
+      if (!result) throw new Error("invalid judge result");
       return json({ ...result, model: JUDGE_MODEL, reasoning_effort: JUDGE_REASONING_EFFORT });
     } catch {
       return json({ error: "OpenAI returned an invalid judge result" }, 502);

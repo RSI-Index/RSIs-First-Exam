@@ -85,6 +85,8 @@ jobs:
           from pathlib import Path
 
           payload = json.load(Path("dispatch-payload.json").open(encoding="utf-8"))
+          if not isinstance(payload, dict) or payload.get("trigger_kind") != "comment":
+              raise SystemExit("manual dispatch payload had an invalid trigger kind")
           event_types = {
               "task": "discussion_task_command",
               "reset": "discussion_task_reset",

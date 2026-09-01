@@ -274,6 +274,76 @@ def test_prepare_maps_generic_reasoning_effort_to_codex_cli_override(
     )
 
 
+@pytest.mark.parametrize(
+    ("resume", "expected_prefix"),
+    (
+        (False, 'claude --effort max -p "$(cat /tmp/rsi-agent-prompt.md)"'),
+        (True, 'claude --effort max --continue -p "Continue working."'),
+    ),
+)
+def test_prepare_maps_generic_reasoning_effort_to_claude_cli_flag(
+    tmp_path: Path, resume: bool, expected_prefix: str
+) -> None:
+    prompt_path = (tmp_path / "claude-reasoning-prompt.md").resolve()
+    plan = make_run_plan(tmp_path)
+    plan = plan.model_copy(
+        update={
+            "task": plan.task.model_copy(
+                update={
+                    "agent": plan.task.agent.model_copy(
+                        update={
+                            "name": "claude-code",
+                            "model": "claude-opus-5",
+                            "reasoning_effort": "max",
+                        }
+                    )
+                }
+            )
+        }
+    )
+
+    prepared = RSILoopAgentAdapter(RSILoopConfig()).prepare(
+        AgentPrepareRequest(
+            run_plan=plan,
+            prompt_path=prompt_path,
+            resume=resume,
+        )
+    )
+
+    assert prepared.command[:2] == ("/bin/bash", "-lc")
+    assert prepared.command[2].startswith(expected_prefix)
+    assert "--model claude-opus-5" in prepared.command[2]
+    assert "--reasoning-effort" not in prepared.command[2]
+
+
+def test_prepare_rejects_unsupported_claude_reasoning_effort_before_writing_prompt(
+    tmp_path: Path,
+) -> None:
+    prompt_path = (tmp_path / "invalid-claude-reasoning-prompt.md").resolve()
+    plan = make_run_plan(tmp_path)
+    plan = plan.model_copy(
+        update={
+            "task": plan.task.model_copy(
+                update={
+                    "agent": plan.task.agent.model_copy(
+                        update={
+                            "name": "claude-code",
+                            "reasoning_effort": "minimal",
+                        }
+                    )
+                }
+            )
+        }
+    )
+
+    with pytest.raises(SetupError, match="Claude Code reasoning effort"):
+        RSILoopAgentAdapter(RSILoopConfig()).prepare(
+            AgentPrepareRequest(run_plan=plan, prompt_path=prompt_path)
+        )
+
+    assert not prompt_path.exists()
+
+
 @pytest.mark.parametrize("effort", ("none", "max", "HIGH", ""))
 def test_prepare_rejects_unsupported_codex_reasoning_effort_before_writing_prompt(
     tmp_path: Path, effort: str
