@@ -48,11 +48,8 @@ MAX_REPOSITORY_TREE_PATHS = 200
 MAX_REPOSITORY_EVIDENCE_CHARS = 250_000
 WEB_SEARCH_TOOL = {"type": "web_search", "search_context_size": "high"}
 PUBLIC_DECISIONS = (
-    "Strong Reject",
     "Reject",
-    "require human review",
-    "Accept",
-    "Strong Accept",
+    "Pass",
 )
 GATE_FIELDS = (
     ("contributor_expertise_alignment", "Contributor Expertise Alignment"),
@@ -63,8 +60,9 @@ GATE_FIELDS = (
     ("research_action_space", "Research Action Space"),
     ("evaluation_integrity", "Evaluation Integrity"),
     ("data_and_network_boundaries", "Data and Network Boundaries"),
+    ("task_generation_readiness", "Task-Generation Readiness"),
 )
-GATE_STATUSES = ("Pass", "Fail", "Human review")
+GATE_STATUSES = ("Pass", "Fail")
 COMPUTE_STATUSES = ("Within normal reference", "Flag", "Estimate incomplete")
 _GATE_RESULT_SCHEMA = {
     "type": "object",
@@ -128,21 +126,6 @@ JUDGE_RESPONSE_FORMAT = {
         },
     },
 }
-WITHHELD_REVIEW = (
-    "Proposal summary:\n"
-    "Automated review output was withheld because it could not be safely "
-    "published. A human maintainer must review this proposal.\n\n"
-    "Decision: require human review"
-)
-_OUTPUT_FIELD_LIMITS = {
-    "proposal_summary": 1000,
-    "evidence": 1600,
-    "gate_evidence": 900,
-    "compute_details": 800,
-    "quality_review": 1800,
-}
-_RUBRIC_OVERLAP_WORDS = 12
-_RUBRIC_OVERLAP_CHARS = 80
 _MARKDOWN_ESCAPE_RE = re.compile(r"([\\`*_{}\[\]()#+\-.!|~])")
 
 
@@ -547,11 +530,9 @@ def build_judge_instructions(rubric: str) -> str:
     )
 
 
-def _bounded_text(value, label: str, limit: int) -> str:
+def _require_text(value, label: str) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError(f"{label} must be a non-empty string")
-    if len(value) > limit:
-        raise ValueError(f"{label} exceeds {limit} characters")
     return value.strip()
 
 
@@ -562,7 +543,7 @@ def _require_exact_keys(value, expected: set[str], label: str) -> dict:
 
 
 def parse_judge_payload(output_text: str) -> dict:
-    """Parse and bound the structured judge response before publication."""
+    """Parse and validate the structured judge response before publication."""
     payload = json.loads(output_text)
     top_level = {
         "decision",
@@ -575,11 +556,7 @@ def parse_judge_payload(output_text: str) -> dict:
     payload = _require_exact_keys(payload, top_level, "judge response")
     if payload["decision"] not in PUBLIC_DECISIONS:
         raise ValueError("invalid decision")
-    _bounded_text(
-        payload["proposal_summary"],
-        "proposal_summary",
-        _OUTPUT_FIELD_LIMITS["proposal_summary"],
-    )
+    _require_text(payload["proposal_summary"], "proposal_summary")
 
     evidence_keys = {
         "contributor_public_expertise",
@@ -590,11 +567,7 @@ def parse_judge_payload(output_text: str) -> dict:
         payload["evidence_reviewed"], evidence_keys, "evidence_reviewed"
     )
     for name in evidence_keys:
-        _bounded_text(
-            evidence[name],
-            f"evidence_reviewed.{name}",
-            _OUTPUT_FIELD_LIMITS["evidence"],
-        )
+        _require_text(evidence[name], f"evidence_reviewed.{name}")
 
     gate_keys = {name for name, _ in GATE_FIELDS}
     gates = _require_exact_keys(
@@ -604,27 +577,20 @@ def parse_judge_payload(output_text: str) -> dict:
         gate = _require_exact_keys(gates[name], {"status", "evidence"}, name)
         if gate["status"] not in GATE_STATUSES:
             raise ValueError(f"invalid status for {name}")
-        _bounded_text(
-            gate["evidence"],
-            f"hard_gate_review.{name}.evidence",
-            _OUTPUT_FIELD_LIMITS["gate_evidence"],
-        )
+        _require_text(gate["evidence"], f"hard_gate_review.{name}.evidence")
+    failed_gate_present = any(gate["status"] == "Fail" for gate in gates.values())
+    if payload["decision"] == "Reject" and not failed_gate_present:
+        raise ValueError("Reject requires at least one failed hard gate")
+    if payload["decision"] != "Reject" and failed_gate_present:
+        raise ValueError(f"{payload['decision']} requires every hard gate to pass")
 
     compute = _require_exact_keys(
         payload["compute_note"], {"status", "details"}, "compute_note"
     )
     if compute["status"] not in COMPUTE_STATUSES:
         raise ValueError("invalid compute status")
-    _bounded_text(
-        compute["details"],
-        "compute_note.details",
-        _OUTPUT_FIELD_LIMITS["compute_details"],
-    )
-    _bounded_text(
-        payload["quality_review"],
-        "quality_review",
-        _OUTPUT_FIELD_LIMITS["quality_review"],
-    )
+    _require_text(compute["details"], "compute_note.details")
+    _require_text(payload["quality_review"], "quality_review")
     return payload
 
 
@@ -683,66 +649,9 @@ def render_public_review(payload: dict) -> str:
     return "\n".join(lines)
 
 
-def _normalized_words(value: str) -> list[str]:
-    normalized = unicodedata.normalize("NFKC", value).casefold()
-    return re.findall(r"[a-z0-9]+", normalized)
-
-
-def _canonical_alnum(value: str) -> str:
-    normalized = unicodedata.normalize("NFKC", value).casefold()
-    return "".join(character for character in normalized if character.isalnum())
-
-
-def _payload_text(value) -> str:
-    if isinstance(value, str):
-        return value
-    if isinstance(value, dict):
-        return "\n".join(_payload_text(item) for item in value.values())
-    if isinstance(value, list):
-        return "\n".join(_payload_text(item) for item in value)
-    return ""
-
-
-def contains_private_rubric_overlap(rubric: str, public_review: str) -> bool:
-    rubric_words = _normalized_words(rubric)
-    public_words = _normalized_words(public_review)
-    window = _RUBRIC_OVERLAP_WORDS
-    if len(rubric_words) >= window and len(public_words) >= window:
-        private_word_windows = {
-            tuple(rubric_words[index : index + window])
-            for index in range(len(rubric_words) - window + 1)
-        }
-        if any(
-            tuple(public_words[index : index + window]) in private_word_windows
-            for index in range(len(public_words) - window + 1)
-        ):
-            return True
-
-    rubric_chars = _canonical_alnum(rubric)
-    public_chars = _canonical_alnum(public_review)
-    char_window = _RUBRIC_OVERLAP_CHARS
-    if len(rubric_chars) < char_window or len(public_chars) < char_window:
-        return False
-    private_char_windows = {
-        rubric_chars[index : index + char_window]
-        for index in range(len(rubric_chars) - char_window + 1)
-    }
-    return any(
-        public_chars[index : index + char_window] in private_char_windows
-        for index in range(len(public_chars) - char_window + 1)
-    )
-
-
-def finalize_judge_output(output_text: str, rubric: str) -> str:
-    try:
-        payload = parse_judge_payload(output_text)
-        model_text = _payload_text(payload)
-        public_review = render_public_review(payload)
-    except (KeyError, TypeError, ValueError, json.JSONDecodeError):
-        return WITHHELD_REVIEW
-    if contains_private_rubric_overlap(rubric, model_text):
-        return WITHHELD_REVIEW
-    return public_review
+def finalize_judge_output(output_text: str) -> str:
+    payload = parse_judge_payload(output_text)
+    return render_public_review(payload)
 
 
 def call_openai(instructions: str, user_input, *, client=None) -> str:
@@ -768,7 +677,7 @@ def call_openai(instructions: str, user_input, *, client=None) -> str:
     output_text = getattr(response, "output_text", None)
     if not isinstance(output_text, str) or not output_text.strip():
         raise RuntimeError("OpenAI response completed without review text")
-    return finalize_judge_output(output_text, instructions)
+    return finalize_judge_output(output_text)
 
 
 async def async_call_openai(instructions: str, user_input, *, client=None) -> str:
@@ -794,16 +703,10 @@ async def async_call_openai(instructions: str, user_input, *, client=None) -> st
     output_text = getattr(response, "output_text", None)
     if not isinstance(output_text, str) or not output_text.strip():
         raise RuntimeError("OpenAI response completed without review text")
-    return finalize_judge_output(output_text, instructions)
+    return finalize_judge_output(output_text)
 
 
-_CANONICAL_DECISIONS = {
-    "strong reject": "Strong Reject",
-    "reject": "Reject",
-    "require human review": "require human review",
-    "accept": "Accept",
-    "strong accept": "Strong Accept",
-}
+_CANONICAL_DECISIONS = {"reject": "Reject", "pass": "Pass"}
 _DECISION_RE = re.compile(
     r"\*{0,2}Decision:\*{0,2}\s*\*{0,2}(.+?)\*{0,2}\s*$",
     re.IGNORECASE,
@@ -901,7 +804,6 @@ def main(argv: list[str] | None = None) -> None:
         "repository": repository_label,
         "decision": decision,
         "review": review,
-        "publication_guard": "withheld" if review == WITHHELD_REVIEW else "pass",
     }
     print(json.dumps(result))
 

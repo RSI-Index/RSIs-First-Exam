@@ -2580,13 +2580,13 @@ def test_production_service_rejects_reasoning_for_unsupported_agent_before_mutat
         bridge_gateway="127.0.0.1",
     )
 
-    with pytest.raises(SetupError, match="claude-code.*reasoning effort"):
+    with pytest.raises(SetupError, match="unsupported-agent.*reasoning effort"):
         services.run(
             RunRequest(
                 task_dir=FIXTURE.resolve(),
-                agent_name="claude-code",
+                agent_name="unsupported-agent",
                 reasoning_effort="high",
-                options=CompileOptions(agent_name="claude-code"),
+                options=CompileOptions(agent_name="unsupported-agent"),
             )
         )
 

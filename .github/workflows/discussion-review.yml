@@ -64,7 +64,7 @@ jobs:
           <!-- rubric-review-status:running -->
           ## 📋 Task Proposal Rubric Review
 
-          ⏳ Proposal review is running.
+          ⏳ Proposal review is running. This usually takes about 1 minute.
           COMMENT_EOF
           )
 
@@ -175,28 +175,10 @@ jobs:
           from pathlib import Path
 
           result = json.loads(Path("result.json").read_text(encoding="utf-8"))
-          publication_guard = result.get("publication_guard")
-          if publication_guard == "withheld":
-              decision = "require human review"
-              review = (
-                  "Proposal summary:\n"
-                  "Automated review output was withheld because it could not be "
-                  "safely published. A human maintainer must review this proposal.\n\n"
-                  "Decision: require human review"
-              )
-          elif publication_guard != "pass":
-              raise SystemExit("Judge returned an invalid publication guard")
-          else:
-              decision = result.get("decision")
-              review = result.get("review")
+          decision = result.get("decision")
+          review = result.get("review")
 
-          allowed_decisions = {
-              "Strong Reject",
-              "Reject",
-              "require human review",
-              "Accept",
-              "Strong Accept",
-          }
+          allowed_decisions = {"Reject", "Pass"}
           if decision not in allowed_decisions:
               raise SystemExit(
                   f"Judge returned a missing or non-canonical decision: {decision!r}"
@@ -243,11 +225,8 @@ jobs:
           set -euo pipefail
           # Decision badge
           case "$DECISION" in
-            "Strong Accept") BADGE="🟢 **Strong Accept**" ;;
-            "Accept")        BADGE="🟢 **Accept**" ;;
-            "require human review") BADGE="🟡 **require human review**" ;;
-            "Reject")        BADGE="🔴 **Reject**" ;;
-            "Strong Reject") BADGE="🔴 **Strong Reject**" ;;
+            "Pass")   BADGE="🟢 **PASS**" ;;
+            "Reject") BADGE="🔴 **REJECT**" ;;
             *)
               echo "Unexpected non-canonical decision: $DECISION" >&2
               exit 1
@@ -258,11 +237,11 @@ jobs:
           BOT_MARKER="<!-- rubric-review-bot -->"
 
           case "$DECISION" in
-            "Strong Accept"|"Accept")
-              NEXT_STEP="> 🤖 This automated recommendation is eligible for task dispatch. The Discussion author or a current organization Owner can send \`/task\` to continue."
+            "Pass")
+              NEXT_STEP="> 🤖 **PASS — Initial check passed. Task building starts automatically. Minor revisions may still be needed in some cases.**"
               ;;
             *)
-              NEXT_STEP="> 🤖 This is an automated recommendation for a human maintainer — not a final decision. Edit your proposal to trigger a fresh review. Judged against the private task proposal rubric; ask a maintainer if a point is unclear."
+              NEXT_STEP="> 🤖 This automated recommendation is not eligible for task dispatch. Edit your proposal to trigger a fresh review. Judged against the private task proposal rubric; ask a maintainer if a point is unclear."
               ;;
           esac
 
@@ -301,7 +280,7 @@ jobs:
               echo "Current review comment is no longer active; skipping publication"
               exit 0
             fi
-            gh api graphql \
+            COMMENT_RESULT=$(gh api graphql \
               -f query='mutation($commentId: ID!, $body: String!) {
                 updateDiscussionComment(input: {
                   commentId: $commentId
@@ -311,26 +290,68 @@ jobs:
                 }
               }' \
               -f commentId="$PROGRESS_COMMENT_ID" \
-              -f body="$BODY"
+              -f body="$BODY")
+            REVIEW_COMMENT_ID=$(jq -er '.data.updateDiscussionComment.comment.id' <<< "$COMMENT_RESULT")
             echo "Updated this run's review comment"
-            exit 0
+          else
+            # Fall back to a new comment if the progress acknowledgement was unavailable.
+            COMMENT_RESULT=$(gh api graphql \
+              -f query='mutation($discussionId: ID!, $body: String!) {
+                addDiscussionComment(input: {
+                  discussionId: $discussionId
+                  body: $body
+                }) {
+                  comment {
+                    id
+                    url
+                  }
+                }
+              }' \
+              -f discussionId="$DISCUSSION_ID" \
+              -f body="$BODY")
+            REVIEW_COMMENT_ID=$(jq -er '.data.addDiscussionComment.comment.id' <<< "$COMMENT_RESULT")
+          fi
+          printf 'review_comment_id=%s\n' "$REVIEW_COMMENT_ID" >> "$GITHUB_OUTPUT"
+
+      - name: Create private Skills dispatch token
+        id: dispatch-token
+        if: steps.review.outputs.decision == 'Pass' && steps.publish-review.outcome == 'success' && steps.publish-review.outputs.review_comment_id != ''
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1
+        with:
+          client-id: ${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}
+          private-key: ${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}
+          owner: RSI-Index
+          repositories: RSI-Skills
+          permission-contents: write
+
+      - name: Dispatch passed proposal privately
+        if: steps.review.outputs.decision == 'Pass' && steps.publish-review.outcome == 'success' && steps.publish-review.outputs.review_comment_id != '' && steps.dispatch-token.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ steps.dispatch-token.outputs.token }}
+          REVIEW_COMMENT_NODE_ID: ${{ steps.publish-review.outputs.review_comment_id }}
+        run: |
+          set -euo pipefail
+          valid=$(python3 checks/proposal_pass_dispatch.py "$GITHUB_EVENT_PATH" "$REVIEW_COMMENT_NODE_ID" proposal-pass-payload.json)
+          if [ "$valid" != "true" ]; then
+            echo "Published Pass did not produce a valid dispatch payload" >&2
+            exit 1
           fi
 
-          # Fall back to a new comment if the progress acknowledgement was unavailable.
-          gh api graphql \
-            -f query='mutation($discussionId: ID!, $body: String!) {
-              addDiscussionComment(input: {
-                discussionId: $discussionId
-                body: $body
-              }) {
-                comment {
-                  id
-                  url
-                }
-              }
-            }' \
-            -f discussionId="$DISCUSSION_ID" \
-            -f body="$BODY"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path("proposal-pass-payload.json").read_text(encoding="utf-8"))
+          request = {
+              "event_type": "discussion_task_command",
+              "client_payload": payload,
+          }
+          with Path("proposal-pass-request.json").open("w", encoding="utf-8") as output:
+              json.dump(request, output, sort_keys=True, separators=(",", ":"))
+          PY
+
+          gh api --method POST /repos/RSI-Index/RSI-Skills/dispatches \
+            --input proposal-pass-request.json
 
       - name: Create failure comment Discussion App token
         id: failure-token

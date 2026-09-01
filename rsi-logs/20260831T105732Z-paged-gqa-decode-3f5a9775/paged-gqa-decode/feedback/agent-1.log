@@ -1,0 +1,1 @@
+{"errors": [{"actual": "p.to", "code": "forbidden_kernel_call", "condition": "Triton kernels may call only Triton language operations and reviewed JIT helpers", "field": "source_line_70", "path": "/workspace/submission.py"}], "status": "candidate_invalid"}
