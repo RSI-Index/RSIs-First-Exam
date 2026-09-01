@@ -2,7 +2,7 @@
 
 日期：2026-09-01
 
-状态：交互式设计已批准，等待书面设计确认
+状态：书面设计已批准；按 native-artifact code review 修订
 
 ## 目标
 
@@ -12,9 +12,11 @@
 .agents/skills/bluevela-single-harbor-tasks-validator/
 ```
 
-它接受一个已经完成静态生成与编译检查的 RSI-Harness Harbor task，在 IBM
-Blue Vela 上完成 execution-readiness 验证；验证通过后，立即沿同一套
-single-node 运行契约启动并监控正式 Codex 轨迹到终态。
+它接受一个已经完成静态生成与编译检查的 RSI-Harness Harbor task，参考
+validator 的 task-specific checks，在 IBM Blue Vela 上完成 native
+end-to-end acceptance，并沿同一套 single-node 运行契约监控正式 Codex 轨迹
+到终态。它不声称替代 standalone validator 的 unchanged-baseline
+`EXECUTION READY` certification。
 
 `harbor-task-validator` 是“验证什么”的权威；
 `bluevela-single-node-running-harbor-tasks` 是“如何在集群执行”的唯一权威。
@@ -44,22 +46,24 @@ single-node 运行契约启动并监控正式 Codex 轨迹到终态。
 
 新 skill 必须要求使用以下两个 sub-skill：
 
-1. `harbor-task-validator`：资源授权、Environment acceptance、Baseline Judge
-   acceptance、task-local 修复边界和 `EXECUTION READY` 证据标准。
-2. `running-harbor-tasks-bluevela`，其仓库目录为
-   `.agents/skills/bluevela-single-node-running-harbor-tasks`：登录节点限制、
+1. `harbor-task-validator`：资源授权、适用的 Environment/Judge checks、奖励
+   失败语义和 task-local 修复边界。Docker-only 与 unchanged-baseline checks
+   保持 standalone validator 专属，不冒充 native trajectory 证据。
+2. `running-harbor-tasks-bluevela`，优先使用仓库目录
+   `.agents/skills/bluevela-single-node-running-harbor-tasks`，不存在时回退到已提交
+   的 `.agents/skills/running-harbor-tasks-bluevela`：登录节点限制、
    dry-run、compute-node image materialization、single-node LSF/Apptainer 执行、
    日志监控、重试和终态证据。
 
 冲突时按以下所有权处理：
 
-- 验证内容、奖励生命周期和通过条件由 validator 决定。
+- validator 提供 task-specific checks 和失败语义。
 - 所有集群执行、调度、镜像构建、GPU 选择、路径和监控由 single-node
   runbook 决定。
 - validator 的本地 Docker 命令不能在 Blue Vela login node 上执行；新 skill
   使用 native Harness/Blue Vela artifacts 证明同一验收事实。
-- 如果 native Harness artifacts 无法证明某项 validator 必需事实，则返回
-  `BLOCKED`，不得降低或跳过该检查。
+- 只报告 native Harness artifacts 实际保留的事实；不把 production candidate
+  冒充 standalone unchanged-baseline certification。
 
 ## 输入与前置条件
 
@@ -123,19 +127,20 @@ UTC run ID 重试。
 
 详细映射写入 `references/validation-on-bluevela.md`。核心要求为：
 
-- Environment gate：verified SIF identity、compute-node build success、未改动
-  starting workspace、有效 public pre-scoring/editable-scope checks、依赖与
-  assets 完整、无未声明 volume/network/host bind，以及声明的 WORKDIR/user/
-  environment/shm 语义。
-- Judge gate：声明的 Judge GPU/CPU/memory/network/timeout 下完整执行
-  `/tests/test.sh`，输出边界正确，有限 scalar reward 恰好写入一次，失败、
-  timeout 或 malformed reward 不得变成成功，Judge 进程退出且 GPU 释放。
+- Environment acceptance：verified SIF identity、compute-node build success、
+  frozen task/run plan、public pre-scoring output、依赖与 assets，以及 native
+  artifacts 实际保留的 WORKDIR/user/environment/shm/isolation 事实。
+- Production Judge acceptance：声明的 Judge GPU/CPU/memory/network/timeout 下
+  完整执行 `/tests/test.sh`；retained `report.json` 含 completed status 和有限
+  parsed reward，`final_result.json` 与其一致，失败路径不得变成成功，Judge
+  进程退出且 GPU 释放。被清理的 raw verifier directory 不能用于声称
+  exactly-once reward-file lifecycle。
 - Harness gate：native Work、submission、Judge、feedback 和 artifact writer
   生命周期成立；不得用 Harbor CLI 日志替代。
 
-当 validator 要求 unchanged baseline Judge，而当前 native run 没有产生可验证
-的 unchanged-baseline execution 时，状态保持 `BLOCKED`；新 skill 不把任意
-candidate submission 冒充 baseline evidence。
+新 skill 明确报告 standalone unchanged-baseline certification 未执行；任意
+candidate submission 都不能冒充该证据，但这不阻止已获授权的 healthy native
+trajectory 继续到终态。
 
 ### 5. 失败处理与终态
 
@@ -145,9 +150,9 @@ evidence。一个 root-cause hypothesis 对应一个最小 source-controlled rep
 
 终态只有：
 
-- `END_TO_END_VALIDATED`：validator 要求和 Blue Vela/Harness success contract
-  全部由 artifacts 证明，正式 Codex 轨迹已经完成且至少一次 Judge submission
-  产生有效 finite reward。
+- `END_TO_END_VALIDATED`：适用的 task checks 和 Blue Vela/Harness success
+  contract 全部由 retained artifacts 证明，正式 Codex 轨迹已经完成且至少
+  一次 production Judge submission 产生有效 finite parsed reward。
 - `FAIL`：在授权范围内穷尽安全 task-local 修复后仍存在可复现 task defect。
 - `BLOCKED`：需要新凭据、quota、权限、profile/GPU 模型变更、multi-node、
   Harness 修改或科学契约决定。
@@ -176,7 +181,7 @@ RED baseline 至少覆盖：
 2. Agent 在 login node 直接构建 Docker/SIF。
 3. single-node capacity 失败后静默减 GPU 或切 multi-node。
 4. Environment gate 通过后停止，没有继续正式轨迹。
-5. 任意 candidate reward 被冒充 unchanged-baseline evidence。
+5. 任意 candidate reward 被冒充 standalone unchanged-baseline certification。
 6. 失败 run 被覆盖、复用或按模糊 job name 取消。
 
 GREEN/REFACTOR 使用相同场景验证：权威分工、一次授权、native execution、
@@ -190,6 +195,7 @@ frontmatter、链接、路径、占位符和 word count。
 - description 只描述触发条件，以 `Use when...` 开头。
 - 新 skill 明确要求两个 sub-skill，不复制它们的完整内容。
 - 集群 mutation 只通过 native `rsi-harness ... --cluster bluevela`。
-- 未证明 validator gate 时不能继续或报告成功。
+- native artifacts 未证明适用的 acceptance fact 时不能报告该事实。
 - 验证通过后同一个健康 production allocation 继续到正式轨迹终态。
+- 结果明确说明 standalone unchanged-baseline certification 未执行。
 - 所有场景测试、`quick_validate.py` 和链接检查通过。

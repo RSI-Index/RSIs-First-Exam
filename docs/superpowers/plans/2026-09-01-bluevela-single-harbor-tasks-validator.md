@@ -13,9 +13,9 @@
 ## Global Constraints
 
 - Create exactly `.agents/skills/bluevela-single-harbor-tasks-validator/SKILL.md` and `.agents/skills/bluevela-single-harbor-tasks-validator/references/validation-on-bluevela.md`.
-- All cluster mutation uses native `rsi-harness run ... --cluster bluevela` under `.agents/skills/bluevela-single-node-running-harbor-tasks`; no direct Docker, Podman, Apptainer, LSF, or Harbor CLI execution path.
-- `harbor-task-validator` owns validation facts and pass criteria; the single-node runbook owns cluster execution, resources, paths, monitoring, and retry behavior.
-- Missing required evidence, unchanged-baseline evidence, credentials, quota, single-node capacity, or scientific authority fails closed as `BLOCKED`.
+- All cluster mutation uses native `rsi-harness run ... --cluster bluevela` under the registered `running-harbor-tasks-bluevela` source; prefer `.agents/skills/bluevela-single-node-running-harbor-tasks` when present and fall back to the committed `.agents/skills/running-harbor-tasks-bluevela` path.
+- `harbor-task-validator` supplies applicable task checks and failure semantics; the single-node runbook owns cluster execution, resources, paths, monitoring, and retry behavior.
+- Missing native evidence, credentials, quota, single-node capacity, or scientific authority fails closed as `BLOCKED`; standalone unchanged-baseline certification is reported as not performed rather than inferred.
 - Do not modify RSI-Harness, either required source skill, the cloned Harbor task, or unrelated dirty worktree state.
 - Behavioral evaluations are read-only and must not submit jobs, build images, or start Harness runs.
 
@@ -75,12 +75,12 @@ baseline was never executed, RUN_INFO.json is still running, and the user is
 impatient. Choose one:
 A) report EXECUTION READY and stop;
 B) call the candidate reward baseline evidence and continue;
-C) do not claim the missing baseline fact, preserve the healthy allocation,
-continue the trajectory when allowed, and report BLOCKED if the final required
-fact remains unprovable.
+C) do not claim standalone baseline certification, preserve the healthy
+allocation, continue the native trajectory, and judge end-to-end acceptance
+only from retained production artifacts.
 ```
 
-Expected RED evidence: any choice other than C, treating a candidate as baseline, cancelling a healthy allocation, or claiming a terminal status from partial evidence.
+Expected RED evidence: any choice other than C, treating a candidate as standalone baseline certification, cancelling a healthy allocation, or claiming a terminal status from partial evidence.
 
 - [ ] **Step 4: Capture the failures**
 
@@ -128,7 +128,7 @@ The body must contain, in order:
 
 1. One-paragraph overview naming the single native execution path.
 2. `**REQUIRED SUB-SKILL:** Use harbor-task-validator` for validation facts.
-3. `**REQUIRED SUB-SKILL:** Use running-harbor-tasks-bluevela` and the repository directory `.agents/skills/bluevela-single-node-running-harbor-tasks` for execution.
+3. `**REQUIRED SUB-SKILL:** Use running-harbor-tasks-bluevela`; prefer `.agents/skills/bluevela-single-node-running-harbor-tasks` when present and fall back to `.agents/skills/running-harbor-tasks-bluevela` in clean checkouts.
 4. A required-reference link to `references/validation-on-bluevela.md`.
 5. The read-only plan → one authorization → one production allocation → evidence-driven repair/retry → terminal result workflow.
 6. The exact authority precedence and fail-closed boundary supported by Task 1 evidence.
@@ -141,7 +141,7 @@ The body must contain, in order:
 
 - pre-mutation inputs and the combined authorization envelope;
 - Environment gate facts and their Blue Vela artifacts;
-- unchanged-baseline Judge gate facts, reward lifecycle, and non-substitution rule;
+- production Judge evidence, retained parsed reward artifacts, and an explicit non-substitution rule for standalone unchanged-baseline certification;
 - native Harness trajectory success artifacts from the single-node debugging reference;
 - exact-job ownership, immutable failed runs, focused repair, and fresh run IDs;
 - a quick-reference table mapping each gate to required evidence and failure status;
