@@ -50,3 +50,7 @@ concurrent-agent-serving-optimizer-qwen36-27b
 # Local Superpowers planning and orchestration artifacts
 superpowers/
 .superpowers/
+.agents/skills
+tmp.md
+CLUSTER_INSTRUCTIONS (1).md
+docs

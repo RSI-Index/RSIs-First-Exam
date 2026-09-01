@@ -22,6 +22,7 @@ from pydantic import (
 from rsi_harness.errors import SetupError
 
 _ENV_REFERENCE = re.compile(r"\$\{([A-Z_][A-Z0-9_]*)\}")
+_SCHEDULER_HOST = re.compile(r"^[A-Za-z0-9][A-Za-z0-9.-]{0,252}$")
 
 
 class _ProfileModel(BaseModel):
@@ -33,9 +34,35 @@ class SchedulerProfile(_ProfileModel):
     submit_binary: str = "bsub"
     status_binary: str = "bjobs"
     cancel_binary: str = "bkill"
+    remote_binary: str = "blaunch"
+    remote_host_flag: str = "-z"
     queue: str
     group: str
+    exclusive: bool = True
+    excluded_hosts: tuple[str, ...] = ()
     poll_seconds: float = Field(default=10.0, gt=0.0)
+
+    @field_validator(
+        "submit_binary",
+        "status_binary",
+        "cancel_binary",
+        "remote_binary",
+        "remote_host_flag",
+    )
+    @classmethod
+    def _nonempty_binary_argument(cls, value: str) -> str:
+        if not value or "\0" in value:
+            raise ValueError("scheduler command values must be non-empty")
+        return value
+
+    @field_validator("excluded_hosts")
+    @classmethod
+    def _safe_excluded_hosts(cls, value: tuple[str, ...]) -> tuple[str, ...]:
+        if len(value) != len(set(value)):
+            raise ValueError("scheduler excluded_hosts contains a duplicate")
+        if any(_SCHEDULER_HOST.fullmatch(host) is None for host in value):
+            raise ValueError("scheduler excluded_hosts contains an unsafe host")
+        return value
 
 
 class StorageProfile(_ProfileModel):
@@ -75,31 +102,100 @@ class BuilderProfile(_ProfileModel):
         return self
 
 
-class ApptainerProfile(_ProfileModel):
-    binary: Path
-    dns_bind: Path = Path("/etc/resolv.conf")
-    extra_binds: tuple[Path, ...] = ()
-    build_args: tuple[str, ...] = ()
-    workspace_target: PurePosixPath = PurePosixPath("/testbed")
-    temp_root: Path = Path("/tmp")
+class ApptainerBindProfile(_ProfileModel):
+    """One site-owned bind, scoped to a single execution phase."""
 
-    @field_validator("workspace_target")
+    source: Path
+    target: PurePosixPath
+    read_only: bool = True
+
+    @field_validator("source")
     @classmethod
-    def _workspace_target(cls, value: PurePosixPath) -> PurePosixPath:
+    def _absolute_source(cls, value: Path) -> Path:
+        if not value.is_absolute():
+            raise ValueError("Apptainer bind sources must be absolute")
+        return value
+
+    @field_validator("target")
+    @classmethod
+    def _absolute_target(cls, value: PurePosixPath) -> PurePosixPath:
         if (
             not value.is_absolute()
             or value == PurePosixPath("/")
             or ".." in value.parts
         ):
             raise ValueError(
-                "Apptainer workspace target must be an absolute non-root path"
+                "Apptainer bind targets must be absolute non-root paths"
             )
+        return value
+
+
+class ApptainerProfile(_ProfileModel):
+    binary: Path
+    dns_bind: Path = Path("/etc/resolv.conf")
+    # Legacy same-path public-network binds remain supported for existing
+    # profiles. New profiles should use phase-scoped binds below.
+    extra_binds: tuple[Path, ...] = ()
+    work_binds: tuple[ApptainerBindProfile, ...] = ()
+    judge_binds: tuple[ApptainerBindProfile, ...] = ()
+    # Optional site-owned root. A task-specific child, when present, is bound
+    # read-only at /run-contract for Judge only.
+    judge_authority_root: Path | None = None
+    build_args: tuple[str, ...] = ()
+    workspace_target: PurePosixPath = PurePosixPath("/testbed")
+    temp_root: Path = Path("/tmp")
+    container_python: PurePosixPath = PurePosixPath("/usr/bin/python3")
+    rdma_binds: tuple[Path, ...] = ()
+    environment: dict[str, str] = Field(default_factory=dict)
+    work_environment: dict[str, str] = Field(default_factory=dict)
+    judge_environment: dict[str, str] = Field(default_factory=dict)
+
+    @field_validator("environment", "work_environment", "judge_environment")
+    @classmethod
+    def _runtime_environment(cls, value: dict[str, str]) -> dict[str, str]:
+        for name, item in value.items():
+            if re.fullmatch(r"[A-Z_][A-Z0-9_]*", name) is None:
+                raise ValueError(
+                    f"Apptainer environment name is invalid: {name!r}"
+                )
+            if "\0" in item:
+                raise ValueError(
+                    f"Apptainer environment value contains NUL: {name}"
+                )
+        return value
+
+    @field_validator("workspace_target", "container_python")
+    @classmethod
+    def _container_path(cls, value: PurePosixPath) -> PurePosixPath:
+        if (
+            not value.is_absolute()
+            or value == PurePosixPath("/")
+            or ".." in value.parts
+        ):
+            raise ValueError(
+                "Apptainer container paths must be absolute non-root paths"
+            )
+        return value
+
+    @field_validator("extra_binds", "rdma_binds")
+    @classmethod
+    def _absolute_host_binds(cls, value: tuple[Path, ...]) -> tuple[Path, ...]:
+        if any(not path.is_absolute() for path in value):
+            raise ValueError("Apptainer host bind paths must be absolute")
+        return value
+
+    @field_validator("judge_authority_root")
+    @classmethod
+    def _absolute_authority_root(cls, value: Path | None) -> Path | None:
+        if value is not None and not value.is_absolute():
+            raise ValueError("Judge authority root must be absolute")
         return value
 
 
 class ResourceProfile(_ProfileModel):
     min_cpu_slots: int = Field(gt=0)
     min_memory_mb: int = Field(gt=0)
+    min_runtime_tmp_mb: int = Field(default=0, ge=0)
     gpus_per_node: int = Field(gt=0)
     walltime_margin_seconds: int = Field(ge=0)
     all_gpus_override: int | None = Field(default=None, gt=0)

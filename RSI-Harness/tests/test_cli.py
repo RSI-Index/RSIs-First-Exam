@@ -291,6 +291,92 @@ def test_cluster_dry_run_prints_resolved_submissions(
     assert local_services.requests == []
 
 
+def test_cluster_dry_run_prints_profile_driven_multinode_geometry(
+    cli, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    cli_module, _local_services = cli
+    task = tmp_path / "task"
+    task.mkdir()
+
+    class ClusterAdapter:
+        def __init__(self, callback) -> None:
+            self.callback = callback
+
+        def run(self, _request):
+            self.callback(
+                "dry_run",
+                {
+                    "run_id": "planned-multi",
+                    "run_dir": "/gpfs/runs/planned-multi",
+                    "image": "/gpfs/images/task.sif",
+                    "cache_hit": True,
+                    "resources": None,
+                    "multi_node": {
+                        "work": {"gpu_count": 12, "node_count": 3},
+                        "verifier": {"gpu_count": 4, "node_count": 1},
+                        "total_nodes": 4,
+                        "gpus_per_node": 4,
+                        "cpu_slots_per_node": 6,
+                        "memory_mb_per_node": 131072,
+                        "shared_workspace_mb": 204800,
+                        "node_tmp_mb": 40960,
+                    },
+                    "pool_policy": "ordered Work prefix; ordered Judge suffix",
+                    "build_argv": ("bsub", "-J", "build"),
+                    "run_argv": ("bsub", "-n", "24", "run.sh"),
+                    "binds": ("/gpfs",),
+                    "assets": (
+                        {
+                            "phase": "work",
+                            "path": "/rsi-data/train/manifest.json",
+                            "ready": True,
+                            "detail": "size=42",
+                        },
+                        {
+                            "phase": "judge",
+                            "path": "/rsi-data/paloma/manifest.json",
+                            "ready": False,
+                            "detail": "missing",
+                        },
+                    ),
+                },
+            )
+            return ClusterRunResult(
+                run_id="planned-multi",
+                status=RunStatus.PREPARING,
+                log_dir=Path("/gpfs/logs"),
+            )
+
+    monkeypatch.setattr(
+        cli_module,
+        "build_cluster_adapter",
+        lambda _name, event_callback=None: ClusterAdapter(event_callback),
+    )
+
+    result = CliRunner().invoke(
+        cli_module.app,
+        [
+            "run",
+            str(task),
+            "--cluster",
+            "bluevela",
+            "--dry-run",
+            "--model",
+            "gpt-test",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "Work nodes:       3" in result.output
+    assert "Judge nodes:      1" in result.output
+    assert "GPUs per node:    4" in result.output
+    assert "CPU/node:         6" in result.output
+    assert "Shared workspace: 204800 MiB" in result.output
+    assert "Node scratch:     40960 MiB" in result.output
+    assert "Assets ready:     1/2" in result.output
+    assert "Missing asset:    judge:/rsi-data/paloma/manifest.json" in result.output
+
+
 def test_run_prints_gpu_plan_event_once_with_uuids_only(cli, tmp_path: Path) -> None:
     cli_module, _services = cli
     task = tmp_path / "task"

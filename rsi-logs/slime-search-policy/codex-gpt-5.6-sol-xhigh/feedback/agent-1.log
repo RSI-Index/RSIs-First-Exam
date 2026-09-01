@@ -1,0 +1,6 @@
+INFO:    gocryptfs not found, will not be able to use gocryptfs
+candidate_valid mode=baseline config_sha256=3fc1021b315abe10caa2cfc7474f55f9b2469e4f9add6c9adaa4154b4eff7500
+/usr/local/lib/python3.12/dist-packages/torchao/quantization/quant_api.py:1731: SyntaxWarning: invalid escape sequence '\.'
+  """Configuration class for applying different quantization configs to modules or parameters based on their fully qualified names (FQNs).
+stage_durations validation_sec=3.556 evaluation_sec=389.383
+normalized_exact_match overall=0.25781250 nq=0.22265625 hotpotqa=0.29296875

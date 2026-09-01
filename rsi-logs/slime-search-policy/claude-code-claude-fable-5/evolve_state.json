@@ -1,0 +1,16 @@
+{
+  "best_round": "agent-1",
+  "best_score": 0.2578125,
+  "submissions": [
+    {
+      "at": 1787948661.551638,
+      "kind": "agent",
+      "rewards": {
+        "reward": 0.2578125
+      },
+      "round": "agent-1",
+      "score": 0.2578125,
+      "status": "completed"
+    }
+  ]
+}

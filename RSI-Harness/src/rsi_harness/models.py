@@ -318,6 +318,26 @@ class AgentPlan(PersistedModel):
     install_stop_hook: bool = True
 
 
+class AssetRequirement(PersistedModel):
+    """Portable container-path readiness contract for cluster-staged data."""
+
+    path: PurePosixPath
+    phase: Literal["work", "judge"]
+    kind: Literal["file", "directory"] = "file"
+    min_bytes: int = Field(default=0, ge=0)
+    min_entries: int = Field(default=0, ge=0)
+
+    @field_validator("path", mode="before")
+    @classmethod
+    def require_absolute_non_root_path(
+        cls, value: PurePosixPath | str
+    ) -> PurePosixPath:
+        path = PurePosixPath(value)
+        if not path.is_absolute() or path == PurePosixPath("/") or ".." in path.parts:
+            raise ValueError("asset path must be an absolute non-root container path")
+        return path
+
+
 class TaskDefinition(PersistedModel):
     task_id: str
     instruction: str = ""
@@ -330,6 +350,8 @@ class TaskDefinition(PersistedModel):
     gpu_requirement: GPURequirement
     verifier: VerifierPlan
     agent: AgentPlan
+    assets: tuple[AssetRequirement, ...] = ()
+    require_disjoint_phase_nodes: bool = False
     environment_digest: str | None = None
     score_direction: Literal["maximize", "minimize"] = "maximize"
 

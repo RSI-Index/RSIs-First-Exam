@@ -16,6 +16,7 @@ from pydantic import ValidationError
 from rsi_harness.errors import UnsupportedTaskError
 from rsi_harness.models import (
     AgentPlan,
+    AssetRequirement,
     CompileOptions,
     GPURequirement,
     ImagePlan,
@@ -105,6 +106,8 @@ class HarborTaskCompiler:
                     network=self._network_policy(task, task.config.agent),
                     install_stop_hook=not options.disable_stop_hook,
                 ),
+                assets=self._asset_requirements(task),
+                require_disjoint_phase_nodes=self._require_disjoint_phase_nodes(task),
                 score_direction=options.score_direction,
             )
         except ValidationError as error:
@@ -336,6 +339,45 @@ class HarborTaskCompiler:
         if type(value) is not int or value < 0:
             raise UnsupportedTaskError(
                 "metadata.rsi_harness.verifier.gpus must be a non-negative integer"
+            )
+        return value
+
+    @staticmethod
+    def _asset_requirements(task: Task) -> tuple[AssetRequirement, ...]:
+        metadata = task.config.metadata
+        rsi_harness = metadata.get("rsi_harness")
+        if rsi_harness is None:
+            return ()
+        if not isinstance(rsi_harness, dict):
+            raise UnsupportedTaskError(
+                "metadata.rsi_harness.assets must be a list of tables"
+            )
+        raw_assets = rsi_harness.get("assets", ())
+        if not isinstance(raw_assets, (list, tuple)):
+            raise UnsupportedTaskError(
+                "metadata.rsi_harness.assets must be a list of tables"
+            )
+        try:
+            return tuple(AssetRequirement.model_validate(item) for item in raw_assets)
+        except (ValidationError, TypeError) as error:
+            raise UnsupportedTaskError(
+                f"invalid metadata.rsi_harness.assets: {error}"
+            ) from error
+
+    @staticmethod
+    def _require_disjoint_phase_nodes(task: Task) -> bool:
+        metadata = task.config.metadata
+        rsi_harness = metadata.get("rsi_harness")
+        if rsi_harness is None:
+            return False
+        if not isinstance(rsi_harness, dict):
+            raise UnsupportedTaskError(
+                "metadata.rsi_harness.require_disjoint_phase_nodes must be a boolean"
+            )
+        value = rsi_harness.get("require_disjoint_phase_nodes", False)
+        if type(value) is not bool:
+            raise UnsupportedTaskError(
+                "metadata.rsi_harness.require_disjoint_phase_nodes must be a boolean"
             )
         return value
 

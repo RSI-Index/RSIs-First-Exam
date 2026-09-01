@@ -152,22 +152,78 @@ class _ClusterConsole:
         if name == "dry_run":
             resources = details.get("resources", {})
             resources = resources if isinstance(resources, Mapping) else {}
+            multi_node = details.get("multi_node", {})
+            multi_node = (
+                multi_node if isinstance(multi_node, Mapping) else {}
+            )
             typer.echo("Blue Vela dry-run:")
             typer.echo(_field("Run ID:", details.get("run_id")))
             typer.echo(_field("Run dir:", details.get("run_dir")))
             typer.echo(_field("Image:", details.get("image")))
             typer.echo(_field("Cache hit:", details.get("cache_hit")))
-            typer.echo(_field("Work GPUs:", resources.get("work_gpus")))
-            typer.echo(_field("Verifier GPUs:", resources.get("verifier_gpus")))
-            typer.echo(_field("Total GPUs:", resources.get("total_gpus")))
-            typer.echo(_field("CPU slots:", resources.get("cpu_slots")))
-            typer.echo(_field("Memory MB:", resources.get("memory_mb")))
+            if multi_node:
+                work = multi_node.get("work", {})
+                work = work if isinstance(work, Mapping) else {}
+                verifier = multi_node.get("verifier", {})
+                verifier = verifier if isinstance(verifier, Mapping) else {}
+                typer.echo(_field("Work GPUs:", work.get("gpu_count")))
+                typer.echo(_field("Judge GPUs:", verifier.get("gpu_count")))
+                typer.echo(_field("Work nodes:", work.get("node_count")))
+                typer.echo(_field("Judge nodes:", verifier.get("node_count")))
+                typer.echo(_field("Total nodes:", multi_node.get("total_nodes")))
+                typer.echo(
+                    _field("GPUs per node:", multi_node.get("gpus_per_node"))
+                )
+                typer.echo(
+                    _field("CPU/node:", multi_node.get("cpu_slots_per_node"))
+                )
+                typer.echo(
+                    _field("Memory/node:", multi_node.get("memory_mb_per_node"))
+                )
+                typer.echo(
+                    _field(
+                        "Shared workspace:",
+                        f"{multi_node.get('shared_workspace_mb')} MiB",
+                    )
+                )
+                typer.echo(
+                    _field(
+                        "Node scratch:",
+                        f"{multi_node.get('node_tmp_mb')} MiB",
+                    )
+                )
+                typer.echo(_field("Pool policy:", details.get("pool_policy")))
+            else:
+                typer.echo(_field("Work GPUs:", resources.get("work_gpus")))
+                typer.echo(
+                    _field("Verifier GPUs:", resources.get("verifier_gpus"))
+                )
+                typer.echo(_field("Total GPUs:", resources.get("total_gpus")))
+                typer.echo(_field("CPU slots:", resources.get("cpu_slots")))
+                typer.echo(_field("Memory MB:", resources.get("memory_mb")))
             typer.echo("Build submission:")
             typer.echo(f"  {shlex.join(tuple(details.get('build_argv', ())))}")
             typer.echo("Run submission:")
             typer.echo(f"  {shlex.join(tuple(details.get('run_argv', ())))}")
             binds = tuple(details.get("binds", ()))
             typer.echo(_field("Binds:", ", ".join(str(item) for item in binds)))
+            assets = tuple(details.get("assets", ()))
+            if assets:
+                ready = sum(
+                    1
+                    for item in assets
+                    if isinstance(item, Mapping) and item.get("ready") is True
+                )
+                typer.echo(_field("Assets ready:", f"{ready}/{len(assets)}"))
+                for item in assets:
+                    if not isinstance(item, Mapping) or item.get("ready") is True:
+                        continue
+                    typer.echo(
+                        _field(
+                            "Missing asset:",
+                            f"{item.get('phase')}:{item.get('path')}",
+                        )
+                    )
         elif name == "job_submitted":
             typer.echo(
                 f"Submitted {details.get('stage')} job: {details.get('job_id')}"

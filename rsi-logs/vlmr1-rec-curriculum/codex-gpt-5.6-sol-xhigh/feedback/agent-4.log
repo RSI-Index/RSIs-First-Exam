@@ -1,0 +1,8 @@
+WARNING: Overriding HOME environment variable with APPTAINERENV_HOME is not permitted
+INFO:    gocryptfs not found, will not be able to use gocryptfs
+contract_status=passed
+curriculum seed=0 round=1 rows=1200 iou=0 format=0 both=1200 builder_seconds=4.1
+aggregate seed=0 round=1 lisa=64.3546 in_domain=85.6000
+curriculum seed=0 round=2 rows=1200 iou=0 format=0 both=1200 builder_seconds=8.6
+aggregate seed=0 round=2 lisa=63.6912 in_domain=84.5667
+curriculum seed=0 round=3 rows=1200 iou=0 format=0 both=1200 builder_seconds=8.5
