@@ -8,6 +8,7 @@ import ast
 import hashlib
 import json
 import os
+import re
 import shutil
 import stat
 import sys
@@ -36,6 +37,7 @@ DEFAULT_PROFILE = (
     / "profile.toml"
 )
 DEFAULT_DESTINATION_ROOT = REPOSITORY_ROOT / "rsi-logs"
+PUBLICATION_COMPONENT = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*$")
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -250,6 +252,38 @@ def _select_latest(run_root: Path, logs_root: Path, task_id: str) -> tuple[str, 
     raise ExtractionError(f"no completed run found for task {task_id!r}")
 
 
+def _publication_name(source: Path) -> str:
+    plan = _read_json(source / "run-plan.json")
+    try:
+        agent = plan["task"]["agent"]  # type: ignore[index]
+        name = agent["name"]
+        model = agent["model"]
+        reasoning_effort = agent.get("reasoning_effort")
+    except (KeyError, TypeError) as error:
+        raise ExtractionError(
+            "run-plan.json does not declare task.agent name and model"
+        ) from error
+
+    values = (("agent name", name), ("model", model))
+    components: list[str] = []
+    for field, value in values:
+        if not isinstance(value, str) or not PUBLICATION_COMPONENT.fullmatch(value):
+            raise ExtractionError(
+                f"run-plan.json {field} is not a safe publication component: {value!r}"
+            )
+        components.append(value)
+    if reasoning_effort not in (None, ""):
+        if not isinstance(reasoning_effort, str) or not PUBLICATION_COMPONENT.fullmatch(
+            reasoning_effort
+        ):
+            raise ExtractionError(
+                "run-plan.json reasoning effort is not a safe publication component: "
+                f"{reasoning_effort!r}"
+            )
+        components.append(reasoning_effort)
+    return "-".join(components)
+
+
 def _file_digest(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -281,11 +315,11 @@ def _same_tree(left: Path, right: Path) -> bool:
 
 
 def _copy_verified(
-    source: Path, destination_root: Path, run_id: str, task_id: str
+    source: Path, destination_root: Path, task_id: str, publication_name: str
 ) -> Path:
     destination_root.mkdir(parents=True, exist_ok=True)
-    destination_run = destination_root / run_id
-    destination = destination_run / task_id
+    destination_task = destination_root / task_id
+    destination = destination_task / publication_name
 
     if destination.exists() or destination.is_symlink():
         if not destination.is_symlink() and _same_tree(source, destination):
@@ -295,29 +329,25 @@ def _copy_verified(
             f"destination already exists with different contents: {destination}"
         )
 
-    if destination_run.exists() or destination_run.is_symlink():
-        if destination_run.is_symlink() or not destination_run.is_dir():
+    if destination_task.exists() or destination_task.is_symlink():
+        if destination_task.is_symlink() or not destination_task.is_dir():
             raise ExtractionError(
-                f"destination run path is not a regular directory: {destination_run}"
+                f"destination task path is not a regular directory: {destination_task}"
             )
-        if any(destination_run.iterdir()):
-            raise ExtractionError(
-                "destination run directory already exists with unrelated contents: "
-                f"{destination_run}"
-            )
-        shutil.copytree(source, destination, copy_function=shutil.copy2)
     else:
-        temporary_run = destination_root / f".{run_id}.{uuid.uuid4().hex}.tmp"
-        try:
-            temporary_run.mkdir()
-            temporary_destination = temporary_run / task_id
-            shutil.copytree(source, temporary_destination, copy_function=shutil.copy2)
-            if not _same_tree(source, temporary_destination):
-                raise ExtractionError("copied log verification failed")
-            os.replace(temporary_run, destination_run)
-        finally:
-            if temporary_run.exists():
-                shutil.rmtree(temporary_run)
+        destination_task.mkdir()
+
+    temporary_destination = destination_task / (
+        f".{publication_name}.{uuid.uuid4().hex}.tmp"
+    )
+    try:
+        shutil.copytree(source, temporary_destination, copy_function=shutil.copy2)
+        if not _same_tree(source, temporary_destination):
+            raise ExtractionError("copied log verification failed")
+        os.rename(temporary_destination, destination)
+    finally:
+        if temporary_destination.exists():
+            shutil.rmtree(temporary_destination)
 
     if not _same_tree(source, destination):
         raise ExtractionError("destination verification failed after extraction")
@@ -330,11 +360,12 @@ def main(argv: list[str] | None = None) -> int:
         _validate_task_id(args.task_id)
         run_root, logs_root = _resolve_roots(args)
         run_id, source = _select_latest(run_root, logs_root, args.task_id)
+        publication_name = _publication_name(source)
         destination = _copy_verified(
             source,
             args.destination_root.expanduser().resolve(),
-            run_id,
             args.task_id,
+            publication_name,
         )
     except (ExtractionError, OSError) as error:
         print(f"error: {error}", file=sys.stderr)

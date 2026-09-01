@@ -2,7 +2,7 @@
 
 日期：2026-08-28
 
-状态：已完成交互式设计确认，等待贡献者审阅本文档
+状态：已完成交互式设计确认，并已进入实施计划
 
 ## 目标
 
@@ -108,11 +108,16 @@ Environment。Judge-only 的分布式 evaluator、可信配置和隐藏资产仍
 未指定 cluster              -> 原有本地路径
 cluster != bluevela         -> 对应原有 adapter
 cluster == bluevela:
-    work_gpus + judge_gpus <= 8
+    max(work_gpus, judge_gpus) <= 8
                                -> 原有 Blue Vela 单节点路径
-    work_gpus + judge_gpus > 8
+    max(work_gpus, judge_gpus) > 8
                                -> 新 Blue Vela 多节点路径
 ```
+
+这里有意先保留现有 phase-sequential 单节点语义：例如 Work 8 GPU、Judge
+4/8 GPU 的任务仍走已经存在的单节点 `RELEASE_ALL` 路径。只有 Work 或 Judge
+某一个 phase 自身无法放入单个 8-GPU 节点时，才进入本设计的多节点分池
+路径。这一优先级是“完全兼容既有 Blue Vela 行为”的回归边界。
 
 多节点路径使用：
 
@@ -138,9 +143,10 @@ gpus = 16
 service 的单实例需求。多节点 adapter 在每个参与节点运行一个 main
 Environment 实例，因此每个节点使用 task 声明与 Blue Vela profile floor
 两者中的较大值。LSF 总 CPU slots 按节点数乘以 per-node slots；memory
-通过 Blue Vela 已验证的 per-host request 形态表达。`storage_mb` 继续是
-task 的计划值；adapter 对每个会使用 node-local scratch 的节点执行可用空间
-检查，但不把该字段虚假描述成强制磁盘 quota。
+通过 Blue Vela 已验证的 per-host request 形态表达。多节点路径把标准
+`storage_mb` 作为 GPFS split-WORKDIR 的共享容量计划，在提交前检查 run root
+可用空间；每节点 node-local scratch 则由 Blue Vela profile floor 决定并在
+allocation 内逐节点检查。现有单节点 `storage_mb -> local_tmp_mb` 行为不变。
 
 ## 单 allocation 与固定 pool
 
@@ -177,29 +183,49 @@ Work 容器只获得 Work broker endpoint，Judge 容器只获得 Judge broker
 endpoint。完整 `LSB_MCPU_HOSTS`、Judge endpoint、可信 evaluator policy
 和 `/tests` 不进入 Work。
 
-Harness 在容器内注入集群无关的启动命令：
+用户的唯一入口仍然是：
 
 ```bash
-rsi-multinode run -- <command> <args...>
+rsi-harness run <task> --cluster bluevela
 ```
 
-它在当前 phase 的每个授权节点执行一次命令，并注入：
+Harness 从标准 `task.toml` 的 Work/Judge GPU 字段自动判定单节点或多节点，
+不要求用户再运行第二个 CLI。对于本版支持的 PyTorch 分布式 task，Blue
+Vela runtime 在多节点容器的 `PATH` 前端透明注入 Harness-owned `torchrun`
+shim。task 仍然使用标准命令：
+
+```bash
+torchrun --nnodes N --nproc-per-node 8 <script> <args>
+```
+
+shim 解析标准 `torchrun` 参数并把 `--nnodes N` 变成当前 phase pool 内的
+原子 subpool lease；它通过 Harness 私有 broker 执行远端 launch，task 和
+用户都不接触该 broker。并发请求的 subpool 不得重叠，节点不足时请求 fail
+closed。每个远端节点最终执行真实的 `python -m torch.distributed.run`，并
+由 runtime 注入：
 
 - `RSI_NUM_NODES`；
 - `RSI_NODE_RANK`；
+- `RSI_POOL_SIZE`；
+- `RSI_POOL_RANK`；
 - `RSI_LOCAL_WORLD_SIZE=8`；
 - runtime-derived `RSI_MASTER_ADDR`；
 - adapter 分配且受 run identity 约束的 `RSI_MASTER_PORT`。
 
-task 的公开训练脚本或 Judge evaluator 使用这些 cluster-neutral 值配置
-`torchrun`、MPI 或上游分布式入口。task 不解析 LSF host list、不直接调用
-SSH/`blaunch`、不硬编码 hostname/IP，也不提交 `bsub`。
+task 的公开训练脚本或 Judge evaluator 只使用普通 `torchrun`/PyTorch
+distributed 接口。task 不解析 LSF host list、不直接调用 SSH/`blaunch`、
+不硬编码 hostname/IP，也不提交 `bsub`。
+
+标准 `torchrun --nnodes` 是当前 rsi-task 表达并发多规模实验所需的 subpool
+能力；shim 不暴露 IBM hostname、`LSB_MCPU_HOSTS`、Harness broker 或另一个
+phase 的拓扑。`--nnodes 1` 保持普通本地 torchrun 行为，`--nnodes > 1`
+才进入透明多节点 launch。
 
 ### Work phase
 
 Agent 与 RSI-Harness controller 位于 Work controller node 的 Work
-Environment。普通命令保持单实例；只有显式调用 `rsi-multinode` 的命令
-才 fan out 到 Work pool。每个远端 Work 进程都由 broker 记录 PID、node、
+Environment。普通命令保持单实例；标准 `torchrun --nnodes > 1` 由透明
+shim fan out 到 Work pool。每个远端 Work 进程都由 broker 记录 PID、node、
 argv、start/end 状态和 run identity。
 
 ### Snapshot 与提交
@@ -220,9 +246,9 @@ capture 前结束。
 ### Judge phase
 
 `tests/test.sh` 只在 Judge controller 中启动。adapter 将同一只读 snapshot、
-同一只读 task-owned `/tests` 和同一 SIF 提供给全部 Judge 节点。Judge 的
-`rsi-multinode` 只使用 Judge pool。每轮 Judge 获得新的临时目录、端口和
-process group；上一轮进程、socket、cache 或 GPU state 不得复用。
+同一只读 task-owned `/tests` 和同一 SIF 提供给全部 Judge 节点。Judge 中的
+标准多节点 `torchrun` 只能使用 Judge pool。每轮 Judge 获得新的临时目录、
+端口和 process group；上一轮进程、socket、cache 或 GPU state 不得复用。
 
 所有 Judge 节点完成后，controller 才允许 terminal evaluator 写一次有限
 reward。Candidate-invalid scalar 仍由 task 自己的协议决定；adapter 不把
@@ -346,6 +372,19 @@ walltime、SIF cache plan、LSF argv 和固定 pool partition policy。
 7. live mismatch 被明确分类为 setup、infrastructure 或 task/runtime failure，
    绝不伪造成成功或 candidate reward。
 
+此外，本次实现的具体 task 验收目标是：
+
+```text
+task_collect/zf_tasks/pre-training/optimizer_update_geometry_stepmatched_v2
+```
+
+该目录最终必须是 Harbor schema 1.4 的 `rsi/*` task，并通过标准 compiler
+和 Blue Vela multi-node dry-run。它不得保留 task-owned `cluster/` 运行入口、
+`bluevela.toml`、`BLAUNCH`/`LSB_MCPU_HOSTS` contract 或预构建 SIF 作为唯一
+Environment 来源；其多规模 Work 与 terminal Judge 必须改用
+标准 `torchrun`。任务的公开 baseline 证据可保留，但 `baselines/` 不是格式
+要求，权威 Judge 资产应按 RSI-Harness trust boundary 放入 `tests/`。
+
 ## 实施范围划分
 
 后续实现计划应拆成三个有序工作包，全部位于 RSI-Harness 与标准
@@ -355,7 +394,9 @@ walltime、SIF cache plan、LSF argv 和固定 pool partition policy。
    pool-scoped launcher 与 scheduler regression tests；
 2. RSI-Harness Blue Vela multi-node Work、snapshot、Judge runtime 与集成
    tests；
-3. 一个标准多节点 `rsi-task` 的 compiler、dry-run 与经授权的完整 Blue
+3. 将
+   `task_collect/zf_tasks/pre-training/optimizer_update_geometry_stepmatched_v2`
+   落成标准多节点 `rsi-task`，完成 compiler、dry-run 与经授权的完整 Blue
    Vela end-to-end run。
 
 任何工作包都不得通过修改 task schema、添加 task-owned `cluster/` 或绕过
