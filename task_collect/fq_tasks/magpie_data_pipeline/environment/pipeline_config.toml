@@ -1,6 +1,0 @@
-[pipeline]
-strategy = "baseline_prefix"
-max_records = 50000
-include_baseline = true
-generate_new = false
-seed = 42
