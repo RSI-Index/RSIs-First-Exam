@@ -31,6 +31,8 @@ Continue in the same session. This agent is not a background monitor: GitHub can
 python3 .agents/skills/proposal-agent/scripts/proposal_session.py discussion status --checkout <public-root>
 ```
 
+If any Discussion or upload command reports missing current-turn proof or a session mismatch, do not work around it. Explain that repository hooks must remain enabled, ask the contributor to resume the original bound Codex or Claude Code session, and retry there.
+
 When the current review requires a scientific change, route it back through the owning round and obtain the contributor's confirmation instead of silently changing a confirmed decision. Rewrite and reread the same proposal file under the Round 6 overwrite rule, then update the same Discussion rather than creating another one:
 
 ```text
