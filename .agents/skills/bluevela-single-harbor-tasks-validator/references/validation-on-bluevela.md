@@ -63,6 +63,24 @@ the live validation environment and the Codex trajectory. Keep the synchronous
 login controller alive until final artifacts are validated. Do not cancel a
 healthy allocation merely to start a second “real” run.
 
+### Long-running submission monitoring
+
+Judge training can produce no controller output for hours. Controller silence
+alone is not evidence of a hang. At bounded intervals, inspect only the exact
+owned job and current run namespace:
+
+- `bjobs` remains `RUN` and cumulative CPU, memory, or Engine timestamps show
+  forward progress;
+- the execution host and selectors still match the native plan;
+- `feedback/agent-N.log` begins as a small placeholder and later becomes a
+  structured scored result; and
+- no bounded diagnostic or exact-job stderr reports a failure.
+
+Use the previous completed submission duration only as an ETA, never as a
+timeout. Once one submission scores, retain its evidence and allow every later
+healthy submission permitted by the run configuration to complete. A worse
+candidate is still valid trajectory evidence and must not be discarded.
+
 ## Native acceptance evidence
 
 Apply validator checks only where the native run produces corresponding
@@ -92,6 +110,20 @@ task defect gets one minimal source-controlled repair plus a focused regression
 and the affected static/compiler checks. A frozen attempt remains immutable;
 retry the same production-shaped command with a fresh UTC run ID.
 
+Prefer diagnostics that expose the root exception without leaking scientific
+outputs: bounded stderr head/tail or prioritized traceback frames, never an
+unbounded training log. Keep repairs in task source. If only evaluator or Judge
+logic changed and the adapter resolves the same content-addressed environment
+image, verify and reuse that SIF rather than modifying or rebuilding it by
+hand. If environment inputs changed, let the adapter create and verify the new
+image on a compute node.
+
+Before terminating a failed allocation, first retain the exact run ID, job ID,
+host, controller output, LSF output, feedback/report state, and root-cause
+diagnostic. Then cancel only that exact owned job when continued Agent work
+cannot produce a valid submission. Never edit the failed run; retry from the
+repaired task with a fresh run ID.
+
 Do not shrink Work/Judge resources, select multi-node, alter the baseline or
 reward, reuse output, or patch cached artifacts. After three failed hypotheses,
 reassess rather than stacking another speculative fix. Request new authority
@@ -114,6 +146,17 @@ Use this order:
    at least one completed production Judge submission with finite parsed
    reward. Report standalone unchanged-baseline certification as not performed.
 
+The final cross-check must include all of the following:
+
+- synchronous controller exited zero;
+- exact LSF job reached the runbook's successful terminal state and released
+  its selectors;
+- `RUN_INFO.json` and `final_result.json` both report completion;
+- at least one feedback/report pair is nonempty, completed, and finite;
+- Agent output and the retained candidate workspace describe the submitted
+  trajectory; and
+- Work/Judge resource selectors agree with the frozen run plan.
+
 ## Common mistakes
 
 - Running validator Docker commands on the login node.
@@ -123,3 +166,7 @@ Use this order:
 - Reducing GPUs or switching to multi-node after a capacity error.
 - Reusing a run directory or cancelling by partial job name.
 - Reporting `completed` while the controller or `RUN_INFO.json` is nonterminal.
+- Treating a quiet controller or feedback placeholder as a hang or failure.
+- Cancelling after the first finite reward while later healthy submissions are
+  still part of the declared run.
+- Rebuilding or patching a cached SIF for a Judge-only source repair.

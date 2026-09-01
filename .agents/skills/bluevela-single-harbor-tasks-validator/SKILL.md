@@ -52,7 +52,9 @@ completely before planning or executing validation.
    real allocation is both live compatibility evidence and the Codex run.
 5. Evaluate image, starting-state, production Judge, parsed reward, and native
    Harness evidence as artifacts arrive. Once the allocation is healthy, leave
-   it running to its declared terminal condition.
+   it running through every healthy declared submission to its terminal
+   condition. A scored first candidate proves trajectory viability; it is not
+   permission to cancel later submissions already owned by the same run.
 6. For a demonstrated task defect, preserve the failed immutable run, make one
    minimal task-local tested repair, and retry with a fresh run ID. Stop for
    authority outside the approved envelope or scientific contract.
@@ -71,3 +73,19 @@ Report only:
 `PEND`, `RUN`, a built SIF, Agent startup, or one Judge line is not terminal
 success. State separately that standalone unchanged-baseline certification was
 not performed.
+
+## Live-run discipline
+
+- A quiet synchronous controller is normal while `rsi-submit` waits for a
+  long Judge. Determine health from the exact LSF job, resource progress,
+  Engine events, and the current `feedback/agent-N.log`, not controller silence.
+- Treat a small newly created feedback file as a round placeholder. Treat it as
+  scored only after it contains completed structured reward evidence.
+- Record every candidate's widths, accounting, reward, and interpretation.
+  Preserve worse candidates: they are part of the Codex research trajectory.
+- Cancel only the exact owned job, and only after retained evidence proves an
+  infrastructure/task failure. Never cancel a healthy job to shorten a
+  multi-submission run.
+- After the controller exits, cross-check its exit code, exact LSF terminal
+  state, `RUN_INFO.json`, `final_result.json`, reports, feedback, Agent output,
+  selectors, and finite rewards before returning `END_TO_END_VALIDATED`.
