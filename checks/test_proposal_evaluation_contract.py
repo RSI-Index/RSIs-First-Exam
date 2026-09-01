@@ -5,6 +5,8 @@ PROPOSAL_AGENT = ROOT / ".agents" / "skills" / "proposal-agent"
 SKILL = PROPOSAL_AGENT / "SKILL.md"
 TEMPLATE = PROPOSAL_AGENT / "references" / "proposal-template.md"
 RUBRIC = PROPOSAL_AGENT / "references" / "task-proposal-rubric.md"
+README = ROOT / "README.md"
+OPERATOR_AUTOMATION = ROOT / "docs" / "DISCUSSION_TASK_AUTOMATION.md"
 
 
 def rubric_copies() -> dict[str, Path]:
@@ -141,3 +143,56 @@ def test_all_available_rubric_copies_use_only_the_nine_gate_pass_reject_rule():
         assert "**Strong Accept:**" not in source, label
         assert "Decision: Reject | Accept" not in source, label
         assert "Decision: Accept" not in source, label
+
+
+def test_readme_preserves_automatic_build_and_hardware_trajectory_contract():
+    readme = README.read_text(encoding="utf-8")
+    normalized = " ".join(readme.lower().split())
+
+    assert "about 1 hour" in normalized
+    for stage in (
+        "submit or edit the discussion",
+        "pass or reject initial check",
+        "task building starts automatically",
+        "`/task <answer or correction>` only if asked",
+        "accepted",
+        "private task repository",
+    ):
+        assert stage in normalized
+    assert "send `/task` once" not in normalized
+    assert "post `/task`" not in normalized
+    assert "`/task confirm`" not in readme
+    assert "legacy" not in normalized
+
+    operator = OPERATOR_AUTOMATION.read_text(encoding="utf-8").lower()
+    assert "legacy" in operator
+    assert "/task" in operator
+
+    without_gpu = readme.split("**Without GPUs**", 1)[1].split("**With GPUs**", 1)[0]
+    with_gpu = readme.split("**With GPUs**", 1)[1].split("### 5.", 1)[0]
+    for hardware_path in (without_gpu, with_gpu):
+        assert "proposal trajectory" in hardware_path.lower()
+        assert "discussion record" in hardware_path.lower()
+    assert "clone" in without_gpu.lower()
+    assert "validator" not in without_gpu.lower()
+    assert "rsi-task-runner" not in without_gpu
+    assert "rsi-harness" not in without_gpu.lower()
+    assert "experiment trajectory" not in without_gpu.lower()
+    assert "clone" in with_gpu.lower()
+    assert "harbor-task-validator" in with_gpu
+    assert "rsi-task-runner" in with_gpu
+    assert "rsi-harness" in with_gpu.lower()
+    assert "experiment trajectory" in with_gpu.lower()
+
+
+def test_readme_requires_hook_review_and_binding_verification_for_both_clients():
+    normalized = " ".join(README.read_text(encoding="utf-8").lower().split())
+
+    assert ".codex/hooks.json" in normalized
+    assert ".claude/settings.json" in normalized
+    assert "review" in normalized
+    assert "trust" in normalized
+    assert "declin" in normalized or "disabl" in normalized
+    assert "prevents trajectory submission" in normalized
+    assert "after the first response" in normalized
+    assert "proposal_session.py status" in normalized

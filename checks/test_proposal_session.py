@@ -35,12 +35,18 @@ def write_transcript(path: Path, content: bytes = b'{"type":"message"}\n') -> Pa
     return path
 
 
-def hook(session_id: str, transcript: Path, checkout: Path) -> dict[str, object]:
+def hook(
+    session_id: str,
+    transcript: Path,
+    checkout: Path,
+    *,
+    event: str = "Stop",
+) -> dict[str, object]:
     return {
         "session_id": session_id,
         "transcript_path": str(transcript),
         "cwd": str(checkout),
-        "hook_event_name": "Stop",
+        "hook_event_name": event,
     }
 
 
@@ -54,11 +60,11 @@ def invoke(*args: str, input: str = "") -> subprocess.CompletedProcess[str]:
     )
 
 
-def configured_stop_hook(path: Path) -> dict[str, object]:
+def configured_hook(path: Path, event: str) -> dict[str, object]:
     config = json.loads(path.read_text(encoding="utf-8"))
-    stop_handlers = config["hooks"]["Stop"]
-    assert len(stop_handlers) == 1
-    commands = stop_handlers[0]["hooks"]
+    handlers = config["hooks"][event]
+    assert len(handlers) == 1
+    commands = handlers[0]["hooks"]
     assert len(commands) == 1
     return commands[0]
 
@@ -69,22 +75,23 @@ def test_project_hooks_invoke_the_canonical_helper_for_each_client() -> None:
         'scripts/proposal_session.py" hook --platform codex --checkout '
         '"$(git rev-parse --show-toplevel)"'
     )
-    assert configured_stop_hook(CODEX_HOOKS) == {
-        "type": "command",
-        "command": root_command,
-    }
-    assert configured_stop_hook(CLAUDE_SETTINGS) == {
-        "type": "command",
-        "command": "python3",
-        "args": [
-            "${CLAUDE_PROJECT_DIR}/.agents/skills/proposal-agent/scripts/proposal_session.py",
-            "hook",
-            "--platform",
-            "claude-code",
-            "--checkout",
-            "${CLAUDE_PROJECT_DIR}",
-        ],
-    }
+    for event in ("UserPromptSubmit", "Stop"):
+        assert configured_hook(CODEX_HOOKS, event) == {
+            "type": "command",
+            "command": root_command,
+        }
+        assert configured_hook(CLAUDE_SETTINGS, event) == {
+            "type": "command",
+            "command": "python3",
+            "args": [
+                "${CLAUDE_PROJECT_DIR}/.agents/skills/proposal-agent/scripts/proposal_session.py",
+                "hook",
+                "--platform",
+                "claude-code",
+                "--checkout",
+                "${CLAUDE_PROJECT_DIR}",
+            ],
+        }
 
 
 def test_claude_skill_alias_resolves_to_the_canonical_skill_directory() -> None:
@@ -107,6 +114,16 @@ def activated_binding(
         checkout,
         platform,
         hook("session_exact", transcript_path, checkout),
+    )
+    assert module.capture_hook(
+        checkout,
+        platform,
+        hook(
+            "session_exact",
+            transcript_path,
+            checkout,
+            event="UserPromptSubmit",
+        ),
     )
     return checkout, transcript_path
 
@@ -639,6 +656,152 @@ def test_concurrent_first_hooks_bind_exactly_one_session(
     assert module.load_binding(checkout).session_id in {"first", "second"}
 
 
+def test_current_turn_attestation_serves_multiple_commands_until_stop(
+    tmp_path: Path,
+) -> None:
+    checkout, transcript = activated_binding(tmp_path)
+    bind_discussion(checkout)
+    runner = PublishingRunner()
+
+    assert module.discussion_status(checkout, run=runner).ref.node_id == "D_1"
+    assert module.discussion_status(checkout, run=runner).ref.node_id == "D_1"
+
+    assert module.capture_hook(
+        checkout,
+        "codex",
+        hook("session_exact", transcript, checkout),
+    )
+    calls_after_stop = list(runner.calls)
+    with pytest.raises(module.ProposalSessionError, match="original codex session"):
+        module.discussion_status(checkout, run=runner)
+    assert runner.calls == calls_after_stop
+
+
+@pytest.mark.parametrize("command", ["status", "update", "upload"])
+def test_foreign_session_cannot_run_lifecycle_commands(
+    tmp_path: Path,
+    command: str,
+) -> None:
+    checkout, _ = activated_binding(tmp_path)
+    bind_discussion(checkout)
+    proposal = checkout / "proposal.md"
+    proposal.write_text("# Revised proposal\n", encoding="utf-8")
+    foreign_transcript = write_transcript(tmp_path / "foreign.jsonl")
+
+    assert module.capture_hook(
+        checkout,
+        "claude-code",
+        hook(
+            "foreign_session",
+            foreign_transcript,
+            checkout,
+            event="UserPromptSubmit",
+        ),
+    )
+
+    runner = LifecycleRunner() if command == "update" else PublishingRunner()
+    with pytest.raises(
+        module.ProposalSessionError,
+        match="Resume the original codex session session_exact",
+    ):
+        if command == "status":
+            module.discussion_status(checkout, run=runner)
+        elif command == "update":
+            module.update_discussion(checkout, proposal, run=runner)
+        else:
+            module.upload_trajectory(checkout, run=runner)
+    assert runner.calls == []
+
+
+def test_disabled_hooks_after_binding_cannot_reuse_prior_turn_proof(
+    tmp_path: Path,
+) -> None:
+    checkout, transcript = activated_binding(tmp_path)
+    bind_discussion(checkout)
+    assert module.capture_hook(
+        checkout,
+        "codex",
+        hook("session_exact", transcript, checkout),
+    )
+
+    runner = PublishingRunner()
+    with pytest.raises(module.ProposalSessionError, match="hooks.*enabled"):
+        module.upload_trajectory(checkout, run=runner)
+    assert runner.calls == []
+
+
+def test_discussion_create_requires_current_turn_proof(tmp_path: Path) -> None:
+    checkout = init_git_checkout(tmp_path)
+    transcript = write_transcript(tmp_path / "codex.jsonl")
+    module.activate(checkout)
+    assert module.capture_hook(
+        checkout,
+        "codex",
+        hook("session_exact", transcript, checkout),
+    )
+    proposal = checkout / "proposal.md"
+    proposal.write_text("# Proposal\n", encoding="utf-8")
+    runner = LifecycleRunner()
+
+    with pytest.raises(module.ProposalSessionError, match="original codex session"):
+        module.create_discussion(checkout, proposal, "Proposal", run=runner)
+    assert runner.calls == []
+
+
+def test_malformed_prompt_hook_clears_prior_turn_proof_without_blocking(
+    tmp_path: Path,
+) -> None:
+    checkout, _ = activated_binding(tmp_path)
+    bind_discussion(checkout)
+    malformed_prompt = {
+        "hook_event_name": "UserPromptSubmit",
+        "session_id": "session_exact",
+        "cwd": str(checkout),
+    }
+
+    result = invoke(
+        "hook",
+        "--platform",
+        "codex",
+        "--checkout",
+        str(checkout),
+        input=json.dumps(malformed_prompt),
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == ""
+    assert "proposal-session hook:" in result.stderr
+    runner = PublishingRunner()
+    with pytest.raises(module.ProposalSessionError, match="original codex session"):
+        module.discussion_status(checkout, run=runner)
+    assert runner.calls == []
+
+
+def test_hook_payload_missing_event_clears_prior_turn_proof(
+    tmp_path: Path,
+) -> None:
+    checkout, transcript = activated_binding(tmp_path)
+    bind_discussion(checkout)
+    missing_event = hook("session_exact", transcript, checkout)
+    missing_event.pop("hook_event_name")
+
+    result = invoke(
+        "hook",
+        "--platform",
+        "codex",
+        "--checkout",
+        str(checkout),
+        input=json.dumps(missing_event),
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == result.stderr == ""
+    runner = PublishingRunner()
+    with pytest.raises(module.ProposalSessionError, match="original codex session"):
+        module.discussion_status(checkout, run=runner)
+    assert runner.calls == []
+
+
 def test_create_discussion_uses_confirmed_file_and_persists_identity(
     tmp_path: Path,
 ) -> None:
@@ -761,6 +924,49 @@ def test_discussion_lifecycle_rejects_disappeared_proposal_file(tmp_path: Path) 
     assert runner.calls == []
 
 
+def test_relative_proposal_resolves_from_checkout_not_process_cwd(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    checkout, _ = activated_binding(tmp_path)
+    (checkout / "proposal.md").write_text("# Checkout proposal\n", encoding="utf-8")
+    other_cwd = tmp_path / "other-cwd"
+    other_cwd.mkdir()
+    (other_cwd / "proposal.md").write_text("# Wrong proposal\n", encoding="utf-8")
+    monkeypatch.chdir(other_cwd)
+    runner = LifecycleRunner()
+
+    module.create_discussion(checkout, Path("proposal.md"), "Proposal", run=runner)
+
+    assert runner.graphql_variables["body"] == "# Checkout proposal\n"
+
+
+def test_create_rejects_proposal_paths_resolving_outside_checkout(
+    tmp_path: Path,
+) -> None:
+    checkout, _ = activated_binding(tmp_path)
+    outside = tmp_path / "outside.md"
+    outside.write_text("outside\n", encoding="utf-8")
+    symlink = checkout / "outside-link.md"
+    symlink.symlink_to(outside)
+
+    for proposal in (Path("../outside.md"), outside.resolve(), Path("outside-link.md")):
+        runner = LifecycleRunner()
+        with pytest.raises(module.ProposalSessionError, match="inside the checkout"):
+            module.create_discussion(checkout, proposal, "Proposal", run=runner)
+        assert runner.calls == []
+
+
+def test_create_requires_proposal_to_be_a_regular_file(tmp_path: Path) -> None:
+    checkout, _ = activated_binding(tmp_path)
+    (checkout / "proposal-dir").mkdir()
+    runner = LifecycleRunner()
+
+    with pytest.raises(module.ProposalSessionError, match="regular file"):
+        module.create_discussion(checkout, Path("proposal-dir"), "Proposal", run=runner)
+    assert runner.calls == []
+
+
 def test_fetch_discussion_paginates_replies_and_renders_timestamp_order() -> None:
     ref = module.DiscussionRef(
         node_id="D_1",
@@ -804,6 +1010,63 @@ def test_fetch_discussion_paginates_replies_and_renders_timestamp_order() -> Non
         "id": "D_1",
         "after": "comment-1",
     }
+
+
+def test_interleaved_replies_keep_global_order_and_name_their_parent() -> None:
+    ref = module.DiscussionRef(
+        node_id="D_1",
+        number=41,
+        url="https://github.com/RSI-Index/RSI-Index-Public/discussions/41",
+    )
+    snapshot = module.DiscussionSnapshot(
+        ref=ref,
+        title="Interleaved",
+        body="body",
+        author="contributor",
+        created_at="2026-09-01T10:00:00Z",
+        entries=(
+            module.DiscussionEntry(
+                node_id="DC_PARENT",
+                author="reviewer-a",
+                body="first comment",
+                created_at="2026-09-01T11:00:00Z",
+            ),
+            module.DiscussionEntry(
+                node_id="DCR_PARENT",
+                author="contributor",
+                body="reply to first",
+                created_at="2026-09-01T11:10:00Z",
+                parent_node_id="DC_PARENT",
+            ),
+            module.DiscussionEntry(
+                node_id="DC_INTERLEAVED",
+                author="reviewer-b",
+                body="interleaved comment",
+                created_at="2026-09-01T11:05:00Z",
+            ),
+            module.DiscussionEntry(
+                node_id="DCR_INTERLEAVED",
+                author="contributor",
+                body="reply to second",
+                created_at="2026-09-01T11:15:00Z",
+                parent_node_id="DC_INTERLEAVED",
+            ),
+        ),
+    )
+
+    rendered = module.render_discussion_markdown(snapshot)
+
+    assert rendered.index("first comment") < rendered.index("interleaved comment")
+    assert rendered.index("interleaved comment") < rendered.index("reply to first")
+    assert rendered.index("reply to first") < rendered.index("reply to second")
+    assert (
+        "  - **contributor** — 2026-09-01T11:10:00Z "
+        "(reply to `DC_PARENT`)"
+    ) in rendered
+    assert (
+        "  - **contributor** — 2026-09-01T11:15:00Z "
+        "(reply to `DC_INTERLEAVED`)"
+    ) in rendered
 
 
 def test_upload_preserves_native_bytes_and_complete_discussion(tmp_path: Path) -> None:

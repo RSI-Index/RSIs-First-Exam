@@ -19,6 +19,17 @@ git clone https://github.com/RSI-Index/RSI-Index-Public.git
 cd RSI-Index-Public
 ```
 
+Before beginning, review the repository hook configuration for your client:
+`.codex/hooks.json` for Codex or `.claude/settings.json` for Claude Code. Trust
+the repository hooks when the client asks. Declining or disabling them prevents
+trajectory submission because the agent cannot attest the original native
+session. After the first response, ask the agent to verify the binding by
+running:
+
+```text
+python3 .agents/skills/proposal-agent/scripts/proposal_session.py status --checkout .
+```
+
 Ask the client to use [proposal-agent](.agents/skills/proposal-agent/SKILL.md).
 Use that one session for one proposal. The agent will help you define the
 research question, baseline, evaluation, scope, and compute requirements, then
