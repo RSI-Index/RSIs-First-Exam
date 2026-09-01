@@ -15,8 +15,8 @@ REPO = Path(__file__).resolve().parents[4]
 SCRIPT = Path(__file__).with_name("preflight_task.py")
 HARNESS = REPO / "RSI-Harness"
 REPRESENTATIVE_TASK = (
-    REPO
-    / "task_collect/zf_tasks/pre-training/optimizer_stepmatched_e3"
+    Path(__file__).resolve().parent
+    / "fixtures/representative-task"
 )
 PROFILE = HARNESS / "src/rsi_harness/cluster/bluevela/profile.toml"
 SKILL = Path(__file__).resolve().parents[1] / "SKILL.md"
@@ -149,7 +149,7 @@ class BlueVelaPreflightTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as raw:
             task = Path(raw) / REPRESENTATIVE_TASK.name
             shutil.copytree(REPRESENTATIVE_TASK, task)
-            solution = task / "solution/certify_baseline.sh"
+            solution = task / "solution/solve.sh"
             solution.write_text(solution.read_text() + "\nbsub dangerous-command\n")
 
             with self.assertRaisesRegex(
