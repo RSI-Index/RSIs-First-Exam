@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import argparse
+import fcntl
 import json
 import os
 import subprocess
 import sys
 import tempfile
 from collections.abc import Mapping
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
 from typing import NoReturn
@@ -254,6 +256,20 @@ def _load_existing_binding(state_dir: Path, checkout_root: Path) -> SessionBindi
     return _binding_from_json(_read_json(binding_path, "binding state"), checkout_root)
 
 
+@contextmanager
+def _binding_lock(state_dir: Path):
+    descriptor = os.open(state_dir / "binding.lock", os.O_CREAT | os.O_RDWR, 0o600)
+    try:
+        with os.fdopen(descriptor, "a+") as lock_file:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+            try:
+                yield
+            finally:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+    except OSError as error:
+        _fail(f"cannot lock proposal session state: {error}")
+
+
 def activate(checkout_root: Path) -> Path:
     root = _checkout_root(checkout_root)
     state_dir = _state_dir(root)
@@ -276,24 +292,28 @@ def capture_hook(
     if not isinstance(payload, Mapping):
         _fail("hook payload must be a JSON object")
     if payload.get("hook_event_name") != "Stop":
-        _fail("hook payload is not a Stop event")
-    _resolve_hook_cwd(payload.get("cwd"), root)
+        return False
     session_id = _valid_string(payload.get("session_id"), "session_id")
 
-    existing = _load_existing_binding(state_dir, root)
-    if existing is not None and (existing.platform, existing.session_id) != (platform, session_id):
-        return False
+    with _binding_lock(state_dir):
+        existing = _load_existing_binding(state_dir, root)
+        if existing is not None and (existing.platform, existing.session_id) != (
+            platform,
+            session_id,
+        ):
+            return False
 
-    transcript_path = _resolve_transcript(payload.get("transcript_path"))
-    binding = SessionBinding(
-        platform=platform,
-        session_id=session_id,
-        transcript_path=transcript_path,
-        checkout_root=root,
-        discussion=None if existing is None else existing.discussion,
-    )
-    _atomic_json(state_dir / "binding.json", _binding_payload(binding))
-    return True
+        _resolve_hook_cwd(payload.get("cwd"), root)
+        transcript_path = _resolve_transcript(payload.get("transcript_path"))
+        binding = SessionBinding(
+            platform=platform,
+            session_id=session_id,
+            transcript_path=transcript_path,
+            checkout_root=root,
+            discussion=None if existing is None else existing.discussion,
+        )
+        _atomic_json(state_dir / "binding.json", _binding_payload(binding))
+        return True
 
 
 def load_binding(checkout_root: Path) -> SessionBinding:
