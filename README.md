@@ -1,6 +1,6 @@
 # RSI's First Exam
 
-## 💥 Why RSI-Exam?
+## 💥 Why RSI's First Exam?
 
 We are witnessing the dawn of a new era: AI is entering a recursive self-improvement loop. The central question is whether this loop can move beyond the best-known human-designed method and reliably extend the scientific frontier. Answering it requires careful measurement, and building that measurement is the purpose of this project.
 
