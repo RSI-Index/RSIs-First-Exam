@@ -1,7 +1,6 @@
 # RSI-Index
 
-Public tasks are in [`rsi-tasks/`](rsi-tasks/) and run with the bundled
-[`RSI-Harness`](RSI-Harness/).
+Public tasks and execution logs are available in [`rsi-tasks/`](rsi-tasks/) and [`rsi-logs/`](rsi-logs/), respectively, and can be reproduced using the bundled [`RSI-Harness`](RSI-Harness/).
 
 ## 🚀 Quick Start
 
