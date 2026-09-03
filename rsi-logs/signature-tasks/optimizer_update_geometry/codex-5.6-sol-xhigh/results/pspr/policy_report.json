@@ -1,0 +1,22 @@
+{
+  "changed_paths": [
+    "examples/training/optimizer/runtime/optimizer_candidate.py"
+  ],
+  "forbidden_hits": [],
+  "gates": {
+    "contract_scale_gate": true,
+    "materialized_source_gate": true,
+    "no_rung_shape_attempt_lookup_keys_gate": true,
+    "optimizer_owned_changes_gate": true,
+    "same_changed_paths_gate": true,
+    "same_source_gate": true,
+    "source_hash_gate": true
+  },
+  "passes": true,
+  "recomputed_source_inventory_sha256": "cd8e55751bd410fc677ac5cee590a8d48f292ee309b4760719f2240175384661",
+  "scanned_files": [
+    "examples/training/optimizer/runtime/optimizer_candidate.py"
+  ],
+  "source_inventory_sha256": "cd8e55751bd410fc677ac5cee590a8d48f292ee309b4760719f2240175384661",
+  "version": 1
+}
