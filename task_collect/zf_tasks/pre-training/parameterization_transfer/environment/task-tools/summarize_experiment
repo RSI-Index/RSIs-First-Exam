@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-[[ ${1:-} == --attempt-id && -n ${2:-} && $# == 2 ]] || {
-    printf 'usage: summarize_experiment --attempt-id ID\n' >&2
-    exit 2
-}
-exec python "$(dirname -- "${BASH_SOURCE[0]}")/parameterization_scaling_task.py" \
-    summarize --attempt "/app/output/attempts/$2"

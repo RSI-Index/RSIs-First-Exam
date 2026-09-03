@@ -1,9 +1,0 @@
-version: 1
-task: positional-encoding
-allowed_source_globs:
-  - 3rdparty/Megatron-LM/megatron/core/models/**
-  - 3rdparty/Megatron-LM/megatron/core/transformer/**
-  - 3rdparty/Megatron-LM/megatron/core/fusions/**
-  - 3rdparty/Megatron-LM/megatron/core/extensions/**
-  - src/megatron/bridge/models/**
-  - examples/training/positional_encoding/runtime/positional_*.py

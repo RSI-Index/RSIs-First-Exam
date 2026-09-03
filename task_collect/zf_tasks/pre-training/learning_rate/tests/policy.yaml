@@ -1,9 +1,0 @@
-version: 1
-task: learning-rate
-allowed_source_globs:
-  - examples/training/lr_schedule/runtime/lr_schedule_candidate.py
-constraints:
-  scale_order: [E0, E1, E2, E3, E4, E5]
-  schedule_inputs: [normalized_progress]
-  peak_multiplier_maximum: 1.0
-  persistent_state_scalars_maximum: 0
