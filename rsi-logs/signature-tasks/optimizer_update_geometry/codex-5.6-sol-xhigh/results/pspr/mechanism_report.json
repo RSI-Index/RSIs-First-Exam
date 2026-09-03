@@ -1,0 +1,64 @@
+{
+  "anchors": {
+    "E0": {
+      "full": {
+        "fixed_window_loss": 3.057333743199706,
+        "macro_bpb": 1.200344757141799,
+        "micro_bpb": 1.068129639537493
+      },
+      "full_attempt_id": "opt-014-pspr-full-e0",
+      "full_source_inventory_sha256": "cd8e55751bd410fc677ac5cee590a8d48f292ee309b4760719f2240175384661",
+      "geometric_micro_loss_gain": 1.0024541542399048,
+      "passes_preregistered_positive_gain": true,
+      "reduced": {
+        "fixed_window_loss": 3.063742578960955,
+        "macro_bpb": 1.202426304872174,
+        "micro_bpb": 1.0711334540800566
+      },
+      "reduced_attempt_id": "opt-013-agpr-full-e0",
+      "reduced_source_inventory_sha256": "dbf1b294615e05dcb60ac528fbbe7ad606342774d336df7216531421427ea832",
+      "scoring_update": 44317
+    },
+    "E2": {
+      "full": {
+        "fixed_window_loss": 2.8726974800229073,
+        "macro_bpb": 1.1323121365052295,
+        "micro_bpb": 1.0031332999201248
+      },
+      "full_attempt_id": "opt-014-pspr-full-e2",
+      "full_source_inventory_sha256": "cd8e55751bd410fc677ac5cee590a8d48f292ee309b4760719f2240175384661",
+      "geometric_micro_loss_gain": 1.0009745189505563,
+      "passes_preregistered_positive_gain": true,
+      "reduced": {
+        "fixed_window_loss": 2.8751940093934536,
+        "macro_bpb": 1.133248700761062,
+        "micro_bpb": 1.0042166788356661
+      },
+      "reduced_attempt_id": "opt-013-agpr-full-e2",
+      "reduced_source_inventory_sha256": "dbf1b294615e05dcb60ac528fbbe7ad606342774d336df7216531421427ea832",
+      "scoring_update": 38014
+    },
+    "E5": {
+      "full": {
+        "fixed_window_loss": 2.5851460695266724,
+        "macro_bpb": 1.0233178338496083,
+        "micro_bpb": 0.9017463493869807
+      },
+      "full_attempt_id": "opt-014-pspr-full-e5-r2",
+      "full_source_inventory_sha256": "cd8e55751bd410fc677ac5cee590a8d48f292ee309b4760719f2240175384661",
+      "geometric_micro_loss_gain": 1.0003199224079435,
+      "passes_preregistered_positive_gain": true,
+      "reduced": {
+        "fixed_window_loss": 2.5863375291228294,
+        "macro_bpb": 1.0240780129708482,
+        "micro_bpb": 0.901907742070855
+      },
+      "reduced_attempt_id": "opt-013-agpr-full-e5-r2",
+      "reduced_source_inventory_sha256": "dbf1b294615e05dcb60ac528fbbe7ad606342774d336df7216531421427ea832",
+      "scoring_update": 35000
+    }
+  },
+  "evaluation_contract": "full_vs_reduced_at_exact_declared_scoring_update",
+  "passes": true,
+  "version": 1
+}
