@@ -1,6 +1,0 @@
-# sha256 of the files synced from _rsi_scout/common/. Written by common/sync_common.sh.
-# tests/contract_check.py verifies the copies against these hashes at package-build time.
-# Regenerate with:  common/sync_common.sh <this package>
-9518d170211783688a3e4a1f9da13758e5faee55b545963e26d21fa48a20f662  chain_score.py
-794dcfcb7ec719eedba5408636ca38a5c8b34ae4122457f7081b69ebd1181ba0  dir_hash.py
-39f74b3ffd61afb017e60d3c14b549962e22d4ea526ffccbd540d643407fd4fc  policy_check.py

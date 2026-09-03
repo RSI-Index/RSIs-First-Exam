@@ -1,14 +1,19 @@
 # RSI Harness
 
-RSI Harness runs supported local Harbor GPU tasks. It creates one
-persistent Work container for the Agent and a fresh Judge container whenever
-the Agent asks for feedback. The Agent can submit multiple times while keeping
-the same Work state.
+RSI Harness is an evaluation framework for Coding Agents tackling
+ultra-long-horizon RSI tasks. Agents such as Claude Code and Codex develop
+solutions in a persistent, isolated Work container and submit solutions to a
+fresh Judge for scoring. They can iterate on test feedback until the submission
+limit or timeout, with the highest score retained as the final result.
+
+It natively supports Harbor-format tasks with or without GPUs, from local
+single-node Docker runs to supported multi-node clusters.
 
 ## Requirements
 
-- Linux with Docker and the NVIDIA Container Toolkit
-- working `docker` and `nvidia-smi` commands
+- Linux with a working `docker` command
+- for GPU tasks, NVIDIA GPUs, the NVIDIA Container Toolkit, and a working
+  `nvidia-smi` command
 - Python 3.12 or 3.13
 - permission to manage Docker and the host `DOCKER-USER` and `INPUT` iptables
   chains (usually by running the command with `sudo -E`)
@@ -61,69 +66,23 @@ artifacts. Do not put credentials in the Harbor task directory.
 
 ## Run a Harbor task
 
-Pass the task directory and the GPUs that this run is allowed to use:
+This mode runs a Harbor task locally with Docker on a single node. For cluster
+or multi-node execution, see
+[Run multi-node tasks on a cluster](#run-multi-node-tasks-on-a-cluster).
 
 ```bash
-TASK=/absolute/path/to/my-harbor-task
-
-sudo -E "$(command -v rsi-harness)" run "$TASK" \
-  --agent codex \
-  --model gpt-5.5 \
-  --reasoning-effort xhigh \
-  --gpus 4,5 \
-  --max-submissions 2 \
-  --verbose
+sudo -E "$(command -v rsi-harness)" run /absolute/path/to/task --gpus 0,1
 ```
 
-`--gpus` accepts host indexes, NVIDIA UUIDs, or a mixture. It is an ordered
-pool authorized by the scheduler for this run; the Engine resolves it to
-physical UUIDs, while Work sees only its task-declared count. Every UUID in
-`--gpus` remains scheduler-owned for the run.
+`--gpus` accepts GPU indexes or UUIDs. Work and Judge GPU counts, images,
+timeouts, and other runtime settings come from the task. Run
+`rsi-harness run --help` for optional controls.
 
-The task's GPU declaration is still enforced:
+## Run multi-node tasks on a cluster
 
-- `count: 2` gives Work the first two GPUs in the authorized pool.
-- `count: all` uses every GPU listed in `--gpus`, not every GPU on the host.
-
-Declare Judge GPUs separately when verification needs them:
-
-```toml
-[environment]
-gpus = 2
-
-[metadata.rsi_harness.verifier]
-gpus = 1
-```
-
-Without the verifier declaration, Judge is CPU-only and Work is frozen while
-it runs. When the pool has enough spare GPUs, Judge receives a disjoint slice.
-When it does not, RSI Harness uses release-all mode: every Work GPU process
-must release its GPU before Judge runs. That rejection is safe to retry and
-does not consume `--max-submissions`.
-
-The Engine reads the task's image or Dockerfile, timeouts, environment,
-network mode, users, verifier, and GPU requirements automatically. Run
-`rsi-harness run --help` for all optional controls.
-
-`--reasoning-effort` is a generic per-run Agent option. Codex supports
-`minimal`, `low`, `medium`, `high`, and `xhigh`; Claude Code supports `low`,
-`medium`, `high`, `xhigh`, and `max`, translated to its native `--effort`
-flag. An Agent or value that is not supported is rejected before Docker
-resources are created. If the option is omitted, the Agent keeps its configured
-default.
-
-Use `--disable-stop-hook` when the Agent should exit normally without the
-RSI Loop stop hook.
-
-A real run may be quiet for a long time while the image builds or the Agent is
-working. The command prints the run ID, final status, Judge rounds, best score,
-workspace location, and log location when it finishes.
-
-## Run on Blue Vela
-
-Blue Vela is available as a cluster profile on the same `run` command. First
-inspect the fully resolved submissions without creating a run directory or
-calling `bsub`:
+Below is an example using Blue Vela, an HPC cluster managed by IBM Spectrum
+LSF. You can use this integration as a reference to adapt RSI Harness directly
+to your own cluster. Preview the resolved job without submitting it:
 
 ```bash
 uv run rsi-harness run "$TASK" \
@@ -135,30 +94,12 @@ uv run rsi-harness run "$TASK" \
   --agent-auth local
 ```
 
-Remove `--dry-run` to execute. The command waits synchronously for every stage.
-It first reuses a SHA256-verified cached SIF or submits an LSF CPU build job
-that performs Dockerfile → Podman/Docker archive → Apptainer SIF conversion in
-node-local `/tmp`. It then submits one exclusive-process GPU job and returns
-success only after the native RSI-Harness Engine and its expected artifacts
-both validate.
+Remove `--dry-run` to submit the job. GPU counts come from the task; for
+multi-node tasks, the adapter maps the Work and Judge requirements to full-node
+LSF allocations using the profile's GPUs-per-node setting. `--gpus` is only for
+local runs, and `gpus = "all"` needs a numeric cluster override.
 
-GPU counts are read from the task, not from a cluster default. For example, a
-task declaring two Work GPUs and two
-`[metadata.rsi_harness.verifier]` GPUs requests exactly four GPUs on one node.
-`--gpus` remains a local-device selector and is rejected with `--cluster`. A
-task declaring `gpus = "all"` needs an explicit numeric override in its cluster
-profile.
-
-The packaged profile owns Blue Vela-specific queue, fair-share group,
-Apptainer, cache, and GPFS paths. Each run gets a unique directory and exact LSF
-job IDs; interruption never performs name-based or bulk cancellation. Cluster
-artifacts retain the existing
-`logs/runs/<run-id>/<task-id>/` leaf schema below the profile's GPFS logs root.
-The Agent, each Judge round, and `RUN_INFO.json` remain in the unique run
-directory. Logs are written live by `RunArtifactWriter`; they are not converted
-from another harness after the run.
-
-To migrate the same adapter, copy
+To adapt another LSF cluster, copy
 `src/rsi_harness/cluster/bluevela/profile.toml`, change its paths and LSF policy,
 then pass the new file:
 
@@ -166,32 +107,55 @@ then pass the new file:
 uv run rsi-harness run "$TASK" --cluster /absolute/path/to/profile.toml ...
 ```
 
-Cluster mode uses the same `RunCoordinator`, embedded `SubmissionService`,
-`RSILoopAgentAdapter`, and multi-submission feedback loop as no-cluster mode.
-The cluster layer owns only scheduling, image materialization, and Apptainer
-Work/Judge process isolation. Harbor is used only to compile the task format;
-the adapter never invokes `harbor run`.
+Cluster mode preserves the native RSI-Harness run and log format. Harbor only
+compiles the task format; the adapter never invokes `harbor run`.
 
-## Feedback and rewards
+## How it works
 
-The Agent calls `rsi-submit` when it wants feedback. RSI Harness then:
+The input is a supported Harbor task directory containing `task.toml`,
+`instruction.md`, `environment/`, and `tests/test.sh`. RSI Harness validates the
+task and compiles its images, resources, network policy, and timeouts into one
+run plan.
 
-1. pauses Work;
-2. creates a fresh Judge from the current Work state;
-3. runs the task's `tests/test.sh`;
-4. returns the test output and reward to the Agent; and
-5. removes the Judge and resumes the same Work container.
+```mermaid
+flowchart LR
+    H["Harbor task<br/>task.toml · instruction.md<br/>environment/ · tests/"]
+    C["Compile and validate<br/>run plan · images · resources"]
+    W["Persistent Work<br/>Agent edits workspace<br/>task tests not mounted"]
+    S["Submission service<br/>pause and snapshot Work"]
+    J["Fresh Judge<br/>inject /tests<br/>run tests/test.sh"]
+    A["Round artifacts<br/>best valid score"]
 
-No human action is needed between submissions. The number of submissions is
-limited by `--max-submissions`.
+    H --> C --> W
+    W -->|rsi-submit control request| S
+    S --> J
+    J -->|test output and reward| S
+    S -->|feedback| W
+    J --> A
+```
+
+- **Work:** the Agent develops in one persistent container without access to
+  the task's `tests/` directory.
+- **Submit:** `rsi-submit` sends only a token-scoped control request. RSI Harness
+  pauses Work and snapshots its current state; the client does not upload a code
+  archive.
+- **Judge:** a fresh isolated container receives the snapshot and private tests,
+  runs `/tests/test.sh`, records the reward and output, and is then removed.
+- **Iterate:** Work resumes with its state intact, so the Agent can use feedback
+  and submit again until the submission limit or timeout. The best valid primary
+  score, respecting the task's score direction, becomes the final result.
+
+This persistent Work → independent Judge → feedback loop is the long-horizon
+RSI mechanism. Codex and Claude Code stop hooks also discourage premature exit,
+while durable run state supports safe recovery after interruptions.
 
 The verifier should write a Harbor reward to
 `/logs/verifier/reward.json`. A scalar `reward.txt` is also accepted. Use
 `--primary-reward NAME` when the reward JSON contains multiple keys and one of
 them should determine the best round.
 
-Detailed task-authoring references: [`task.toml`
-fields](docs/harbor-task-authoring/task-toml.md) and [Compose, Dockerfile, and
+Detailed task-authoring references: `task.toml`
+[fields](docs/harbor-task-authoring/task-toml.md) and [Compose, Dockerfile, and
 WORKDIR fields](docs/harbor-task-authoring/docker-compose.md).
 
 ## View results
@@ -232,31 +196,6 @@ sudo -E "$(command -v rsi-harness)" cleanup RUN_ID \
   --delete-workspace --yes
 ```
 
-## How it works
-
-The Agent runs as root in Work and can modify project files, Python packages,
-shells, `PATH`, system libraries, and other container files, matching the
-expected Harbor workflow. Judge sees the Work filesystem at submission time,
-but Judge writes never flow back into Work.
-
-RSI Harness chooses the snapshot method from the effective WORKDIR:
-
-- A non-root WORKDIR uses a managed Docker volume. Work mounts it read-write
-  and Judge mounts it read-only, avoiding a new copy of large files stored
-  there for each submission.
-- A `/` WORKDIR uses a complete Docker root-filesystem snapshot. This is more
-  compatible, but large Agent changes anywhere in the container can increase
-  snapshot time and Docker storage use.
-
-While Judge runs, Work processes are paused rather than destroyed. A CPU-only
-Judge uses freeze-only mode. A GPU Judge uses a disjoint spare allocation when
-available; otherwise release-all mode checks that every Work GPU process has
-released its allocation before Judge starts. A release-all rejection can be
-retried without consuming a submission.
-
-Network access is taken from the Harbor task. Public, no-network, and supported
-allowlist policies are compiled and enforced for Work and Judge.
-
 ## Supported task shape
 
 The current Engine supports the common single-service Harbor GPU shape:
@@ -280,11 +219,25 @@ only below the selected data and log roots.
 
 - Docker commit captures filesystem changes, not running process state.
 - Task-authored Docker or Compose volumes are not supported because their
-  contents are outside the committed container root filesystem.
+contents are outside the committed container root filesystem.
 - A `/` WORKDIR can produce large Judge snapshots when the Agent writes large
-  files outside reusable image layers.
+files outside reusable image layers.
 - Standard Harbor compatibility runs `test.sh` beside the code under test in
-  Judge. It isolates Judge from Work, but it is not a separate secret-verifier
-  protocol.
+Judge. It isolates Judge from Work, but it is not a separate secret-verifier
+protocol.
 - The Engine fails closed when required Docker or firewall authority is
-  unavailable; it does not silently run with weaker isolation.
+unavailable; it does not silently run with weaker isolation.
+
+## Acknowledgements
+
+RSI Harness builds on the excellent work of the following open-source
+projects:
+
+- [Harbor](https://github.com/harbor-framework/harbor), which provides the task
+  format and core tooling for portable agent environments and evaluation.
+- [EdgeBench](https://github.com/ByteDance-Seed/EdgeBench), whose RSI Loop
+  powers the agent integration, iterative feedback workflow, and result
+  visualization used by RSI Harness.
+
+We thank both teams and their contributors for making their work openly
+available.

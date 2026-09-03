@@ -1,3 +1,0 @@
-[submodule "tokenizers-superbpe"]
-	path = tokenizers_superbpe
-	url = https://github.com/alisawuffles/tokenizers-superbpe.git

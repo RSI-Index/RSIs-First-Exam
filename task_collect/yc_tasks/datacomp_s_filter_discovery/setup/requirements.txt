@@ -1,9 +1,0 @@
-cloudpathlib==0.13.0
-datasets==2.8.0
-fsspec==2022.11.0
-huggingface-hub==0.14.1
-img2dataset==1.40.0
-numpy==1.23.4
-pandas==1.5.1
-pyarrow==7.0.0
-PyYAML==6.0.2

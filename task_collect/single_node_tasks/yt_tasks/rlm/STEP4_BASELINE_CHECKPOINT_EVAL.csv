@@ -1,4 +1,0 @@
-checkpoint,raw_oolong_reward,examples,errors,timeouts,source,lsf_job_id
-20,0.3607127179228175,25,0,0,posthoc_merged_checkpoint_eval,252617
-40,0.36000000000172944,25,0,1,posthoc_merged_checkpoint_eval,252618
-60,0.360077631820896,25,0,2,in_run_final_checkpoint_eval,238576
