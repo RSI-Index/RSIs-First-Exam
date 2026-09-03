@@ -7,7 +7,7 @@ fresh Judge for scoring. They can iterate on test feedback until the submission
 limit or timeout, with the highest score retained as the final result.
 
 It natively supports [Harbor-format tasks](../rsi-tasks/) with or without GPUs,
-from local single-node Docker runs to supported multi-node clusters.
+from local single-node Docker runs to multi-node clusters.
 
 
 ## How it works
