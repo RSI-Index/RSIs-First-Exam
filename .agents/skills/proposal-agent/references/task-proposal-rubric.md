@@ -157,14 +157,20 @@ Evaluate all nine gates before deciding. Do not stop at the first concern.
 - Acceptable baselines include:
   - an official released checkpoint or artifact evaluated under the proposal's
     fixed matched protocol; or
-  - when no suitable released artifact exists or the comparison requires fresh
-    training, a runnable experiment, configuration, or launch path shipped by
-    the source repository; or
+  - when the contributor explicitly chooses evaluation-time retraining under a
+    fixed evaluator, an existing runnable configuration or launch path shipped
+    by the source repository; or
   - a benchmark-owned matched, hardened, or clean-room baseline derived
     transparently from the source repository or task harness.
 - Prefer the official evaluation-ready checkpoint or artifact when it represents
   the intended reference method. Do not require baseline retraining merely
   because a training recipe also exists.
+- Keep the Solution-materializable reference baseline separate from any newly
+  trained matched control. For direct evaluation, the reference baseline must
+  be an existing evaluation-ready artifact. A newly trained matched control
+  required for a causal comparison is a Work-produced control trial unless the
+  contributor explicitly chose evaluation-time retraining; it is not an
+  unavailable task-construction prerequisite.
 - The baseline provenance, relevant paths, ref, command or artifact, metric, and
   comparison protocol must be traceable. The contributor need not have run it
   successfully yet; reproduction happens after proposal acceptance.
@@ -176,6 +182,11 @@ Evaluate all nine gates before deciding. Do not stop at the first concern.
 - It must define a primary metric or reward and a fixed comparison protocol.
 - Every fixed budget must define its counted unit and whether replacement
   generation, retries, and resampling count toward that budget.
+- Before accepting an exact total or per-task sample count, official evidence or
+  a concrete existing delivery must show that enough eligible distinct examples
+  remain after filtering, deduplication, and few-shot exclusions. Otherwise the
+  proposal must contain a contributor-confirmed explicit fallback for the
+  resulting workload, sampling, source, and aggregation semantics.
 - The reward contract must state whether a candidate-invalid artifact is
   unscored or receives an explicitly defined finite scalar. Candidate-invalid,
   infrastructure, timeout, and incomplete outcomes default to unscored unless
@@ -282,6 +293,10 @@ Evaluate all nine gates before deciding. Do not stop at the first concern.
 - Web search, each external service, and additional-data access must be bounded
   separately. Every required artifact or service must have a real public source
   or concrete existing delivery/access interface.
+- Check cross-field consistency rather than reviewing fields independently: the
+  Solution-materializable reference baseline must agree with the declared Work
+  trials, and fixed evaluation counts must be feasible under source cardinality
+  and all selection or exclusion rules.
 - Do not fail for repository paths, image selection, dependency versions, task
   layout, Verifier mechanics, timeout sizing, unavailable reproduced
   measurements, unverified runtime, pending stateful validation, or another
