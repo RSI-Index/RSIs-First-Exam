@@ -36,4 +36,4 @@ After `discussion status` shows the verified private task repository is ready, u
 python3 .agents/skills/proposal-agent/scripts/proposal_session.py upload --checkout <public-root>
 ```
 
-Do not finish the contributor workflow until `upload` reports both the committed private repository and its commit SHA. Report both values to the contributor.
+Do not finish the contributor workflow until `upload` reports both the committed private repository and its commit SHA. Report both values to the contributor, then direct them to clone that repository on a machine with the GPU resources declared by the task, follow its README to validate and run the task, and push the completed experiment trajectory.

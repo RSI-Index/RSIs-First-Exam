@@ -5,8 +5,7 @@ from pathlib import Path
 import yaml
 
 WORKFLOW = Path(__file__).parent.parent / ".github/workflows/discussion-task-dispatch.yml"
-README = Path(__file__).parent.parent / "README.md"
-OPERATOR_DOC = Path(__file__).parent.parent / "docs/DISCUSSION_TASK_AUTOMATION.md"
+CONTRIBUTING = Path(__file__).parent.parent / "CONTRIBUTING.md"
 CHECKOUT_SHA = "fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09"
 APP_TOKEN_SHA = "bcd2ba49218906704ab6c1aa796996da409d3eb1"
 
@@ -187,36 +186,21 @@ def test_dispatch_workflow_never_handles_private_or_untrusted_content():
 
 def test_plain_task_is_documented_only_for_clean_restart_after_reset():
     _, raw = load_workflow()
-    readme = README.read_text(encoding="utf-8")
-    operator_doc = OPERATOR_DOC.read_text(encoding="utf-8")
+    contributing = CONTRIBUTING.read_text(encoding="utf-8")
 
-    assert "send a plain `/task` to start a clean attempt" in readme
-    assert "`/task <answer or correction>`" in readme
-    assert "`/task confirm`" not in readme
-    assert "Legacy plain `/task`" in operator_doc
-    assert "`/task confirm`" in operator_doc
-    assert "send a new plain `/task` to start a clean attempt" in operator_doc
+    assert "send a plain `/task` to start a clean attempt" in contributing
+    assert "`/task <answer or correction>`" in contributing
+    assert "`/task confirm`" not in contributing
     assert "COMMAND: ${{ steps.gate.outputs.command }}" in raw
     assert "discussion_task_command" in raw
     assert "task_confirm" not in raw.lower()
 
 
-def test_operator_doc_distinguishes_automatic_and_legacy_reset_boundaries():
-    operator_doc = " ".join(
-        OPERATOR_DOC.read_text(encoding="utf-8").lower().split()
+def test_contributing_documents_reset_cleanup_and_clean_restart():
+    contributing = " ".join(
+        CONTRIBUTING.read_text(encoding="utf-8").lower().split()
     )
 
-    assert "for an automatic lineage" in operator_doc
-    assert (
-        "preserves the current app-authored schema-2 `pass` review" in operator_doc
-    )
-    assert (
-        "deletes later task-workflow replies together with the `/reset` comment"
-        in operator_doc
-    )
-    assert "for a legacy or manual lineage" in operator_doc
-    assert "deletion begins with the first valid authored `/task`" in operator_doc
-    assert (
-        "from the first valid `/task` after the accepted review" not in operator_doc
-    )
-    assert "reset stops the workflow" in operator_doc
+    assert "to discard an unpublished attempt, send `/reset`" in contributing
+    assert "reset cleans up that attempt and stops the workflow" in contributing
+    assert "send a plain `/task` to start a clean attempt" in contributing

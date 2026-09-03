@@ -77,23 +77,15 @@ The `$...` lines below are skill invocations for your coding agent, not shell
 commands.
 
 > [!IMPORTANT]
-> **Be responsible for your experiment design.** Every setup you specify will be run on real compute resources, either your own cluster or ours. Choose a task scope, experiment plan, and compute budget that fit the GPU resources available for your burden.
-
-**Without GPUs**
+> **GPU access is required to complete a contribution.** You must have access
+> to the required GPU resources declared by your task. Choose a task scope,
+> experiment plan, and compute budget that fit those resources.
 
 When your private task repository is available, return to the original
 proposal-agent session and ask it to upload the required proposal trajectory
-and Discussion record. After the agent reports the private repository and
-upload commit SHA, no task execution is required. You can clone the repository
-and inspect the complete generated task, but that upload completes the
-no-GPU contribution path.
-
-**With GPUs**
-
-First return to the original proposal-agent session and ask it to upload the
-required proposal trajectory and Discussion record. After it reports the
-private repository and upload commit SHA, clone that repository on a machine
-with the required GPU resources and follow its README:
+and Discussion record. After it reports the private repository and upload
+commit SHA, clone that repository on a machine with the required GPU resources
+and follow its README:
 
 1. Invoke the bundled validator skill to perform real environment validation:
 
@@ -118,4 +110,4 @@ with the required GPU resources and follow its README:
 
 Please leave brief feedback on `proposal-agent` and the overall VibeRSI pipeline in [this Discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/7).
 
-After following the path appropriate to your hardware, your task is ready for review. Thank you for contributing to RSI-Index! 🙏
+After pushing the completed experiment trajectory, your task is ready for review. Thank you for contributing to RSI-Index! 🙏
