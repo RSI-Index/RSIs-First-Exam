@@ -1,121 +1,63 @@
-# Contributing an RSI task with VibeRSI
+# RSI-Index
 
-> [!TIP]
->
-> ### VibeRSI: from idea to a ready RSI task in about 1 hour
->
-> Bring the idea and our agents handle the rest. Review, validate, and have fun!
+Public tasks are in [`rsi-tasks/`](rsi-tasks/) and run with the bundled
+[`RSI-Harness`](RSI-Harness/).
 
-**VibeRSI** is the RSI-Index contribution pipeline. It turns your research idea into a private, ready-to-use RSI task repository through an automated workflow, asking for your input only when a task-defining choice genuinely needs it.
+## 🚀 Quick Start
 
+You need a Linux machine with Docker, NVIDIA Container Toolkit, the GPUs
+required by your task, and [`uv`](https://docs.astral.sh/uv/).
 
-### 1. Create a proposal
-
-Clone this repository, then start a fresh Codex or Claude Code session from the
-repository root:
+### 1 — Install RSI-Harness
 
 ```bash
 git clone https://github.com/RSI-Index/RSI-Index-Public.git
 cd RSI-Index-Public
+uv tool install ./RSI-Harness
 ```
 
-Before beginning, review the repository hook configuration for your client:
-`.codex/hooks.json` for Codex or `.claude/settings.json` for Claude Code. Trust
-the repository hooks when the client asks. Declining or disabling them prevents
-trajectory submission because the agent cannot attest the original native
-session. After the first response, ask the agent to verify the binding by
-running:
+### 2 — Pick a task
 
-```text
-python3 .agents/skills/proposal-agent/scripts/proposal_session.py status --checkout .
+```bash
+find rsi-tasks -name task.toml -print
+
+export RSI_TASK="$PWD/rsi-tasks/gemm-h100-refined"
+export RSI_GPU_POOL="0"
+export RSI_MODEL="<model-id>"
 ```
 
-Ask the client to use [proposal-agent](.agents/skills/proposal-agent/SKILL.md).
-Use that one session for one proposal. The agent will help you define the
-research question, baseline, evaluation, scope, and compute requirements, then
-generate an RSI task proposal. Review the completed proposal before confirming
-it.
+Check the task's `README.md` and `task.toml` for its GPU and storage
+requirements. `RSI_GPU_POOL` accepts comma-separated GPU indexes or UUIDs.
 
-### 2. Submit the proposal
+### 3 — Run it
 
-After you confirm the proposal, `proposal-agent` creates the
-[Task Ideas Discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/categories/task-ideas)
-from the confirmed file. Return to the original session when review feedback
-arrives; the agent fetches the current Discussion, helps revise the proposal,
-and updates the same Discussion. A new review runs on every edit.
+Sign in to Codex on the host, then run:
 
-### 3. Automatic task building
+```bash
+sudo -E "$(command -v rsi-harness)" run "$RSI_TASK" \
+  --agent codex \
+  --agent-auth local \
+  --model "$RSI_MODEL" \
+  --reasoning-effort xhigh \
+  --gpus "$RSI_GPU_POOL" \
+  --primary-reward reward \
+  --max-submissions 1 \
+  --verbose
+```
 
-The standard contributor path is:
+To use an API key instead, export `RSI_AGENT_API_KEY` and optionally
+`RSI_AGENT_API_BASE_URL`, then remove `--agent-auth local`.
 
-1. Submit or edit the Discussion.
-2. Receive the PASS or REJECT initial check.
-3. After PASS, task building starts automatically.
-4. Send `/task <answer or correction>` only if asked a genuine task-defining
-   question; the answer resumes building automatically.
-5. The bot posts ACCEPTED when assumptions are resolved, then continues to the
-   private task repository.
+### 4 — View results
 
-At ACCEPTED, keep the instruction with your original session:
+```bash
+rsi-harness visualize
+```
 
-> Keep this agent session to address any feedback or revisions that may arise.
-> Once the private task repository is ready, return here and ask me to upload
-> this session's required trajectory and Discussion record.
+Open <http://127.0.0.1:8000>. Raw logs are under `logs/runs/`.
 
-To discard an unpublished attempt, send `/reset`. Reset cleans up that attempt
-and stops the workflow; send a plain `/task` to start a clean attempt.
-
-### 4. Use the private task repository
-
-The generated private repository is a self-contained workspace containing:
-
-- the generated Harbor task in its own directory;
-- the bundled read-only `RSI-Harness`;
-- the repository-local `harbor-task-validator` and `rsi-task-runner` skills.
-
-The `$...` lines below are skill invocations for your coding agent, not shell
-commands.
-
-> [!IMPORTANT]
-> **Be responsible for your experiment design.** Every setup you specify will be run on real compute resources, either your own cluster or ours. Choose a task scope, experiment plan, and compute budget that fit the GPU resources available for your burden.
-
-**Without GPUs**
-
-When your private task repository is available, return to the original
-proposal-agent session and ask it to upload the required proposal trajectory
-and Discussion record. After the agent reports the private repository and
-upload commit SHA, no task execution is required. You can clone the repository
-and inspect the complete generated task, but that upload completes the
-no-GPU contribution path.
-
-**With GPUs**
-
-First return to the original proposal-agent session and ask it to upload the
-required proposal trajectory and Discussion record. After it reports the
-private repository and upload commit SHA, clone that repository on a machine
-with the required GPU resources and follow its README:
-
-1. Invoke the bundled validator skill to perform real environment validation:
-
-   ```text
-   $harbor-task-validator ./<task-name>
-   ```
-
-2. After validation passes, invoke the bundled runner skill to run, monitor,
-   and recover the task through `RSI-Harness`:
-
-   ```text
-   $rsi-task-runner
-   ```
-
-3. Upload the separate completed experiment trajectory to the private task
-   repository.
-
-> [!CAUTION]
-> We review every task for scientific soundness, rigor, and novelty, and independently reproduce submitted tasks. Proposal approval and trajectory submission do not guarantee inclusion. A task with an unreasonable, unsupported, or irreproducible design may still be rejected after trajectory submission and excluded from RSI-Index.
-
-### 5. Share feedback
-
-Please leave brief feedback on `proposal-agent` and the overall VibeRSI pipeline in [this Discussion](https://github.com/RSI-Index/RSI-Index-Public/discussions/7).
-
-After following the path appropriate to your hardware, your task is ready for review. Thank you for contributing to RSI-Index! 🙏
+These tasks use the Harbor task format but must be run with `rsi-harness`, not
+`harbor run`, to support long-horizon RSI. See
+[`RSI-Harness/README.md`](RSI-Harness/README.md) for Blue Vela, recovery,
+cleanup, and advanced options. See
+[`CONTRIBUTING.md`](CONTRIBUTING.md) to propose a new task.

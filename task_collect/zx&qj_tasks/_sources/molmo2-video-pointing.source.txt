@@ -1,8 +1,0 @@
-repository: https://github.com/zixianma/molmo2-video-pointing
-visibility: private
-default_branch: main
-commit: d92be54fbf25fa4e780cdb2485e249a74ce6f9a7
-retrieved_date: 2026-08-15
-task_subtree: task/
-published_task_directory: ../molmo2-video-pointing/
-source_snapshot: molmo2-video-pointing-d92be54fbf25.tar.gz
