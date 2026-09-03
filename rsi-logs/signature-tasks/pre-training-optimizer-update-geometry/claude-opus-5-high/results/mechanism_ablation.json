@@ -1,0 +1,17 @@
+{
+  "anchors": {
+    "E0": {
+      "full_attempt_id": "opt-002-rmbt-e0",
+      "reduced_attempt_id": "red-003-mechoff-e0-r1"
+    },
+    "E2": {
+      "full_attempt_id": "opt-002-rmbt-e2",
+      "reduced_attempt_id": "red-002-mechoff-e2"
+    },
+    "E5": {
+      "full_attempt_id": "opt-002-rmbt-e5b-r1",
+      "reduced_attempt_id": "red-006-mechoff-e5-r1"
+    }
+  },
+  "version": 1
+}
