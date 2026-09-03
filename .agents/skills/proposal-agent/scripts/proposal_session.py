@@ -21,7 +21,9 @@ _SCHEMA = 1
 _SUPPORTED_PLATFORMS = frozenset({"codex", "claude-code"})
 PUBLIC_REPOSITORY = "RSI-Index/RSI-Index-Public"
 DISCUSSION_CATEGORY = "Task Ideas"
-_DISPATCHER_LOGIN = "rsi-index-task-dispatcher[bot]"
+_DISPATCHER_LOGINS = frozenset(
+    {"rsi-index-task-dispatcher", "rsi-index-task-dispatcher[bot]"}
+)
 _WRITE_PERMISSIONS = frozenset({"WRITE", "MAINTAIN", "ADMIN"})
 _REPOSITORY_URL = re.compile(
     r"(?<![A-Za-z0-9_.-])https://github\.com/"
@@ -1045,7 +1047,7 @@ def _publication_repository(snapshot: DiscussionSnapshot) -> tuple[str, str]:
     candidates: list[tuple[str, str]] = []
     scoped_without_url = False
     for entry in snapshot.entries:
-        if entry.author != _DISPATCHER_LOGIN:
+        if entry.author not in _DISPATCHER_LOGINS:
             continue
         if entry.body.count("<!-- rsi-task-bot:") != 1 or marker.search(entry.body) is None:
             continue

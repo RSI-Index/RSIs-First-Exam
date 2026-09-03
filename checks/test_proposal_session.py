@@ -235,6 +235,7 @@ class LifecycleRunner:
 def discussion_payload(
     *,
     publication_body: str | None = None,
+    publication_author: str = "rsi-index-task-dispatcher[bot]",
 ) -> dict[str, object]:
     publication = publication_body or (
         "Task repository: https://github.com/RSI-Index/example-d41\n\n"
@@ -257,7 +258,7 @@ def discussion_payload(
                             "id": "DC_LATE",
                             "body": publication,
                             "createdAt": "2026-09-01T13:00:00Z",
-                            "author": {"login": "rsi-index-task-dispatcher[bot]"},
+                            "author": {"login": publication_author},
                             "replies": {
                                 "nodes": [],
                                 "pageInfo": {"hasNextPage": False, "endCursor": None},
@@ -296,6 +297,7 @@ class PublishingRunner:
         viewer_permission: str = "WRITE",
         repository: str = "RSI-Index/example-d41",
         publication_body: str | None = None,
+        publication_author: str = "rsi-index-task-dispatcher[bot]",
         second_directory: bool = False,
         existing_trajectory: bool = False,
         staged_matches: bool = True,
@@ -305,6 +307,7 @@ class PublishingRunner:
         self.viewer_permission = viewer_permission
         self.repository = repository
         self.publication_body = publication_body
+        self.publication_author = publication_author
         self.second_directory = second_directory
         self.existing_trajectory = existing_trajectory
         self.staged_matches = staged_matches
@@ -329,7 +332,10 @@ class PublishingRunner:
             variables = graphql_variables(argv)
             query = variables["query"]
             if "ProposalDiscussion" in query:
-                payload = discussion_payload(publication_body=self.publication_body)
+                payload = discussion_payload(
+                    publication_body=self.publication_body,
+                    publication_author=self.publication_author,
+                )
                 if self.paginate_comments:
                     node = payload["data"]["node"]
                     comments = node["comments"]
@@ -1095,6 +1101,18 @@ def test_upload_preserves_native_bytes_and_complete_discussion(tmp_path: Path) -
     assert "transcript" not in json.dumps(metadata)
     assert result.repository == "RSI-Index/example-d41"
     assert result.commit_sha == "abc123"
+
+
+def test_upload_accepts_graphql_app_login_without_bot_suffix(tmp_path: Path) -> None:
+    checkout, _ = activated_binding(tmp_path)
+    bind_discussion(checkout)
+    runner = PublishingRunner(publication_author="rsi-index-task-dispatcher")
+
+    result = module.upload_trajectory(checkout, run=runner)
+
+    assert result.repository == "RSI-Index/example-d41"
+    assert result.commit_sha == "abc123"
+    assert runner.pushed
 
 
 @pytest.mark.parametrize(
