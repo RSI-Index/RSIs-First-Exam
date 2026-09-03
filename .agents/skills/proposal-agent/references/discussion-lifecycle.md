@@ -20,15 +20,17 @@ Continue in the same session. This agent is not a background monitor: GitHub can
 python3 .agents/skills/proposal-agent/scripts/proposal_session.py discussion status --checkout <public-root>
 ```
 
+Treat the Discussion as a serialized workflow: allow only one Discussion mutation at a time. After `discussion create`, `discussion update`, or one `/task ...` reply, wait until `discussion status` reports the corresponding completed result before editing or posting again. A normal proposal pass starts task preparation automatically; do not edit or post `/task` merely to start, hurry, or retry it. After `/reset`, one `/task` may restart the workflow.
+
 If any Discussion or upload command reports missing current-turn proof or a session mismatch, do not work around it. Explain that repository hooks must remain enabled, ask the contributor to resume the original bound Codex or Claude Code session, and retry there.
 
-When the current review requires a scientific change, route it back through the owning round and obtain the contributor's confirmation instead of silently changing a confirmed decision. Rewrite and reread the same proposal file under the Round 6 overwrite rule, then update the same Discussion rather than creating another one:
+When feedback arrives, use exactly one path. If it requires a scientific-contract change, route it back through the owning round and obtain the contributor's confirmation instead of silently changing a confirmed decision. Rewrite and reread the same proposal file under the Round 6 overwrite rule, then update the same Discussion rather than creating another one:
 
 ```text
 python3 .agents/skills/proposal-agent/scripts/proposal_session.py discussion update --checkout <public-root> --proposal <proposal-path>
 ```
 
-When task preparation asks a genuine task-defining question, help the contributor resolve it in this same session and have their exact contributor-owned answer posted to the same Discussion as `/task <answer or correction>`. Do not use `/task` merely to start a passed proposal.
+If task preparation instead asks a genuine task-defining question that does not require changing the proposal body, help the contributor resolve it in this same session and post their exact contributor-owned answer as one `/task <answer or correction>`. Never update the proposal and post `/task` for the same feedback. If GitHub, the runner, Codex, or another transport or service fails, report the failure and wait for the contributor; do not autonomously retry by editing the Discussion or posting another command.
 
 After `discussion status` shows the verified private task repository is ready, upload the native session trajectory and complete Discussion record:
 
