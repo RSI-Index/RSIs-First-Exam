@@ -61,13 +61,15 @@ them to select a decision tier.
   instead use evaluation-time retraining under a fixed protocol from a submitted
   declarative configuration or manifest.
 - **Normal compute reference:** Work must use at least 1 GPU; the end-to-end lane
-  uses at most 8 H100-equivalent GPUs and at most 12 hours for one single
-  experiment run. Judge may use zero GPUs when appropriate. Runtime over 12
-  hours remains non-blocking at proposal stage.
+  uses at most 8 GPUs on one physical node and at most 12 hours for one single
+  experiment run. H100 is the budgeting reference, not a required model:
+  compatible A100, B100, or other GPUs are allowed unless the task genuinely
+  requires a specific GPU model. Judge may use zero GPUs when appropriate.
+  Runtime over 12 hours remains non-blocking at proposal stage.
 - **Execution-lane eligibility:** Work must use at least 1 GPU, and one single
-  experiment run must fit on one physical node with at most 8 H100-equivalent
-  GPUs at peak. CPU-only Work, multi-node lanes, and lanes using more than 8
-  H100-equivalent GPUs are outside the currently admitted task class.
+  experiment run must fit on one physical node with at most 8 GPUs at peak.
+  CPU-only Work, multi-node lanes, and lanes using more than 8 GPUs are outside
+  the currently admitted task class.
 - **Current execution model:** the current RSI-Harness uses a shared
   Base/Work/Judge environment. Judge evaluates the Work snapshot, and task-owned
   tests are injected Judge-only; this is not an independent clean-Base verifier.
@@ -123,10 +125,12 @@ Evaluate all nine gates before deciding. Do not stop at the first concern.
   workflow. A vague statement that an operator will pre-provision something
   later is insufficient.
 - Work must use at least 1 GPU. The selected execution lane must fit on a single
-  physical node and use at most 8 H100-equivalent GPUs at peak; Judge may use
-  zero GPUs when appropriate. A CPU-only Work lane, a lane that inherently
-  requires multi-node execution, or a lane requiring more than 8 H100-equivalent
-  GPUs fails this gate unless the proposal already selects a faithful,
+  physical node and use at most 8 GPUs at peak; Judge may use zero GPUs when
+  appropriate. H100 is the budgeting reference, not a required model:
+  compatible A100, B100, or other GPUs are allowed unless the task genuinely
+  requires a specific GPU model. A CPU-only Work lane, a lane that inherently
+  requires multi-node execution, or a lane requiring more than 8 GPUs fails
+  this gate unless the proposal already selects a faithful,
   repository-supported eligible lane.
 
 ### 3. Model-Development AutoResearch Scope
@@ -302,7 +306,7 @@ topology and peak-count eligibility are handled by the Source Repository gate.
   execution failure is sufficient when relevant.
 - If runtime exceeds 12 hours, write a clear `Flag` and state the estimate. The
   runtime flag is retained for resource review after baseline reproduction.
-- CPU-only Work, multi-node execution, or more than 8 H100-equivalent GPUs is
+- CPU-only Work, multi-node execution, or more than 8 GPUs is
   not a non-blocking compute flag; it fails the Source Repository gate as an
   ineligible execution lane.
 - If the estimate is absent or still approximate, write `Estimate incomplete`

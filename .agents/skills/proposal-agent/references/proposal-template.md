@@ -37,8 +37,10 @@ runtime, or final verifier behavior.
 | Compute Feasibility | Early-stopping signals / lower-cost proxy experiments | [For significantly over-reference runs, repository-supported plan chosen by contributor; for ordinary runs, N/A or clear failure termination only] |
 
 The admitted lane must use at least 1 GPU in Work, fit on a single physical node,
-and use at most 8 H100-equivalent GPUs at peak. Judge may use zero GPUs when
-appropriate. CPU-only Work, multi-node, or larger-peak lanes are rejected unless
+and use at most 8 GPUs at peak. H100 is the budgeting reference, not a required
+model: compatible A100, B100, or other GPUs are allowed unless the task genuinely
+requires a specific GPU model. Judge may use zero GPUs when appropriate.
+CPU-only Work, multi-node, or larger-peak lanes are rejected unless
 the contributor selects a faithful repository-supported eligible lane.
 Runtime over 12 hours remains a non-blocking resource-review flag after baseline
 reproduction. Early-stop or proxy advice is reserved for long-runtime or
