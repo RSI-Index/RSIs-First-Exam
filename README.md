@@ -1,4 +1,4 @@
-# RSI-Index
+# RSI's First Exam
 
 Public tasks and execution logs are available in [`rsi-tasks/`](rsi-tasks/) and [`rsi-logs/`](rsi-logs/), respectively, and can be reproduced using the bundled [`RSI-Harness`](RSI-Harness/).
 
