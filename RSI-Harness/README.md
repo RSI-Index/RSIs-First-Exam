@@ -177,6 +177,48 @@ sudo -E "$(command -v rsi-harness)" cleanup RUN_ID \
   --delete-workspace --yes
 ```
 
+## Quick Commands
+
+Use `rsi-harness COMMAND --help` for the complete CLI reference. The examples
+below assume that `rsi-harness` is on `PATH`; local Docker lifecycle commands
+may need to be prefixed with `sudo -E "$(command -v rsi-harness)"` as shown
+above.
+
+| Command | Purpose | Example |
+| --- | --- | --- |
+| `run TASK_DIR` | Run a Harbor task locally, or submit it to a cluster when `--cluster` is set. | `rsi-harness run ../rsi-tasks/minference-sparse-prefill --agent codex --agent-auth local --model gpt-5.6-sol --reasoning-effort xhigh --gpus 0` |
+| `visualize` | Serve the run visualizer. | `rsi-harness visualize` |
+| `recover [RUN_ID]` | Recover one interrupted run, or all unfinished runs when `RUN_ID` is omitted. | `rsi-harness recover RUN_ID` |
+| `cleanup RUN_ID` | Remove leftover runtime resources while retaining the final workspace. | `rsi-harness cleanup RUN_ID` |
+| `cleanup RUN_ID --delete-workspace --yes` | Also delete the retained final workspace without prompting. | `rsi-harness cleanup RUN_ID --delete-workspace --yes` |
+
+### Common `run` options
+
+| Option | Purpose | Default |
+| --- | --- | --- |
+| `TASK_DIR` | Path to a supported Harbor task directory. | Required |
+| `--agent NAME` | Agent adapter to run: `codex` or `claude-code`. | `codex` |
+| `--gpus LIST` | Ordered, comma-separated local GPU indexes or UUIDs. The Work container receives the count declared by the task. This option cannot be combined with `--cluster`. | Automatically select the task-declared GPU count; `gpus = "all"` requires an explicit list |
+| `--model NAME` | Override the model used by the selected Agent. | `RSI_AGENT_MODEL`, then the Agent's default |
+| `--reasoning-effort LEVEL` | Set an Agent-supported reasoning effort. | Agent default |
+| `--agent-auth local` | Reuse credentials from the local Codex or Claude Code login. | Not set; use `RSI_AGENT_API_KEY` when provided |
+| `--timeout SECONDS` | Override the Agent time limit. | Task `agent.timeout_sec`, or 60 seconds if unset |
+| `--max-submissions N` | Limit how many Judge submissions the Agent may make. | Unlimited |
+| `--cooldown SECONDS` | Require a minimum delay between submissions. | `0.0` |
+| `--primary-reward KEY` | Select the reward key used as the primary score. | `reward`, or the only reward key when exactly one exists |
+| `--score-direction DIRECTION` | Choose whether the best score is the maximum or minimum: `maximize` or `minimize`. | `maximize` |
+| `--disable-stop-hook` | Let the Agent stop naturally instead of installing the RSI Loop stop hook. | Disabled; the stop hook is installed |
+| `--cluster NAME_OR_PROFILE` | Run through a named cluster integration or profile TOML instead of local Docker. | Not set; run locally |
+| `--dry-run` | Resolve and print cluster submissions without submitting jobs. Requires `--cluster`. | Disabled |
+| `--data-root PATH` | Store runtime state under this directory. | `.rsi-harness` |
+| `--logs-root PATH` | Store logs and run artifacts under this directory. | `logs` |
+| `--verbose` | Include diagnostic details in errors. | Disabled |
+
+The default roots are resolved relative to the current working directory.
+`visualize` uses the same roots and listens on `127.0.0.1:8000` by default.
+Both `recover` and `cleanup` also accept `--data-root`, `--logs-root`, and
+`--verbose`.
+
 ## Acknowledgements
 
 RSI Harness builds on [Harbor](https://github.com/harbor-framework/harbor) and
