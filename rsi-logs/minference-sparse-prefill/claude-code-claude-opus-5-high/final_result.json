@@ -1,0 +1,14 @@
+{
+  "agent": "claude-code",
+  "best_rewards": {
+    "reward": 1.291530685508356
+  },
+  "best_round": "agent-1",
+  "best_score": 1.291530685508356,
+  "model": "claude-opus-5",
+  "runtime_seconds": 4940.72061266494,
+  "status": "completed",
+  "timed_out": false,
+  "timeout_seconds": 151200.0,
+  "total_rounds": 2
+}

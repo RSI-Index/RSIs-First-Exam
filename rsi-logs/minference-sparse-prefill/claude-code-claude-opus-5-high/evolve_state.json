@@ -1,0 +1,26 @@
+{
+  "best_round": "agent-1",
+  "best_score": 1.291530685508356,
+  "submissions": [
+    {
+      "at": 1788404830.457751,
+      "kind": "agent",
+      "rewards": {
+        "reward": 1.291530685508356
+      },
+      "round": "agent-1",
+      "score": 1.291530685508356,
+      "status": "completed"
+    },
+    {
+      "at": 1788406967.810353,
+      "kind": "agent",
+      "rewards": {
+        "reward": 1.2891834091680494
+      },
+      "round": "agent-2",
+      "score": 1.2891834091680494,
+      "status": "completed"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "compiler_validation": "PASS",
+  "confirmation_sha256": "c8ae3a11b0b6a1ded667a273d9de7a14a6286d866170a50aba5280055fcac66f",
+  "correction_count": 2,
+  "final_status": "REVIEWED_WITH_FINAL_CORRECTIONS",
+  "initial_review_decision": "CHANGES_REQUIRED",
+  "proposal_sha256": "dfd8f9deab161595bc4d09f5eeafaa7cd9e902508fb8673e7cff25fd5a0c60af",
+  "public_commit": "f69920d9061875c09d6070ad82f6f12ea258d9d3",
+  "rereview_decision": "CHANGES_REQUIRED",
+  "schema": 1,
+  "skills_commit": "cb1a60f35fe074f0806a44797f85378a3b27cef0",
+  "source": {
+    "discussion_node_id": "D_kwDOT4zfac4Ao3lO",
+    "discussion_number": 16,
+    "discussion_url": "https://github.com/RSI-Index/RSI-Index-Public/discussions/16"
+  },
+  "static_validation": "PASS",
+  "task_tree_sha256": "08d32e71cab22ee5dd8c02d9407c11294bab6a7d3921c0b7e3cc351536e1589f",
+  "validation_attestation_sha256": "802b15d3232ed989dd488fd0405b6d072ebed8c856aae54ba86a37be463ec683"
+}

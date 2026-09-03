@@ -1,0 +1,2 @@
+INFO:    gocryptfs not found, will not be able to use gocryptfs
+{"aggregation": "median_tflops", "correctness": "passed", "median_tflops": 716.483, "reward": 716.483, "selected_version": "gemm_v007_epi.cu", "status": "ok", "valid_repeats": 5}
