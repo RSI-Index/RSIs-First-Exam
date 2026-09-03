@@ -50,7 +50,7 @@ To use an API key instead, export `RSI_AGENT_API_KEY` and optionally
 ### 4 — View results
 
 ```bash
-rsi-harness visualize
+sudo -E "$(command -v rsi-harness)" visualize
 ```
 
 Open <http://127.0.0.1:8000>. Raw logs are under `logs/runs/`.
