@@ -1,5 +1,7 @@
 # RSI's First Exam
 
+We are witnessing the dawn of a new era: AI is entering a recursive self-improvement loop. The central question is whether this loop can move beyond the best-known human-designed method and reliably extend the scientific frontier. Answering it requires careful measurement, and building that measurement carefully is the purpose of this project.
+
 Public tasks and execution logs are available in [`rsi-tasks/`](rsi-tasks/) and [`rsi-logs/`](rsi-logs/), respectively, and can be reproduced using the bundled [`RSI-Harness`](RSI-Harness/).
 
 ## 🚀 Quick Start
