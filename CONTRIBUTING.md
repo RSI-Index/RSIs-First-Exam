@@ -2,7 +2,7 @@
 
 > [!TIP]
 >
-> ### VibeRSI: from idea to a ready RSI task in about 1 hour
+> ### VibeRSI: from idea to a ready RSI task <=  30min
 >
 > Bring the idea and our agents handle the rest. Review, validate, and have fun!
 
