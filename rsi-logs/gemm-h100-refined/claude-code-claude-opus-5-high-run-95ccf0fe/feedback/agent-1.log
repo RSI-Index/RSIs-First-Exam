@@ -1,0 +1,1 @@
+{"aggregation": "median_tflops", "correctness": "passed", "median_tflops": 193.548, "reward": 193.548, "selected_version": "gemm_v001_wmma.cu", "status": "ok", "valid_repeats": 5}
