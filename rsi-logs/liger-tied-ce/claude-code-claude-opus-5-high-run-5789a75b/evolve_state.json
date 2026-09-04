@@ -1,0 +1,96 @@
+{
+  "best_round": "agent-8",
+  "best_score": 961.8609790233078,
+  "submissions": [
+    {
+      "at": 1788484707.120446,
+      "kind": "agent",
+      "rewards": {
+        "reward": 935.9928677152021
+      },
+      "round": "agent-1",
+      "score": 935.9928677152021,
+      "status": "completed"
+    },
+    {
+      "at": 1788485958.675952,
+      "kind": "agent",
+      "rewards": {
+        "reward": 903.7773401181886
+      },
+      "round": "agent-2",
+      "score": 903.7773401181886,
+      "status": "completed"
+    },
+    {
+      "at": 1788488593.475826,
+      "kind": "agent",
+      "rewards": {
+        "reward": 934.787953740673
+      },
+      "round": "agent-3",
+      "score": 934.787953740673,
+      "status": "completed"
+    },
+    {
+      "at": 1788489315.979873,
+      "kind": "agent",
+      "rewards": {
+        "reward": 949.3104507287045
+      },
+      "round": "agent-4",
+      "score": 949.3104507287045,
+      "status": "completed"
+    },
+    {
+      "at": 1788490285.842511,
+      "kind": "agent",
+      "rewards": {
+        "reward": 952.6128468960554
+      },
+      "round": "agent-5",
+      "score": 952.6128468960554,
+      "status": "completed"
+    },
+    {
+      "at": 1788490942.190352,
+      "kind": "agent",
+      "rewards": {
+        "reward": 909.0697347041338
+      },
+      "round": "agent-6",
+      "score": 909.0697347041338,
+      "status": "completed"
+    },
+    {
+      "at": 1788491667.403428,
+      "kind": "agent",
+      "rewards": {
+        "reward": 935.8342205904094
+      },
+      "round": "agent-7",
+      "score": 935.8342205904094,
+      "status": "completed"
+    },
+    {
+      "at": 1788492247.997066,
+      "kind": "agent",
+      "rewards": {
+        "reward": 961.8609790233078
+      },
+      "round": "agent-8",
+      "score": 961.8609790233078,
+      "status": "completed"
+    },
+    {
+      "at": 1788492831.542947,
+      "kind": "agent",
+      "rewards": {
+        "reward": 939.6292670296708
+      },
+      "round": "agent-9",
+      "score": 939.6292670296708,
+      "status": "completed"
+    }
+  ]
+}
