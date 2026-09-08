@@ -133,7 +133,7 @@ def bind_discussion(checkout: Path) -> module.DiscussionRef:
     ref = module.DiscussionRef(
         node_id="D_1",
         number=41,
-        url="https://github.com/RSI-Index/RSI-Index-Public/discussions/41",
+        url="https://github.com/RSI-Index/RSIs-First-Exam/discussions/41",
     )
     state_dir = module._state_dir(binding.checkout_root)
     module._atomic_json(
@@ -210,7 +210,7 @@ class LifecycleRunner:
                         "discussion": {
                             "id": self.created_id,
                             "number": 41,
-                            "url": "https://github.com/RSI-Index/RSI-Index-Public/discussions/41",
+                            "url": "https://github.com/RSI-Index/RSIs-First-Exam/discussions/41",
                         }
                     }
                 }
@@ -222,7 +222,7 @@ class LifecycleRunner:
                         "discussion": {
                             "id": self.updated_id,
                             "number": 41,
-                            "url": "https://github.com/RSI-Index/RSI-Index-Public/discussions/41",
+                            "url": "https://github.com/RSI-Index/RSIs-First-Exam/discussions/41",
                         }
                     }
                 }
@@ -247,7 +247,7 @@ def discussion_payload(
                 "__typename": "Discussion",
                 "id": "D_1",
                 "number": 41,
-                "url": "https://github.com/RSI-Index/RSI-Index-Public/discussions/41",
+                "url": "https://github.com/RSI-Index/RSIs-First-Exam/discussions/41",
                 "title": "Fixed proposal",
                 "body": "initial body",
                 "createdAt": "2026-09-01T10:00:00Z",
@@ -821,7 +821,7 @@ def test_create_discussion_uses_confirmed_file_and_persists_identity(
     assert ref == module.DiscussionRef(
         node_id="D_1",
         number=41,
-        url="https://github.com/RSI-Index/RSI-Index-Public/discussions/41",
+        url="https://github.com/RSI-Index/RSIs-First-Exam/discussions/41",
     )
     assert module.load_binding(checkout).discussion == ref
     assert runner.calls[0] == (["gh", "auth", "status"], None)
@@ -834,7 +834,7 @@ def test_create_discussion_uses_confirmed_file_and_persists_identity(
         "-f",
         "owner=RSI-Index",
         "-f",
-        "name=RSI-Index-Public",
+        "name=RSIs-First-Exam",
     ]
     assert runner.calls[2][0] == [
         "gh",
@@ -977,7 +977,7 @@ def test_fetch_discussion_paginates_replies_and_renders_timestamp_order() -> Non
     ref = module.DiscussionRef(
         node_id="D_1",
         number=41,
-        url="https://github.com/RSI-Index/RSI-Index-Public/discussions/41",
+        url="https://github.com/RSI-Index/RSIs-First-Exam/discussions/41",
     )
     runner = PublishingRunner(paginate_comments=True)
 
@@ -1022,7 +1022,7 @@ def test_interleaved_replies_keep_global_order_and_name_their_parent() -> None:
     ref = module.DiscussionRef(
         node_id="D_1",
         number=41,
-        url="https://github.com/RSI-Index/RSI-Index-Public/discussions/41",
+        url="https://github.com/RSI-Index/RSIs-First-Exam/discussions/41",
     )
     snapshot = module.DiscussionSnapshot(
         ref=ref,
@@ -1091,10 +1091,10 @@ def test_upload_preserves_native_bytes_and_complete_discussion(tmp_path: Path) -
     )
     assert metadata == {
         "discussion_number": 41,
-        "discussion_url": "https://github.com/RSI-Index/RSI-Index-Public/discussions/41",
+        "discussion_url": "https://github.com/RSI-Index/RSIs-First-Exam/discussions/41",
         "platform": "codex",
         "session_id": "session_exact",
-        "source_repository": "RSI-Index/RSI-Index-Public",
+        "source_repository": "RSI-Index/RSIs-First-Exam",
         "target_repository": "RSI-Index/example-d41",
         "uploaded_at": metadata["uploaded_at"],
     }

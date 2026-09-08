@@ -85,7 +85,7 @@ def test_review_workflow_replaces_only_current_progress_with_generic_failure():
             "client-id": "${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}",
             "private-key": "${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}",
             "owner": "RSI-Index",
-            "repositories": "RSI-Index-Public",
+            "repositories": "${{ github.event.repository.name }}",
             "permission-discussions": "write",
         },
     }
@@ -218,7 +218,7 @@ def test_review_reactions_and_comments_use_just_in_time_scoped_app_tokens():
         "client-id": "${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}",
         "private-key": "${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}",
         "owner": "RSI-Index",
-        "repositories": "RSI-Index-Public",
+        "repositories": "${{ github.event.repository.name }}",
         "permission-discussions": "write",
     }
 

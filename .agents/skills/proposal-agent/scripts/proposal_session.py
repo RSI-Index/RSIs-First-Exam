@@ -19,7 +19,7 @@ from typing import NoReturn
 
 _SCHEMA = 1
 _SUPPORTED_PLATFORMS = frozenset({"codex", "claude-code"})
-PUBLIC_REPOSITORY = "RSI-Index/RSI-Index-Public"
+PUBLIC_REPOSITORY = "RSI-Index/RSIs-First-Exam"
 DISCUSSION_CATEGORY = "Task Ideas"
 _DISPATCHER_LOGINS = frozenset(
     {"rsi-index-task-dispatcher", "rsi-index-task-dispatcher[bot]"}
@@ -738,7 +738,7 @@ def _repository_and_category(run: CommandRunner) -> tuple[str, str]:
     categories: list[str] = []
     seen_cursors: set[str] = set()
     while True:
-        variables = {"owner": "RSI-Index", "name": "RSI-Index-Public"}
+        variables = {"owner": "RSI-Index", "name": "RSIs-First-Exam"}
         if after is not None:
             variables["after"] = after
         payload = _graphql(

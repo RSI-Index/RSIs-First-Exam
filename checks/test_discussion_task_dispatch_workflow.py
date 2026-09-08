@@ -151,7 +151,7 @@ def test_authorized_task_command_gets_non_blocking_eyes_acknowledgement():
             "client-id": "${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}",
             "private-key": "${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}",
             "owner": "RSI-Index",
-            "repositories": "RSI-Index-Public",
+            "repositories": "${{ github.event.repository.name }}",
             "permission-discussions": "write",
         },
     }

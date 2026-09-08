@@ -27,7 +27,7 @@ jobs:
           client-id: ${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}
           private-key: ${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}
           owner: RSI-Index
-          repositories: RSI-Index-Public
+          repositories: ${{ github.event.repository.name }}
           permission-discussions: write
 
       - name: React with eyes
@@ -210,7 +210,7 @@ jobs:
           client-id: ${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}
           private-key: ${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}
           owner: RSI-Index
-          repositories: RSI-Index-Public
+          repositories: ${{ github.event.repository.name }}
           permission-discussions: write
 
       - name: Format and post or update comment
@@ -362,7 +362,7 @@ jobs:
           client-id: ${{ vars.RSI_DISPATCH_APP_CLIENT_ID }}
           private-key: ${{ secrets.RSI_DISPATCH_APP_PRIVATE_KEY }}
           owner: RSI-Index
-          repositories: RSI-Index-Public
+          repositories: ${{ github.event.repository.name }}
           permission-discussions: write
 
       - name: Post or update failed review comment
