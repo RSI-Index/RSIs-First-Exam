@@ -3015,7 +3015,7 @@ Failures:
 Root Cause (first observed failure):
 [0]:
   time      : 2026-08-23_23:27:00
-  host      : p6-r32-n1.bluevela.rmf.ibm.com
+  host      : [REDACTED]
   rank      : 2 (local_rank: 2)
   exitcode  : 1 (pid: 1132)
   error_file: <N/A>

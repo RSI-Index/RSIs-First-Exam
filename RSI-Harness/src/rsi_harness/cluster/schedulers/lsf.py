@@ -1,4 +1,4 @@
-"""Synchronous IBM Spectrum LSF job submission."""
+"""Synchronous Spectrum LSF job submission."""
 
 from __future__ import annotations
 

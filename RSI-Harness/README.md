@@ -115,8 +115,7 @@ timeouts, and other runtime settings come from the task. Run
 
 ## Run multi-node tasks on a cluster
 
-Below is an example using Blue Vela, an HPC cluster managed by IBM Spectrum
-LSF. You can use this integration as a reference to adapt RSI Harness directly
+Below is an example using Blue Vela, an HPC cluster managed by LSF. You can use this integration as a reference to adapt RSI Harness directly
 to your own cluster. Preview the resolved job without submitting it:
 
 ```bash
