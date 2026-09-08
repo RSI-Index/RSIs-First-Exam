@@ -143,6 +143,20 @@ def bind_discussion(checkout: Path) -> module.DiscussionRef:
     return ref
 
 
+def test_session_bound_before_repository_rename_can_fetch_current_discussion(tmp_path):
+    checkout, _ = activated_binding(tmp_path)
+    current = bind_discussion(checkout)
+    binding = module.load_binding(checkout)
+    legacy = replace(current, url="https://github.com/RSI-Index/RSI-Index-Public/discussions/41")
+    module._atomic_json(
+        module._state_dir(checkout) / "binding.json",
+        module._binding_payload(replace(binding, discussion=legacy)),
+    )
+
+    assert module.load_binding(checkout).discussion == current
+    assert module.discussion_status(checkout, run=PublishingRunner()).ref == current
+
+
 def graphql_variables(arguments: Sequence[str]) -> dict[str, str]:
     assert list(arguments[:3]) == ["gh", "api", "graphql"]
     fields = list(arguments[3:])

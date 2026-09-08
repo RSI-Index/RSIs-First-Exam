@@ -315,6 +315,10 @@ def _read_discussion(value: object) -> DiscussionRef | None:
         or not url
     ):
         _fail("binding discussion has invalid values")
+    # Keep sessions bound before the repository rename usable with GitHub's
+    # canonical URL, without changing the bound Discussion node or number.
+    if url == f"https://github.com/RSI-Index/RSI-Index-Public/discussions/{number}":
+        url = f"https://github.com/{PUBLIC_REPOSITORY}/discussions/{number}"
     return DiscussionRef(node_id=node_id, number=number, url=url)
 
 
