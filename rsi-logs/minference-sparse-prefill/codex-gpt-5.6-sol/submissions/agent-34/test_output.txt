@@ -1,0 +1,2 @@
+INFO:    gocryptfs not found, will not be able to use gocryptfs
+{"status":"scoreable","by_length":{"32768":{"baseline_median_ms":16.568416237831116,"candidate_median_ms":10.413655936717987,"speedup":1.4879179092576507},"65536":{"baseline_median_ms":60.9117693901062,"candidate_median_ms":38.84111142158508,"speedup":1.4863422615756123},"131072":{"baseline_median_ms":220.69601583480835,"candidate_median_ms":155.03998351097107,"speedup":1.416751193103455}},"peak_hbm_mib":16385.25,"wall_time_sec":51.328,"reward":1.4632901915764913}

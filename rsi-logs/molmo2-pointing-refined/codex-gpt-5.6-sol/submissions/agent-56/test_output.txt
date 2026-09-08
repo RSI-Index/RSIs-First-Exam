@@ -1,0 +1,29 @@
+INFO:    gocryptfs not found, will not be able to use gocryptfs
+Traceback (most recent call last):
+  File "/tests/evaluate.py", line 282, in validate_protected_assets
+    actual_digest = digest_file(path)
+                    ^^^^^^^^^^^^^^^^^
+  File "/tests/evaluate.py", line 99, in digest_file
+    for chunk in iter(lambda: stream.read(8 * 1024 * 1024), b""):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tests/evaluate.py", line 99, in <lambda>
+    for chunk in iter(lambda: stream.read(8 * 1024 * 1024), b""):
+                              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: [Errno 107] Transport endpoint is not connected
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/tests/evaluate.py", line 455, in <module>
+    exit_code = main()
+                ^^^^^^
+  File "/tests/evaluate.py", line 401, in main
+    errors = validate_protected_assets()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tests/evaluate.py", line 284, in validate_protected_assets
+    errors.append(candidate_error(
+                  ^^^^^^^^^^^^^^^^
+  File "/tests/evaluate.py", line 104, in candidate_error
+    def candidate_error(
+    
+KeyboardInterrupt

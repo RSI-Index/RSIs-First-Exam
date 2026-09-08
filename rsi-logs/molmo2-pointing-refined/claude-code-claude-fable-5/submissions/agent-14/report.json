@@ -1,0 +1,15 @@
+{
+  "error": null,
+  "exit_code": 0,
+  "full_output_captured": true,
+  "metrics": {
+    "reward": 0.426939669759643
+  },
+  "round": "agent-14",
+  "runtime_seconds": 296.7294697938487,
+  "score": 0.426939669759643,
+  "status": "completed",
+  "submitted_at": 1787763918.624085,
+  "timed_out": false,
+  "verifier_output_required": true
+}

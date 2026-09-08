@@ -1,0 +1,15 @@
+INFO:    gocryptfs not found, will not be able to use gocryptfs
+/opt/conda/lib/python3.12/site-packages/transformers/utils/hub.py:110: FutureWarning: Using `TRANSFORMERS_CACHE` is deprecated and will be removed in v5 of Transformers. Use `HF_HOME` instead.
+  warnings.warn(
+Using a slow image processor as `use_fast` is unset and a slow processor was saved with this model. `use_fast=True` will be the default behavior in v4.52, even if the model was saved with a slow processor. This will result in minor differences in outputs. You'll still be able to use a slow processor with `use_fast=False`.
+
+Loading checkpoint shards:   0%|          | 0/4 [00:00<?, ?it/s]
+Loading checkpoint shards:  25%|██▌       | 1/4 [00:00<00:02,  1.14it/s]
+Loading checkpoint shards:  50%|█████     | 2/4 [00:01<00:01,  1.19it/s]
+Loading checkpoint shards:  75%|███████▌  | 3/4 [00:02<00:00,  1.24it/s]
+Loading checkpoint shards: 100%|██████████| 4/4 [00:03<00:00,  1.24it/s]
+Loading checkpoint shards: 100%|██████████| 4/4 [00:03<00:00,  1.22it/s]
+molmo-utils using decord by default to read video.
+/tmp/molmo2-judge-videos-wp2zbo3t/hf/modules/transformers_modules/model/modeling_molmo2.py:1320: UserWarning: Specified kernel cache directory could not be created! This disables kernel caching. Specified directory is /tmp/molmo2-judge-videos-wp2zbo3t/xdg/torch/kernels. This warning will appear only once per process. (Triggered internally at /pytorch/aten/src/ATen/native/cuda/jit_utils.cpp:1487.)
+  num_pooled_patches_per_video = video_grids.prod(dim=1)  # [num_videos]
+{"reward": 0.356433313402252, "status": "ok", "summary": {"empty_soft_f1": 0.4166666666666667, "examples": 72, "mean_generated_tokens": 25.77777777777778, "mean_predicted_triplets": 0.6111111111111112, "positive_soft_f1": 0.2961999601378373, "valid_prediction_fraction": 0.5416666666666666}}
