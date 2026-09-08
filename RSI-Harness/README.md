@@ -1,13 +1,18 @@
 # RSI Harness
 
-RSI Harness is an evaluation framework for Coding Agents tackling
-ultra-long-horizon RSI tasks. Agents such as Claude Code and Codex develop
-solutions in a persistent, isolated Work container and submit solutions to a
-fresh Judge for scoring. They can iterate on test feedback until the submission
-limit or timeout, with the highest score retained as the final result.
+RSI Harness powers RSI's First Exam for ultra-long-horizon RSI runs, natively
+supporting [Harbor-format tasks](../rsi-tasks/) with or without GPUs, from
+single-node local Docker to multi-node clusters.
 
-It natively supports [Harbor-format tasks](../rsi-tasks/) with or without GPUs,
-from local single-node Docker runs to multi-node clusters.
+Agents such as Claude Code and Codex develop solutions in a persistent, isolated
+Work container and submit them to a fresh Judge for scoring. They can iterate on
+test feedback until the submission limit or timeout, with the highest score
+retained as the final result.
+
+RSI Harness runs the **outer loop** only: preparing the task, pausing and
+snapshotting Work, scoring each submission in a fresh Judge, and selecting the
+final result. The **inner loop** is whichever agent you put in it — Claude Code,
+Codex, or an agent you design yourself.
 
 
 ## How it works
