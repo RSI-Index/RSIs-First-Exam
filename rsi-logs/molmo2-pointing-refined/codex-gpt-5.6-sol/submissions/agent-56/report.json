@@ -1,0 +1,13 @@
+{
+  "error": "verifier exited with 130",
+  "exit_code": 130,
+  "full_output_captured": true,
+  "metrics": {},
+  "round": "agent-56",
+  "runtime_seconds": 167.44230058975518,
+  "score": null,
+  "status": "verifier_error",
+  "submitted_at": 1788570033.033052,
+  "timed_out": false,
+  "verifier_output_required": true
+}

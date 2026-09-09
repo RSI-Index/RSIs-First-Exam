@@ -1,0 +1,2 @@
+INFO:    gocryptfs not found, will not be able to use gocryptfs
+{"errors":[{"actual":"torch.cuda.current_stream","code":"prohibited_api","condition":"the source calls a prohibited loss, dynamic-code, file, process, stream, or distributed API","field":"call","path":"/workspace/candidate.py"},{"actual":"torch.cuda.current_stream","code":"prohibited_api","condition":"prohibited APIs cannot be referenced indirectly","field":"attribute","path":"/workspace/candidate.py"}],"status":"candidate_invalid"}

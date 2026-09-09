@@ -1,0 +1,2 @@
+INFO:    gocryptfs not found, will not be able to use gocryptfs
+{"errors":[{"code":"persistent_state","condition":"module-level state must be an immutable literal","field":"module_assignment","path":"/workspace/candidate.py"}],"status":"candidate_invalid"}
