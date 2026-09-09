@@ -91,6 +91,10 @@ PYTHONDONTWRITEBYTECODE=1 RSI-Harness/.venv/bin/python \
 Work receives only individually mounted pool/baseline paths. Judge alone gets
 the evaluation tree; task asset metadata is a readiness gate, while the configured cluster phase-specific bindings are the physical visibility boundary.
 
-Site integration tests accept `RSI_CLUSTER_PROFILE` (the installed profile TOML)
-and `RSI_TASK_VALIDATOR` (the installed validator script). Without these values,
-only their two site-dependent checks are skipped; the task contract checks still run.
+The cluster mount check automatically reads the sole profile shipped in this
+checkout; no environment variable is required. It fails if the profile is
+missing or ambiguous. `RSI_CLUSTER_PROFILE` optionally selects a different
+installed profile TOML. The separate external validator is not included in this
+repository; its check automatically discovers it under
+`.agents/skills/*/scripts/validate_task.py` when installed, and otherwise skips
+as before. `RSI_TASK_VALIDATOR` optionally selects another installed script.

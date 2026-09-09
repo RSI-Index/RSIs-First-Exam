@@ -29,13 +29,13 @@ REWARD_TOOL = TASK_ROOT / "tests" / "reward.py"
 EVALUATION_TOOL = TASK_ROOT / "tests" / "run_evaluation.py"
 PREPARE_JUDGE = TASK_ROOT / "tests" / "prepare_judge.py"
 REPOSITORY_ROOT = TASK_ROOT.parents[1]
-# Site integration checks are opt-in; pass the installed profile and validator.
+# An explicit site profile overrides automatic discovery in the checkout.
 CLUSTER_PROFILE = (
-    Path(os.environ["RSI_CLUSTER_PROFILE"])
+    Path(os.environ["RSI_CLUSTER_PROFILE"]).expanduser()
     if os.environ.get("RSI_CLUSTER_PROFILE") else None
 )
 TASK_VALIDATOR = (
-    Path(os.environ["RSI_TASK_VALIDATOR"])
+    Path(os.environ["RSI_TASK_VALIDATOR"]).expanduser()
     if os.environ.get("RSI_TASK_VALIDATOR") else None
 )
 
@@ -112,14 +112,20 @@ def test_compiled_task_reserves_full_disjoint_work_and_judge_pools() -> None:
     assert definition.verifier.timeout_seconds == 21_600
 
 
-@pytest.mark.skipif(
-    CLUSTER_PROFILE is None,
-    reason="set RSI_CLUSTER_PROFILE for site integration checks",
-)
 def test_cluster_work_mounts_cannot_reach_judge_evaluation_assets() -> None:
     """Phase declarations are insufficient unless the physical binds agree."""
-    assert CLUSTER_PROFILE is not None
-    profile = tomllib.loads(CLUSTER_PROFILE.read_text(encoding="utf-8"))
+    profile_path = CLUSTER_PROFILE
+    if profile_path is None:
+        profiles = sorted(
+            (REPOSITORY_ROOT / "RSI-Harness" / "src" / "rsi_harness" / "cluster")
+            .glob("*/profile.toml")
+        )
+        assert len(profiles) == 1, (
+            "Expected one cluster profile in the checkout; "
+            "set RSI_CLUSTER_PROFILE if using a different installation"
+        )
+        profile_path = profiles[0]
+    profile = tomllib.loads(profile_path.read_text(encoding="utf-8"))
     work_targets = {
         item["target"] for item in profile["apptainer"]["work_binds"]
     }
@@ -1014,16 +1020,24 @@ def test_evaluation_loads_sealed_hf_arrow_files_without_the_hub(tmp_path: Path) 
     assert loaded == [str(arrow_paths[repository]) for repository in expected]
 
 
-@pytest.mark.skipif(
-    TASK_VALIDATOR is None,
-    reason="set RSI_TASK_VALIDATOR for the installed task validator",
-)
 def test_unified_skill_static_validator_has_no_findings() -> None:
     """The generated package must pass the exact gate used before live work."""
+    validator_path = TASK_VALIDATOR
+    if validator_path is None:
+        validators = sorted(
+            (REPOSITORY_ROOT / ".agents" / "skills")
+            .glob("*/scripts/validate_task.py")
+        )
+        if not validators:
+            pytest.skip("optional task validator is not installed")
+        assert len(validators) == 1, (
+            "Multiple task validators found; set RSI_TASK_VALIDATOR to select one"
+        )
+        validator_path = validators[0]
     completed = subprocess.run(
         [
             sys.executable,
-            str(TASK_VALIDATOR),
+            str(validator_path),
             str(TASK_ROOT),
             "--harness-root",
             str(REPOSITORY_ROOT / "RSI-Harness"),
