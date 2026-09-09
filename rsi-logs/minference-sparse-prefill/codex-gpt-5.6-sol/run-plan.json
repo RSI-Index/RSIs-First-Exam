@@ -36,24 +36,24 @@
   },
   "images": {
     "base_digest": "sha256:fbd77af42c3885f076aa0c988c559a34cf54310eda464d6a07c76367c33a1960",
-    "base_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/fbd77af42c3885f076aa0c988c559a34cf54310eda464d6a07c76367c33a1960.sif",
+    "base_ref": "/rsi-runner/images/fbd77af42c3885f076aa0c988c559a34cf54310eda464d6a07c76367c33a1960.sif",
     "judge_digest": "sha256:fbd77af42c3885f076aa0c988c559a34cf54310eda464d6a07c76367c33a1960",
-    "judge_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/fbd77af42c3885f076aa0c988c559a34cf54310eda464d6a07c76367c33a1960.sif",
+    "judge_ref": "/rsi-runner/images/fbd77af42c3885f076aa0c988c559a34cf54310eda464d6a07c76367c33a1960.sif",
     "judge_user": null,
     "rootfs_snapshot_mode": "split-workdir",
     "work_digest": "sha256:fbd77af42c3885f076aa0c988c559a34cf54310eda464d6a07c76367c33a1960",
-    "work_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/fbd77af42c3885f076aa0c988c559a34cf54310eda464d6a07c76367c33a1960.sif",
+    "work_ref": "/rsi-runner/images/fbd77af42c3885f076aa0c988c559a34cf54310eda464d6a07c76367c33a1960.sif",
     "work_user": null,
     "workdir": "/workspace"
   },
   "paths": {
-    "logs": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/logs",
-    "root": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260904T183926Z-minference-sparse-prefill-3a71e92d",
-    "workspace": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260904T183926Z-minference-sparse-prefill-3a71e92d/workspace"
+    "logs": "/rsi-runner/logs",
+    "root": "/rsi-runner/runs/20260904T183926Z-minference-sparse-prefill-3a71e92d",
+    "workspace": "/rsi-runner/runs/20260904T183926Z-minference-sparse-prefill-3a71e92d/workspace"
   },
   "rootfs_snapshot_mode": "split-workdir",
   "schema_version": 2,
-  "snapshot_kind": "bluevela-apptainer-engine",
+  "snapshot_kind": "apptainer-engine",
   "task": {
     "agent": {
       "auto_resume": true,
@@ -110,7 +110,7 @@
     "require_disjoint_phase_nodes": false,
     "score_direction": "maximize",
     "service": {
-      "build_context": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260904T183926Z-minference-sparse-prefill-3a71e92d/control/task/environment",
+      "build_context": "/rsi-runner/runs/20260904T183926Z-minference-sparse-prefill-3a71e92d/control/task/environment",
       "build_timeout_seconds": 7200.0,
       "cpus": 16,
       "environment": [
@@ -153,7 +153,7 @@
       "workdir": "/workspace"
     },
     "source_digest": "54b7b77ad5ef9766352517ecc9f8921979c4edbd50f5769d8661282d1f5cda74",
-    "source_dir": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260904T183926Z-minference-sparse-prefill-3a71e92d/control/task",
+    "source_dir": "/rsi-runner/runs/20260904T183926Z-minference-sparse-prefill-3a71e92d/control/task",
     "task_id": "minference-sparse-prefill",
     "tests_digest": "e1b8a22aa137568de3132b78139e53d5b2c46c87ffa6003172352f1fee0e5253",
     "verifier": {

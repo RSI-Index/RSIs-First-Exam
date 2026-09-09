@@ -36,24 +36,24 @@
   },
   "images": {
     "base_digest": "sha256:a8613ee237111576237c2836a5027071bec6c49195332d371f745c904214a538",
-    "base_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/a8613ee237111576237c2836a5027071bec6c49195332d371f745c904214a538.sif",
+    "base_ref": "/rsi-runner/images/a8613ee237111576237c2836a5027071bec6c49195332d371f745c904214a538.sif",
     "judge_digest": "sha256:a8613ee237111576237c2836a5027071bec6c49195332d371f745c904214a538",
-    "judge_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/a8613ee237111576237c2836a5027071bec6c49195332d371f745c904214a538.sif",
+    "judge_ref": "/rsi-runner/images/a8613ee237111576237c2836a5027071bec6c49195332d371f745c904214a538.sif",
     "judge_user": null,
     "rootfs_snapshot_mode": "split-workdir",
     "work_digest": "sha256:a8613ee237111576237c2836a5027071bec6c49195332d371f745c904214a538",
-    "work_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/a8613ee237111576237c2836a5027071bec6c49195332d371f745c904214a538.sif",
+    "work_ref": "/rsi-runner/images/a8613ee237111576237c2836a5027071bec6c49195332d371f745c904214a538.sif",
     "work_user": null,
     "workdir": "/workspace/molmo2-pointing"
   },
   "paths": {
-    "logs": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/logs",
-    "root": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260826T154301Z-molmo2-pointing-refined-d74cea68",
-    "workspace": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260826T154301Z-molmo2-pointing-refined-d74cea68/workspace"
+    "logs": "/rsi-runner/logs",
+    "root": "/rsi-runner/runs/20260826T154301Z-molmo2-pointing-refined-d74cea68",
+    "workspace": "/rsi-runner/runs/20260826T154301Z-molmo2-pointing-refined-d74cea68/workspace"
   },
   "rootfs_snapshot_mode": "split-workdir",
   "schema_version": 2,
-  "snapshot_kind": "bluevela-apptainer-engine",
+  "snapshot_kind": "apptainer-engine",
   "task": {
     "agent": {
       "environment": [],
@@ -78,7 +78,7 @@
     "instruction_digest": "a3ac4db277c5db479cd2f3b86bc23127cc61ddbcb6c758a325a92373ae20c7a4",
     "score_direction": "maximize",
     "service": {
-      "build_context": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260826T154301Z-molmo2-pointing-refined-d74cea68/control/task/environment",
+      "build_context": "/rsi-runner/runs/20260826T154301Z-molmo2-pointing-refined-d74cea68/control/task/environment",
       "build_timeout_seconds": 10800.0,
       "cpus": 16,
       "environment": [],
@@ -92,7 +92,7 @@
       "workdir": "/workspace/molmo2-pointing"
     },
     "source_digest": "67680fee456d7e51b0628d57a21b4b10c73fb8af0b766338640d8adc89fdc044",
-    "source_dir": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260826T154301Z-molmo2-pointing-refined-d74cea68/control/task",
+    "source_dir": "/rsi-runner/runs/20260826T154301Z-molmo2-pointing-refined-d74cea68/control/task",
     "task_id": "molmo2-pointing-refined",
     "tests_digest": "377fe9902aac485984cf401805b4fb4fc59c321bb20585062112904d8d456fee",
     "verifier": {

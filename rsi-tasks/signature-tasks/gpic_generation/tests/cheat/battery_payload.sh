@@ -1,8 +1,10 @@
 #!/bin/bash
 set -uxo pipefail
-WORK=/lustre/fsw/portfolios/nvr/projects/nvr_lacr_llm/users/gracieh/task
+SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+TASK_ROOT=$(cd -- "$SCRIPT_DIR/../.." && pwd)
+export GPIC_WORK_ROOT="${GPIC_WORK_ROOT:-$TASK_ROOT}"
 pip install --no-cache-dir -q scipy scikit-learn 2>/dev/null
-pip install --no-cache-dir -q --no-deps $WORK/gpic/gpic_eval
-export TORCH_HOME=$WORK/torch_home HF_HUB_OFFLINE=1
-export GPIC_QWEN_DIR=$WORK/hf_models/Qwen3-1.7B
-python $WORK/cheat/run_battery.py
+pip install --no-cache-dir -q --no-deps "$GPIC_WORK_ROOT/gpic/gpic_eval"
+export TORCH_HOME="$GPIC_WORK_ROOT/torch_home" HF_HUB_OFFLINE=1
+export GPIC_QWEN_DIR="$GPIC_WORK_ROOT/hf_models/Qwen3-1.7B"
+python "$SCRIPT_DIR/run_battery.py"

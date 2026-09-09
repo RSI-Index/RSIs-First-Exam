@@ -251,8 +251,8 @@ PY" in /workspace
  succeeded in 23050ms:
 /workspace/research:
 total 1
-drwxr-xr-x+ 2 yuetai nogroup 4096 Sep  1 04:09 .
-drwxr-xr-x+ 3 yuetai nogroup 4096 Sep  1 04:09 ..
+drwxr-xr-x+ 2 runner nogroup 4096 Sep  1 04:09 .
+drwxr-xr-x+ 3 runner nogroup 4096 Sep  1 04:09 ..
 metadata_files 26
 meta /rsi-data/datacomp-small/commonpool/metadata/0020f0cbd157d470aa56bea08e304b90.parquet rows 505671 rowgroups 1
 uid: string
@@ -4400,8 +4400,8 @@ def load_uids_with_image_filter(
             pass
 
         if all(not p.is_alive() for p in processes):
--rw-rw-r--+ 1 yuetai yuetai  11K Sep  1 10:16 /workspace/research/profile.json
--rw-rw-r--+ 1 yuetai yuetai 786M Sep  1 10:15 /workspace/research/successful_metadata.parquet
+-rw-rw-r--+ 1 runner runner  11K Sep  1 10:16 /workspace/research/profile.json
+-rw-rw-r--+ 1 runner runner 786M Sep  1 10:15 /workspace/research/successful_metadata.parquet
 
 diff --git a/research/profile_pool.py b/research/profile_pool.py
 new file mode 100644
@@ -6443,7 +6443,7 @@ if __name__ == "__main__":
 # Name of the method to be shown on the leaderboard
 METHOD_NAME: test
 # Email for contact.
-EMAIL: gabriel.ilharco@gmail.com
+EMAIL: source-author-01@example.invalid
 # Name of the contact person.
 CONTACT_AUTHOR: Gabriel Ilharco
 
@@ -11946,7 +11946,7 @@ sim=0.9594 l=0.278/0.262 sha_same=False dim=130/150 dom=api.qrserver.com|api.qrs
  A QR Code urbis:sobre-projeto (generated for current page)
  B QR-Code dieser Seite
 sim=0.9612 l=0.327/0.284 sha_same=False dim=394/394 dom=mynickname.com|mynickname.com
- A Certificate for nickname ДУШ@ is registered to: vodopad-vodopad@mail.ru
+ A Certificate for nickname ДУШ@ is registered to: source-author-02@example.invalid
  B Certificate for nickname anatoria is registered to: Anat Or Lev
 sim=0.9556 l=0.257/0.257 sha_same=False dim=200/200 dom=api.qrserver.com|api.qrserver.com
  A QR-Code

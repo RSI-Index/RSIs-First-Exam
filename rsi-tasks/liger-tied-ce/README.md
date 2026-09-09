@@ -69,7 +69,7 @@ liger-tied-ce/
 For offline Agent access, export `RSI_AGENT_API_KEY` plus an operator-approved `RSI_AGENT_API_BASE_URL`, or start the documented RSI-Harness proxy. Do not store credentials in this directory.
 
 ```bash
-sudo -E "$(command -v rsi-harness)" run /home/yuetaili/_Code/0807_edge/rsi_repo/new_rsi_task/tasks/liger-kernel-fused-tied-ce/liger-tied-ce \
+sudo -E "$(command -v rsi-harness)" run "$PWD/rsi-tasks/liger-tied-ce" \
   --agent codex \
   --model gpt-5.5 \
   --reasoning-effort xhigh \
@@ -83,9 +83,9 @@ sudo -E "$(command -v rsi-harness)" run /home/yuetaili/_Code/0807_edge/rsi_repo/
 The authoring compiler command is:
 
 ```bash
-/tmp/harbor-build/liger-kernel-fused-tied-ce/venv/bin/python /home/yuetaili/_Code/0807_edge/rsi_repo/RSI-Skills/.agents/skills/harbor-task-agent/scripts/validate_task.py \
-  /home/yuetaili/_Code/0807_edge/rsi_repo/new_rsi_task/tasks/liger-kernel-fused-tied-ce/liger-tied-ce \
-  --harness-root /home/yuetaili/_Code/0807_edge/rsi_repo/RSI-Index-Public/RSI-Harness
+python3 "${RSI_TASK_VALIDATOR:?set the validator script path}" \
+  "$PWD/rsi-tasks/liger-tied-ce" \
+  --harness-root "$PWD/RSI-Harness"
 ```
 
 That command is static/compiler validation only. Docker build and image-volume inspection, pristine-container closure, `solution/solve.sh`, baseline score, full H100 direct/SFT evaluator, paired runtime/noise qualification, and real-Agent runs remain pending for `harbor-task-validator`.

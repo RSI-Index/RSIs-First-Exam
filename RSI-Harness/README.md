@@ -115,12 +115,15 @@ timeouts, and other runtime settings come from the task. Run
 
 ## Run multi-node tasks on a cluster
 
-Below is an example using Blue Vela, an HPC cluster managed by LSF. You can use this integration as a reference to adapt RSI Harness directly
-to your own cluster. Preview the resolved job without submitting it:
+The `lsf-apptainer` adapter runs single-node and multi-node tasks using LSF
+and Apptainer. Set the scheduler group and a shared storage directory visible
+at the same absolute path on every allocated node. Preview the resolved job:
 
 ```bash
+export RSI_CLUSTER_ROOT=/shared/rsi-harness
+export RSI_LSF_GROUP=my-scheduler-group
 uv run rsi-harness run "$TASK" \
-  --cluster bluevela \
+  --cluster lsf-apptainer \
   --dry-run \
   --agent codex \
   --model gpt-5.6-sol \
@@ -133,13 +136,30 @@ multi-node tasks, the adapter maps the Work and Judge requirements to full-node
 LSF allocations using the profile's GPUs-per-node setting. `--gpus` is only for
 local runs, and `gpus = "all"` needs a numeric cluster override.
 
-To adapt another LSF cluster, copy
-`src/rsi_harness/cluster/bluevela/profile.toml`, change its paths and LSF policy,
-then pass the new file:
+The packaged profile requires `USER`, `RSI_CLUSTER_ROOT`, and `RSI_LSF_GROUP`.
+It uses `/usr/bin/podman` and `/usr/bin/apptainer` and mounts no external task
+data by default. To configure your installation, copy
+`src/rsi_harness/cluster/lsf_apptainer/profile.toml`, set its tool paths, queue,
+resource limits, and phase-scoped data binds, then pass the file:
 
 ```bash
 uv run rsi-harness run "$TASK" --cluster /absolute/path/to/profile.toml ...
 ```
+
+Keep `adapter = "lsf-apptainer"` in custom profiles. `${VARIABLE}` references
+are expanded from the host environment; unset or empty variables fail before submission.
+For tasks using external data, configure `apptainer.work_binds` with only the
+training/proxy assets needed by Work and `apptainer.judge_binds` with the
+separate evaluation assets. Each bind declares an absolute `source`, an
+absolute container `target`, and `read_only = true`. Do not expose the whole
+shared storage tree merely to make one dataset visible. If your build requires
+external fakeroot helpers, configure both `builder.faked_binary` and
+`builder.fakeroot_library` in the custom profile.
+
+Existing deployments must update their profile adapter value, package imports,
+and CLI selector to these names before starting new runs. Let existing runs
+finish with their original frozen controller source. Cached image identities
+include the adapter name and may rebuild.
 
 Cluster mode preserves the native RSI-Harness run and log format. Harbor only
 compiles the task format; the adapter never invokes `harbor run`.
@@ -230,3 +250,6 @@ Both `recover` and `cleanup` also accept `--data-root`, `--logs-root`, and
 RSI Harness builds on [Harbor](https://github.com/harbor-framework/harbor) and
 [EdgeBench](https://github.com/ByteDance-Seed/EdgeBench); we thank both projects
 and their contributors.
+
+Optional legacy server deployments should follow the [administrator credential
+configuration and migration guide](docs/legacy-admin-auth.md).

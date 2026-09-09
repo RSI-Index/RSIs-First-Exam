@@ -56,8 +56,8 @@ RUN python3 /opt/rsi-build/stage_assets.py \
     && cp -a /workspace/Small-Model-Learnability-Gap/LLaMA-Factory/src/llamafactory/data /opt/rsi-assets/reference/llamafactory-data \
     && ln -s /opt/rsi-assets /workspace/assets \
     && git -C /workspace/Small-Model-Learnability-Gap init -b main \
-    && git -C /workspace/Small-Model-Learnability-Gap config user.name yichen-f \
-    && git -C /workspace/Small-Model-Learnability-Gap config user.email yfeng42@uw.edu \
+    && git -C /workspace/Small-Model-Learnability-Gap config user.name rsi-task-bot \
+    && git -C /workspace/Small-Model-Learnability-Gap config user.email rsi-task-bot@example.invalid \
     && git -C /workspace/Small-Model-Learnability-Gap add -A \
     && git -C /workspace/Small-Model-Learnability-Gap commit -m 'Pinned task starting state' \
     && test -z "$( \

@@ -24,8 +24,8 @@ import numpy as np
 import torch
 from PIL import Image
 
-WORK = Path("/lustre/fsw/portfolios/nvr/projects/nvr_lacr_llm/users/gracieh/task")
-PKG = WORK / "task_collect/yh_tasks/gpic_generation"
+PKG = Path(__file__).resolve().parents[2]
+WORK = Path(os.environ.get("GPIC_WORK_ROOT") or PKG).expanduser().resolve()
 SANDBOX = WORK / "cheat/sandbox"
 REF = WORK / "gpic_verifier/reference_stats/test_stats.npz"   # sealed test stats
 EVAL_JSONL = WORK / "cheat/eval_16.jsonl"                     # tiny frozen caption set

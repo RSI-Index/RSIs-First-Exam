@@ -57,7 +57,7 @@ export RSI_REASONING_EFFORT="${RSI_REASONING_EFFORT:?set the desired effort}"
 export RSI_GPU_POOL="${RSI_GPU_POOL:?set two authorized H100-equivalent indexes or UUIDs}"
 test -n "${RSI_AGENT_API_BASE_URL:-${HTTPS_PROXY:-${HTTP_PROXY:-}}}"
 
-sudo -E rsi-harness run /home/yuetaili/_Code/0807_edge/rsi_repo/new_rsi_task/tasks/minference-sparse-prefill/minference-sparse-prefill \
+sudo -E rsi-harness run "$PWD/rsi-tasks/minference-sparse-prefill" \
   --agent codex \
   --model "$RSI_MODEL" \
   --reasoning-effort "$RSI_REASONING_EFFORT" \
@@ -71,10 +71,10 @@ sudo -E rsi-harness run /home/yuetaili/_Code/0807_edge/rsi_repo/new_rsi_task/tas
 Authoritative non-executing static/compiler command:
 
 ```bash
-/tmp/harbor-build/minference-sparse-prefill/venv/bin/python3 \
-  /home/yuetaili/_Code/0807_edge/rsi_repo/RSI-Skills/.agents/skills/harbor-task-agent/scripts/validate_task.py \
-  /home/yuetaili/_Code/0807_edge/rsi_repo/new_rsi_task/tasks/minference-sparse-prefill/minference-sparse-prefill \
-  --harness-root /home/yuetaili/_Code/0807_edge/rsi_repo/RSI-Index-Public/RSI-Harness
+python3 \
+  "${RSI_TASK_VALIDATOR:?set the validator script path}" \
+  "$PWD/rsi-tasks/minference-sparse-prefill" \
+  --harness-root "$PWD/RSI-Harness"
 ```
 
 The parent `HANDOFF.md` records the actual Stage 8/9 outcomes. Source/ref and registry metadata verification, pure policy/lifecycle regressions, syntax checks, static validation, compiler validation, and independent review belong to authoring. Docker build and image-volume preflight; pristine container closure; public proxy; Solution/baseline; CUDA-extension/Triton compile; positive/negative numerical and stream controls; full H100 correctness, memory, timing, timeout, and variance; evaluator execution; and real-Agent execution remain pending for `harbor-task-validator`.

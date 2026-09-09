@@ -150,7 +150,7 @@ timed_out: false
 duration_seconds: 7745.020722186193
 remaining: unlimited
 total 1
--rw-rw-r--+ 2 yuetai yuetai 301 Sep  2 04:28 agent-1.log
+-rw-rw-r--+ 2 runner runner 301 Sep  2 04:28 agent-1.log
 INFO:    gocryptfs not found, will not be able to use gocryptfs
 {"forward_flops": 2005551546368, "loss_aggregates": 100, "mean_loss": 3.422798912525177, "parameters": 233489152, "processed_tokens": 10003415040, "reward": -3.422798912525177, "status": "scored", "training_flops": 14694114625805352960}
 
@@ -2890,7 +2890,7 @@ exit_code: 0
 timed_out: false
 duration_seconds: 7748.36010982655
 remaining: unlimited
--rw-rw-r--+ 2 yuetai yuetai 301 Sep  3 10:52 /run/rsi-harness/feedback/agent-15.log
+-rw-rw-r--+ 2 runner runner 301 Sep  3 10:52 /run/rsi-harness/feedback/agent-15.log
 INFO:    gocryptfs not found, will not be able to use gocryptfs
 {"forward_flops": 2005551546368, "loss_aggregates": 100, "mean_loss": 3.425647532939911, "parameters": 233489152, "processed_tokens": 10003415040, "reward": -3.425647532939911, "status": "scored", "training_flops": 14694114625805352960}
 

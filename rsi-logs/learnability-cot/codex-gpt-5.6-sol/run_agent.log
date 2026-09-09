@@ -165,46 +165,46 @@ find /workspace/Small-Model-Learnability-Gap -maxdepth 3 -type f \\( -name '*.md
 rsi-submit --help" in /workspace
  exited 130 in 12615ms:
 find: ‘../proc/tty/driver’: Permission denied
-find: ‘../proj/moc-datasets’: Permission denied
-find: ‘../proj/moc-checkpoints’: Permission denied
-find: ‘../proj/hg-co’: Permission denied
-find: ‘../proj/aa-algo-disc’: Permission denied
-find: ‘../proj/inf-scaling’: Permission denied
-find: ‘../proj/grp-flow-map’: Permission denied
-find: ‘../proj/granite-quantum’: Permission denied
-find: ‘../proj/dmfemb’: Permission denied
-find: ‘../proj/cont-training’: Permission denied
-find: ‘../proj/gpuaccel’: Permission denied
-find: ‘../proj/checkpoints’: Permission denied
-find: ‘../proj/dmfml’: Permission denied
-find: ‘../proj/granite-build’: Permission denied
-find: ‘../proj/mmfm’: Permission denied
-find: ‘../proj/rh-inf-scaling’: Permission denied
-find: ‘../proj/long-multi’: Permission denied
-find: ‘../proj/qec’: Permission denied
-find: ‘../proj/guardian’: Permission denied
-find: ‘../proj/datasets/archive/.pconflicts’: Permission denied
-find: ‘../proj/datasets/archive/graded/domain_deduped/pleias_common_corpus__open_government/.state/logs/nodes-359643’: Permission denied
-find: ‘../proj/datasets/archive/graded/domain_deduped/pleias_common_corpus__open_culture_r4/.state/logs/nodes-433097’: Permission denied
-find: ‘../proj/datasets/archive/graded/domain_deduped/pleias_common_corpus__open_culture_r4/.state/logs/nodes-456311’: Permission denied
-find: ‘../proj/datasets/archive/graded/domain_deduped/pleias_common_corpus__open_culture_r4/.state/logs/nodes-456397’: Permission denied
-find: ‘../proj/datasets/archive/graded/domain_deduped/pleias_common_corpus__open_culture_r4/.state/logs/nodes-466966’: Permission denied
-find: ‘../proj/datasets/archive/graded/domain_deduped/domain-g4-p1_v2/.state/logs/nodes-365355’: Permission denied
-find: ‘../proj/datasets/archive/graded/domain_deduped/domain-g4-p1_v2/.state/logs/nodes-374409’: Permission denied
-find: ‘../proj/datasets/archive/graded/domain_deduped/domain-g4-p1_v2/.state/logs/nodes-375565’: Permission denied
-find: ‘../proj/datasets/archive/graded/multilingual_deduped/epfml-fineweb2-hq/.state/logs/nodes-454084’: Permission denied
-find: ‘../proj/datasets/archive/graded/multilingual_deduped/epfml-fineweb2-hq/.state/logs/nodes-432525’: Permission denied
-find: ‘../proj/datasets/archive/graded/multilingual_deduped/multilang-g4-p2/.state/logs/nodes-432462’: Permission denied
-find: ‘../proj/datasets/archive/graded/multilingual_deduped/multilingual-g4-p1/.state/logs/nodes-408524’: Permission denied
-find: ‘../proj/datasets/archive/graded/multilingual_deduped/multilingual-g4-p1/.state/logs/nodes-401760’: Permission denied
-find: ‘../proj/datasets/archive/graded/multilingual_deduped/multilingual-g4-p1/.state/logs/nodes-397514’: Permission denied
-find: ‘../proj/datasets/archive/graded/multilingual_deduped/multilingual-g4-p1/.state/logs/nodes-428101’: Permission denied
-find: ‘../proj/datasets/archive/graded/multilingual_deduped/multilingual-g4-p1/.state/logs/nodes-402900’: Permission denied
-find: ‘../proj/datasets/archive/graded/multilingual_deduped/multilingual-g4-p1/.state/logs/nodes-427905’: Permission denied
-find: ‘../proj/datasets/archive/graded/multilingual_deduped/fineweb-2-multilang/.state/logs/nodes-378824’: Permission denied
-find: ‘../proj/datasets/archive/graded/multilingual_deduped/fineweb-2-multilang/.state/logs/nodes-376575’: Permission denied
-find: ‘../proj/datasets/archive/.ptrash’: Permission denied
-find: ‘../proj/datasets/archive/syshah/trl_lce_persona_20260522’: Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
+find: '[redacted host directory]': Permission denied
 
 exec
 /bin/bash -lc "find /workspace -name AGENTS.md -print
@@ -217,17 +217,17 @@ find /workspace/Small-Model-Learnability-Gap -maxdepth 4 -type f \\( -name '*.md
 
 rsi-submit --help" in /workspace
  succeeded in 0ms:
-lrwxrwxrwx 1 yuetai nogroup   15 Aug 23 20:05 /workspace/assets -> /opt/rsi-assets
+lrwxrwxrwx 1 runner nogroup   15 Aug 23 20:05 /workspace/assets -> /opt/rsi-assets
 
 /workspace/Small-Model-Learnability-Gap:
 total 19
-drwxr-sr-x  4 yuetai nogroup 4096 Aug 23 20:05 .
-drwxr-sr-x  3 yuetai nogroup 4096 Aug 23 20:05 ..
-drwxr-sr-x  8 yuetai nogroup 4096 Aug 23 23:21 .git
--rw-r--r--  1 yuetai nogroup   41 Aug 23 19:51 .rsi-source-ref
--rw-r--r--  1 yuetai nogroup 1072 Aug 23 19:51 LICENSE
-drwxr-sr-x 12 yuetai nogroup 4096 Aug 23 19:51 LLaMA-Factory
--rw-r--r--  1 yuetai nogroup 7316 Aug 23 19:51 README.md
+drwxr-sr-x  4 runner nogroup 4096 Aug 23 20:05 .
+drwxr-sr-x  3 runner nogroup 4096 Aug 23 20:05 ..
+drwxr-sr-x  8 runner nogroup 4096 Aug 23 23:21 .git
+-rw-r--r--  1 runner nogroup   41 Aug 23 19:51 .rsi-source-ref
+-rw-r--r--  1 runner nogroup 1072 Aug 23 19:51 LICENSE
+drwxr-sr-x 12 runner nogroup 4096 Aug 23 19:51 LLaMA-Factory
+-rw-r--r--  1 runner nogroup 7316 Aug 23 19:51 README.md
 d /workspace/assets 0 bytes -> 
 d /workspace/assets/data 0 bytes -> 
 d /workspace/assets/models 0 bytes -> 

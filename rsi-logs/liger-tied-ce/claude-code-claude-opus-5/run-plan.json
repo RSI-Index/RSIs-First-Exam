@@ -56,24 +56,24 @@
   },
   "images": {
     "base_digest": "sha256:bca08ed38c22fc6fb77858e711e5bd236c43e1f61545a4aa2d3c89c381067e3e",
-    "base_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/bca08ed38c22fc6fb77858e711e5bd236c43e1f61545a4aa2d3c89c381067e3e.sif",
+    "base_ref": "/rsi-runner/images/bca08ed38c22fc6fb77858e711e5bd236c43e1f61545a4aa2d3c89c381067e3e.sif",
     "judge_digest": "sha256:bca08ed38c22fc6fb77858e711e5bd236c43e1f61545a4aa2d3c89c381067e3e",
-    "judge_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/bca08ed38c22fc6fb77858e711e5bd236c43e1f61545a4aa2d3c89c381067e3e.sif",
+    "judge_ref": "/rsi-runner/images/bca08ed38c22fc6fb77858e711e5bd236c43e1f61545a4aa2d3c89c381067e3e.sif",
     "judge_user": null,
     "rootfs_snapshot_mode": "split-workdir",
     "work_digest": "sha256:bca08ed38c22fc6fb77858e711e5bd236c43e1f61545a4aa2d3c89c381067e3e",
-    "work_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/bca08ed38c22fc6fb77858e711e5bd236c43e1f61545a4aa2d3c89c381067e3e.sif",
+    "work_ref": "/rsi-runner/images/bca08ed38c22fc6fb77858e711e5bd236c43e1f61545a4aa2d3c89c381067e3e.sif",
     "work_user": null,
     "workdir": "/workspace"
   },
   "paths": {
-    "logs": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/logs",
-    "root": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260904T183926Z-liger-tied-ce-2df1d313",
-    "workspace": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260904T183926Z-liger-tied-ce-2df1d313/workspace"
+    "logs": "/rsi-runner/logs",
+    "root": "/rsi-runner/runs/20260904T183926Z-liger-tied-ce-2df1d313",
+    "workspace": "/rsi-runner/runs/20260904T183926Z-liger-tied-ce-2df1d313/workspace"
   },
   "rootfs_snapshot_mode": "split-workdir",
   "schema_version": 2,
-  "snapshot_kind": "bluevela-apptainer-engine",
+  "snapshot_kind": "apptainer-engine",
   "task": {
     "agent": {
       "auto_resume": true,
@@ -146,7 +146,7 @@
     "require_disjoint_phase_nodes": false,
     "score_direction": "maximize",
     "service": {
-      "build_context": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260904T183926Z-liger-tied-ce-2df1d313/control/task/environment",
+      "build_context": "/rsi-runner/runs/20260904T183926Z-liger-tied-ce-2df1d313/control/task/environment",
       "build_timeout_seconds": 10800.0,
       "cpus": 16,
       "environment": [
@@ -205,7 +205,7 @@
       "workdir": "/workspace"
     },
     "source_digest": "e54bb9dd4efc4b632a0fb3049f6aa1ba72bbae5c38ea493acd7b742ca7db81f9",
-    "source_dir": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260904T183926Z-liger-tied-ce-2df1d313/control/task",
+    "source_dir": "/rsi-runner/runs/20260904T183926Z-liger-tied-ce-2df1d313/control/task",
     "task_id": "liger-tied-ce",
     "tests_digest": "a962f2b64bcc7f92d47bf0d9777c6e49679b34821e2259fae25a4be84ef2191c",
     "verifier": {

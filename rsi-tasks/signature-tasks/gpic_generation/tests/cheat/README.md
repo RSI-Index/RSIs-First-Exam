@@ -9,11 +9,17 @@ key)) stands in for the 1.1B PixelGen model so the battery runs in ~1 min on
 one GPU — the spot gate is model-agnostic, so this faithfully tests whether
 cheats are caught.
 
-Run (needs torch + gpic_eval + a warm DINOv2 hub cache; paths in the scripts
-point at the author's staging and must be adjusted per environment):
+Run inside the tests-equivalent environment with torch and a warm DINOv2
+hub cache. `GPIC_WORK_ROOT` selects the staged assets directory and defaults
+to the `gpic_generation` task directory. It must contain `gpic/gpic_eval`,
+`torch_home`, `hf_models/Qwen3-1.7B`, `gpic_data/test`, and
+`gpic_verifier/reference_stats/test_stats.npz`. The battery creates `cheat/`
+under that directory for its temporary captions and sandbox. The verifier
+source is always taken from this task checkout.
 
 ```bash
-bash battery_payload.sh   # inside the tests-equivalent container/venv
+GPIC_WORK_ROOT=/path/to/staged-assets bash tests/cheat/battery_payload.sh
+# Run from the gpic_generation task directory.
 ```
 
 `battery_results.json` is the recorded 13/13 pass from 2026-08-24 (each row:

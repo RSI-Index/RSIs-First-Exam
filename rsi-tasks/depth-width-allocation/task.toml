@@ -8,7 +8,7 @@ description = "Search nonuniform decoder-width allocations under the fixed 200M 
 
 [metadata]
 author_name = "Chenglei Si"
-author_email = "sichenglei1125@gmail.com"
+author_email = "contributor-02@example.invalid"
 difficulty_explanation = "Each hypothesis changes a constrained 16-layer allocation and a score requires a fresh, fixed 19,080-update eight-GPU trajectory."
 verification_explanation = "Judge accepts only a declarative manifest, independently enforces source-derived parameter and FLOP ceilings, reconstructs the fixed pinned training run, and scores authenticated late-training loss aggregates."
 category = "ML"

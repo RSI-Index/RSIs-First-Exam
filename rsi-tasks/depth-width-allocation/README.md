@@ -22,7 +22,7 @@ The Dockerfile fixes all immutable revisions, applies the source-documented comp
 
 | Boundary | Contract |
 | --- | --- |
-| Work | `/workspace`; one GPU; public Agent network for Blue Vela Apptainer compatibility; only `architecture.json` is scored and `notes/` is ignored |
+| Work | `/workspace`; one GPU; public Agent network for compatibility with the configured Apptainer backend; only `architecture.json` is scored and `notes/` is ignored |
 | Judge | Eight GPUs; offline; read-only workspace snapshot; fixed source reconstructed in private scratch |
 | Reward | `-mean(loss_18090, ..., loss_19080)`, maximized |
 | Feedback | Aggregate loss/reward, accounting, token count, and bounded diagnostics only |
@@ -59,4 +59,4 @@ python3 .agents/skills/harbor-task-agent/scripts/validate_task.py \
   --harness-root /absolute/path/to/RSI-Harness
 ```
 
-Static and Harness compiler validation are the only checks performed during generation. Pending execution validation includes base-image and dependency resolution, preprocessing/storage measurement, image build, post-build closure, fresh-container self-check, baseline reproduction, eight-GPU launch, metric-hook and failure-path execution, timeout measurement, real-Agent iteration, and provider-network operation. Judge remains offline; the Agent uses public networking because the Blue Vela Apptainer backend does not implement host allowlists.
+Static and Harness compiler validation are the only checks performed during generation. Pending execution validation includes base-image and dependency resolution, preprocessing/storage measurement, image build, post-build closure, fresh-container self-check, baseline reproduction, eight-GPU launch, metric-hook and failure-path execution, timeout measurement, real-Agent iteration, and provider-network operation. Judge remains offline; the Agent uses public networking because the configured Apptainer backend does not implement host allowlists.

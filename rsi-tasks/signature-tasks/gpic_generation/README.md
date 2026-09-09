@@ -15,8 +15,7 @@ encoders.
 - [`instruction.md`](instruction.md) — the runtime prompt for the research
   agent: what it starts from, what it may change, how it is scored.
 - [`task.toml`](task.toml) / [`policy.yaml`](policy.yaml) /
-  [`environment/`](environment/) / [`tests/`](tests/) — the Harbor package
-  (same shape as `chenhao_tasks/dinov3_imagenet_semdense`).
+  [`environment/`](environment/) / [`tests/`](tests/) — the Harbor package.
 - [`tests/cheat/`](tests/cheat/) — the anti-cheat battery and its recorded
   13/13 result (`battery_results.json`).
 

@@ -10,7 +10,7 @@ SCRIPT = (
     ROOT
     / ".agents"
     / "skills"
-    / "extracting-rsi-run-logs-bluevela"
+    / "extracting-rsi-run-logs-lsf-apptainer"
     / "scripts"
     / "extract_logs.py"
 )

@@ -145,8 +145,8 @@ exec
 /bin/bash -lc 'ls -la /run/rsi-harness/feedback 2>/dev/null || true' in /workspace/molmo2-pointing
  succeeded in 0ms:
 total 1
-drwxr-xr-x+ 2 yuetai nogroup 4096 Sep  4 18:33 .
-drwxr-xr-x  4 yuetai yuetai    80 Sep  4 18:33 ..
+drwxr-xr-x+ 2 runner nogroup 4096 Sep  4 18:33 .
+drwxr-xr-x  4 runner runner    80 Sep  4 18:33 ..
 
 exec
 /bin/bash -lc "find /opt/molmo2/reference -maxdepth 2 -type f -printf '%p\\n' | sort | head -50" in /workspace/molmo2-pointing

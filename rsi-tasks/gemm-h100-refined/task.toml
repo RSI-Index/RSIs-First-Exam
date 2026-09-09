@@ -8,7 +8,7 @@ description = "Optimize a clean-room CUDA fp16 GEMM kernel for absolute H100 thr
 
 [metadata]
 author_name = "Yuetai Li"
-author_email = "deep_ebe_952@foxmail.com"
+author_email = "contributor-03@example.invalid"
 difficulty_explanation = "High-throughput Hopper GEMM requires iterative decisions about tensor-core instructions, tiling, data movement, synchronization, occupancy, and numerical correctness under noisy GPU timing."
 verification_explanation = "A Judge-only evaluator checks the pristine workspace boundary and source policy, rebuilds the selected materialized CUDA candidate, validates every invocation on reserved deterministic inputs, and maximizes the median TFLOP/s across five fresh-process repeats."
 category = "ML"

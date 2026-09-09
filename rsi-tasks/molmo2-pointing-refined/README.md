@@ -48,7 +48,7 @@ For each case, the evaluator normalizes time and coordinates to `[0,100]`, conve
 Run with operator-supplied model and GPU-pool selectors:
 
 ```bash
-sudo -E rsi-harness run /home/nsl/yichen/RSI-Index/task_collect/refined_tasks/molmo2-pointing-refined \
+sudo -E rsi-harness run "$PWD/rsi-tasks/molmo2-pointing-refined" \
   --agent codex \
   --model "$RSI_MODEL" \
   --reasoning-effort "$RSI_REASONING_EFFORT" \
@@ -62,9 +62,9 @@ sudo -E rsi-harness run /home/nsl/yichen/RSI-Index/task_collect/refined_tasks/mo
 Static validation and Harness compilation use:
 
 ```bash
-python3 /absolute/path/to/private-task-authoring-validator/validate_task.py \
-  /home/nsl/yichen/RSI-Index/task_collect/refined_tasks/molmo2-pointing-refined \
-  --harness-root /home/nsl/yichen/RSI-Index/RSI-Harness
+python3 "${RSI_TASK_VALIDATOR:?set the validator script path}" \
+  "$PWD/rsi-tasks/molmo2-pointing-refined" \
+  --harness-root "$PWD/RSI-Harness"
 ```
 
 Static validation, Harness compilation, syntax checks, and the remote base-image config preflight were completed; the pinned image declares no Docker volumes. Docker build, 37+ GB asset retrieval, Solution execution, evaluator execution, GPU baseline reproduction, and full Agent runs are intentionally left as execution-layer checks; no success or runtime result is claimed for them here.

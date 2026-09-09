@@ -75,7 +75,7 @@ def test_image_resets_base_workspace_before_enforcing_submission_topology():
     assert dockerfile.index(reset) < dockerfile.index(create)
 
 
-def test_bluevela_network_policy_keeps_judge_offline_and_codex_reachable():
+def test_cluster_network_policy_keeps_judge_offline_and_codex_reachable():
     task_toml = Path(__file__).parents[1] / "task.toml"
     config = tomllib.loads(task_toml.read_text(encoding="utf-8"))
 

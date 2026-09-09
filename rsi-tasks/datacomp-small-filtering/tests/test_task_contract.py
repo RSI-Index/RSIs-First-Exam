@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import io
 import json
+import os
 from pathlib import Path
 import struct
 import subprocess
@@ -28,14 +29,14 @@ REWARD_TOOL = TASK_ROOT / "tests" / "reward.py"
 EVALUATION_TOOL = TASK_ROOT / "tests" / "run_evaluation.py"
 PREPARE_JUDGE = TASK_ROOT / "tests" / "prepare_judge.py"
 REPOSITORY_ROOT = TASK_ROOT.parents[1]
-BLUEVELA_PROFILE = REPOSITORY_ROOT / "RSI-Harness" / "src" / "rsi_harness" / "cluster" / "bluevela" / "profile.toml"
+# Site integration checks are opt-in; pass the installed profile and validator.
+CLUSTER_PROFILE = (
+    Path(os.environ["RSI_CLUSTER_PROFILE"])
+    if os.environ.get("RSI_CLUSTER_PROFILE") else None
+)
 TASK_VALIDATOR = (
-    REPOSITORY_ROOT
-    / ".agents"
-    / "skills"
-    / "bluevela-multi-node-harbor-task-agent"
-    / "scripts"
-    / "validate_task.py"
+    Path(os.environ["RSI_TASK_VALIDATOR"])
+    if os.environ.get("RSI_TASK_VALIDATOR") else None
 )
 
 
@@ -60,7 +61,7 @@ def sha256(path: Path) -> str:
 
 
 def test_legacy_pyarrow_chunked_array_conversion_is_supported() -> None:
-    """Blue Vela's pinned PyArrow rejects the newer zero_copy_only keyword."""
+    """The pinned cluster PyArrow rejects the newer zero_copy_only keyword."""
     script = f"""
 import sys
 sys.path.insert(0, {str(ASSET_CONTRACT.parent)!r})
@@ -111,9 +112,14 @@ def test_compiled_task_reserves_full_disjoint_work_and_judge_pools() -> None:
     assert definition.verifier.timeout_seconds == 21_600
 
 
-def test_bluevela_work_mounts_cannot_reach_judge_evaluation_assets() -> None:
+@pytest.mark.skipif(
+    CLUSTER_PROFILE is None,
+    reason="set RSI_CLUSTER_PROFILE for site integration checks",
+)
+def test_cluster_work_mounts_cannot_reach_judge_evaluation_assets() -> None:
     """Phase declarations are insufficient unless the physical binds agree."""
-    profile = tomllib.loads(BLUEVELA_PROFILE.read_text(encoding="utf-8"))
+    assert CLUSTER_PROFILE is not None
+    profile = tomllib.loads(CLUSTER_PROFILE.read_text(encoding="utf-8"))
     work_targets = {
         item["target"] for item in profile["apptainer"]["work_binds"]
     }
@@ -1009,8 +1015,8 @@ def test_evaluation_loads_sealed_hf_arrow_files_without_the_hub(tmp_path: Path) 
 
 
 @pytest.mark.skipif(
-    not TASK_VALIDATOR.is_file(),
-    reason="private task validator is unavailable in this checkout",
+    TASK_VALIDATOR is None,
+    reason="set RSI_TASK_VALIDATOR for the installed task validator",
 )
 def test_unified_skill_static_validator_has_no_findings() -> None:
     """The generated package must pass the exact gate used before live work."""

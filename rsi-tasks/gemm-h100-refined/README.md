@@ -38,7 +38,7 @@ The shared Base/Judge model means root Work can modify system state inherited by
 ## Run and validate
 
 ```bash
-sudo -E rsi-harness run /home/yuetaili/_Code/0807_edge/rsi_repo/rsi_edgebench_convert/tasks/gemm-h100-refined \
+sudo -E rsi-harness run "$PWD/rsi-tasks/gemm-h100-refined" \
   --agent codex \
   --model "$RSI_MODEL" \
   --reasoning-effort "$RSI_REASONING_EFFORT" \
@@ -52,9 +52,9 @@ sudo -E rsi-harness run /home/yuetaili/_Code/0807_edge/rsi_repo/rsi_edgebench_co
 Static plus Harness compiler validation:
 
 ```bash
-python3 /home/yuetaili/_Code/0807_edge/.agents/skills/edgebench-harbor-refiner/scripts/validate_task.py \
-  /home/yuetaili/_Code/0807_edge/rsi_repo/rsi_edgebench_convert/tasks/gemm-h100-refined \
-  --harness-root /home/yuetaili/_Code/0807_edge/rsi_repo/RSI-Index-Public/RSI-Harness
+python3 "${RSI_TASK_VALIDATOR:?set the validator script path}" \
+  "$PWD/rsi-tasks/gemm-h100-refined" \
+  --harness-root "$PWD/RSI-Harness"
 ```
 
 Completed during authoring: source inventory and immutable-revision research, static/compiler validation, Generator review, and independent read-only review. Pending execution checks: Docker build/image metadata preflight, baseline Solution execution, pristine/candidate Judge runs, and H100 timing/correctness reproduction. No image was built or pulled and no GPU workload was run during task conversion.

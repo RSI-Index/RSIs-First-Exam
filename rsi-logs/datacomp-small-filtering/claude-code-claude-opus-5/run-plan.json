@@ -4,162 +4,162 @@
       "devices": [
         {
           "index": 0,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:0"
         },
         {
           "index": 1,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:1"
         },
         {
           "index": 2,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:2"
         },
         {
           "index": 3,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:3"
         },
         {
           "index": 4,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:4"
         },
         {
           "index": 5,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:5"
         },
         {
           "index": 6,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:6"
         },
         {
           "index": 7,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:7"
         },
         {
           "index": 8,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:0"
         },
         {
           "index": 9,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:1"
         },
         {
           "index": 10,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:2"
         },
         {
           "index": 11,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:3"
         },
         {
           "index": 12,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:4"
         },
         {
           "index": 13,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:5"
         },
         {
           "index": 14,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:6"
         },
         {
           "index": 15,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:7"
         },
         {
           "index": 16,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:5"
         },
         {
           "index": 17,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:6"
         },
         {
           "index": 18,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:7"
         },
         {
           "index": 19,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:0"
         },
         {
           "index": 20,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:4"
         },
         {
           "index": 21,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:3"
         },
         {
           "index": 22,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:1"
         },
         {
           "index": 23,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:2"
         },
         {
           "index": 24,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:0"
         },
         {
           "index": 25,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:1"
         },
         {
           "index": 26,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:2"
         },
         {
           "index": 27,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:3"
         },
         {
           "index": 28,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:4"
         },
         {
           "index": 29,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:5"
         },
         {
           "index": 30,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:6"
         },
         {
           "index": 31,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:7"
         }
       ]
@@ -168,82 +168,82 @@
       "devices": [
         {
           "index": 16,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:5"
         },
         {
           "index": 17,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:6"
         },
         {
           "index": 18,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:7"
         },
         {
           "index": 19,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:0"
         },
         {
           "index": 20,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:4"
         },
         {
           "index": 21,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:3"
         },
         {
           "index": 22,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:1"
         },
         {
           "index": 23,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r08-n4:2"
         },
         {
           "index": 24,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:0"
         },
         {
           "index": 25,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:1"
         },
         {
           "index": 26,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:2"
         },
         {
           "index": 27,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:3"
         },
         {
           "index": 28,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:4"
         },
         {
           "index": 29,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:5"
         },
         {
           "index": 30,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:6"
         },
         {
           "index": 31,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p4-r24-n2:7"
         }
       ]
@@ -253,82 +253,82 @@
       "devices": [
         {
           "index": 0,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:0"
         },
         {
           "index": 1,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:1"
         },
         {
           "index": 2,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:2"
         },
         {
           "index": 3,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:3"
         },
         {
           "index": 4,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:4"
         },
         {
           "index": 5,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:5"
         },
         {
           "index": 6,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:6"
         },
         {
           "index": 7,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p1-r22-n3:7"
         },
         {
           "index": 8,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:0"
         },
         {
           "index": 9,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:1"
         },
         {
           "index": 10,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:2"
         },
         {
           "index": 11,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:3"
         },
         {
           "index": 12,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:4"
         },
         {
           "index": 13,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:5"
         },
         {
           "index": 14,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:6"
         },
         {
           "index": 15,
-          "name": "allocated Blue Vela GPU",
+          "name": "allocated HPC GPU",
           "uuid": "p3-r09-n2:7"
         }
       ]
@@ -336,24 +336,24 @@
   },
   "images": {
     "base_digest": "sha256:1d4e64c3fd1209a5ccd42b60bb92f45a13e222059f9665e24cf9b5a3f4e15b15",
-    "base_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/1d4e64c3fd1209a5ccd42b60bb92f45a13e222059f9665e24cf9b5a3f4e15b15.sif",
+    "base_ref": "/rsi-runner/images/1d4e64c3fd1209a5ccd42b60bb92f45a13e222059f9665e24cf9b5a3f4e15b15.sif",
     "judge_digest": "sha256:1d4e64c3fd1209a5ccd42b60bb92f45a13e222059f9665e24cf9b5a3f4e15b15",
-    "judge_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/1d4e64c3fd1209a5ccd42b60bb92f45a13e222059f9665e24cf9b5a3f4e15b15.sif",
+    "judge_ref": "/rsi-runner/images/1d4e64c3fd1209a5ccd42b60bb92f45a13e222059f9665e24cf9b5a3f4e15b15.sif",
     "judge_user": null,
     "rootfs_snapshot_mode": "split-workdir",
     "work_digest": "sha256:1d4e64c3fd1209a5ccd42b60bb92f45a13e222059f9665e24cf9b5a3f4e15b15",
-    "work_ref": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images/1d4e64c3fd1209a5ccd42b60bb92f45a13e222059f9665e24cf9b5a3f4e15b15.sif",
+    "work_ref": "/rsi-runner/images/1d4e64c3fd1209a5ccd42b60bb92f45a13e222059f9665e24cf9b5a3f4e15b15.sif",
     "work_user": null,
     "workdir": "/workspace"
   },
   "paths": {
-    "logs": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/logs",
-    "root": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260903T004540Z-datacomp-small-filtering-873a87d2",
-    "workspace": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260903T004540Z-datacomp-small-filtering-873a87d2/workspace"
+    "logs": "/rsi-runner/logs",
+    "root": "/rsi-runner/runs/20260903T004540Z-datacomp-small-filtering-873a87d2",
+    "workspace": "/rsi-runner/runs/20260903T004540Z-datacomp-small-filtering-873a87d2/workspace"
   },
   "rootfs_snapshot_mode": "split-workdir",
   "schema_version": 2,
-  "snapshot_kind": "bluevela-apptainer-engine",
+  "snapshot_kind": "apptainer-engine",
   "task": {
     "agent": {
       "environment": [
@@ -548,7 +548,7 @@
     "require_disjoint_phase_nodes": true,
     "score_direction": "maximize",
     "service": {
-      "build_context": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260903T004540Z-datacomp-small-filtering-873a87d2/control/task/environment",
+      "build_context": "/rsi-runner/runs/20260903T004540Z-datacomp-small-filtering-873a87d2/control/task/environment",
       "build_timeout_seconds": 259200.0,
       "cpus": 32,
       "environment": [
@@ -603,7 +603,7 @@
       "workdir": "/workspace"
     },
     "source_digest": "3df654c52cae3ea9be9a3ac0c07b6a2a99e08f2dd9184fde25fcaa1fc9500b4b",
-    "source_dir": "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs/20260903T004540Z-datacomp-small-filtering-873a87d2/control/task",
+    "source_dir": "/rsi-runner/runs/20260903T004540Z-datacomp-small-filtering-873a87d2/control/task",
     "task_id": "datacomp-small-filtering",
     "tests_digest": "59685812fb82c509c20fb895d4afd4a4c831ab4f7f2a3aca071b4f4f0cc96e1d",
     "verifier": {

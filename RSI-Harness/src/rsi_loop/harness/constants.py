@@ -18,6 +18,9 @@ import os
 from pathlib import Path
 from typing_extensions import NotRequired, TypedDict
 
+# Host-only credentials are resolved lazily; never created during import.
+from rsi_loop.harness.admin_auth import get_admin_secret as get_admin_secret
+
 # --- Paths ---
 # Resolved from env vars or cwd-relative defaults so RSI Loop works as a
 # pip-installed tool without depending on the source checkout location.
@@ -39,10 +42,6 @@ DEFAULT_BENCHMARK = "edgebench"
 # --- Defaults ---
 DEFAULT_EVAL_INTERVAL = 300  # seconds
 
-# --- Admin secret for judge server registration ---
-# Only known to host-side processes (run_agent.py, judge_server.py).
-# Never injected into agent containers.
-ADMIN_SECRET = "sEb3nCh!aDm1n#2026-x9Kp7qW4mZq"
 
 # --- Docker ---
 DOCKER_USER = "root"
