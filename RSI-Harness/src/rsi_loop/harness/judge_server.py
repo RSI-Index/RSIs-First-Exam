@@ -28,12 +28,12 @@ from pathlib import Path, PurePosixPath
 from typing import Any
 
 import requests
-from fastapi import FastAPI, File, Form, Header, HTTPException, Query, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, Query, UploadFile
 from pydantic import BaseModel
 
 from rsi_loop.harness.backend import ContainerBackend
 from rsi_loop.harness.config import RSILoopConfig, create_backend_from_config, get_container_env, load_config
-from rsi_loop.harness.constants import get_admin_secret
+from rsi_loop.harness.constants import ADMIN_SECRET
 from rsi_loop.harness.docker_build import BuildImageError, build_judge_image
 from rsi_loop.harness.run_evaluation import judge_submission
 from rsi_loop.harness.selection import select_best
@@ -745,11 +745,6 @@ def create_app(config: RSILoopConfig | None = None) -> FastAPI:
     if config is None:
         config = load_config()
 
-    expected_admin_secret = get_admin_secret().encode("ascii")
-
-    def admin_authorized(candidate: str) -> bool:
-        return secrets.compare_digest(candidate.encode("utf-8"), expected_admin_secret)
-
     app = FastAPI(title="RSI Loop Judge", version="1.0.0")
     state = JudgeState(config)
     state.load_tasks()
@@ -770,7 +765,7 @@ def create_app(config: RSILoopConfig | None = None) -> FastAPI:
     @app.post("/api/v1/register")
     def register(req: RegisterRequest) -> RegisterResponse:
         """Register a session and get a token for submissions."""
-        if not admin_authorized(req.admin_secret):
+        if req.admin_secret != ADMIN_SECRET:
             raise HTTPException(status_code=403, detail="Invalid admin secret")
         try:
             token = state.register_session(
@@ -803,7 +798,7 @@ def create_app(config: RSILoopConfig | None = None) -> FastAPI:
         """
         if kind not in ("agent", "auto"):
             raise HTTPException(status_code=400, detail="kind must be 'agent' or 'auto'")
-        if kind == "auto" and not admin_authorized(admin_secret):
+        if kind == "auto" and admin_secret != ADMIN_SECRET:
             raise HTTPException(status_code=403, detail="admin_secret required for auto submissions")
         try:
             task_id, run_id, round_id, judge_cpu_limit, judge_mem_limit, remaining = state.consume_round(token, kind)
@@ -828,10 +823,7 @@ def create_app(config: RSILoopConfig | None = None) -> FastAPI:
             raise HTTPException(status_code=404, detail=str(e))
 
     @app.get("/api/v1/history")
-    def history(
-        token: str = Query(...),
-        admin_secret: str = Header("", alias="X-RSI-Admin-Secret"),
-    ) -> dict:
+    def history(token: str = Query(...), admin_secret: str = Query("")) -> dict:
         """Get run history using a session token.
 
         Without admin_secret: returns only agent submissions (agent-visible view).
@@ -842,7 +834,7 @@ def create_app(config: RSILoopConfig | None = None) -> FastAPI:
         except KeyError:
             raise HTTPException(status_code=401, detail="Invalid token")
         full = state.get_run_history(info["run_id"], info["task_id"])
-        if admin_authorized(admin_secret):
+        if admin_secret == ADMIN_SECRET:
             return full
         # Filter to agent-only view: hide auto-eval entries
         agent_entries = [

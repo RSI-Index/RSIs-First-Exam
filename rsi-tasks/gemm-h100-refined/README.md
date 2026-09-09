@@ -37,6 +37,8 @@ The shared Base/Judge model means root Work can modify system state inherited by
 
 ## Run and validate
 
+Run the following commands from the repository root.
+
 ```bash
 sudo -E rsi-harness run "$PWD/rsi-tasks/gemm-h100-refined" \
   --agent codex \

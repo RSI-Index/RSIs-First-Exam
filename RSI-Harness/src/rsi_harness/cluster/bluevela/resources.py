@@ -1,4 +1,4 @@
-"""Compatible single-node and multi-node LSF/Apptainer resource planning."""
+"""Compatible single-node and multi-node Blue Vela resource planning."""
 
 from __future__ import annotations
 
@@ -44,14 +44,14 @@ class MultiNodeResources(PersistedModel):
     run_walltime: str
 
 
-class LsfApptainerResourcePlan(PersistedModel):
+class BlueVelaResourcePlan(PersistedModel):
     single_node: ClusterResources | None = None
     multi_node: MultiNodeResources | None = None
 
     @model_validator(mode="after")
     def _exactly_one_branch(self) -> Self:
         if (self.single_node is None) == (self.multi_node is None):
-            raise ValueError("exactly one LSF/Apptainer resource branch is required")
+            raise ValueError("exactly one Blue Vela resource branch is required")
         return self
 
 
@@ -146,7 +146,7 @@ def derive_resources(
 def derive_resource_plan(
     definition: TaskDefinition,
     profile: ClusterProfile,
-) -> LsfApptainerResourcePlan:
+) -> BlueVelaResourcePlan:
     """Select legacy one-node behavior or strict full-node multi-node behavior."""
     work_gpus, verifier_gpus = _phase_gpu_counts(definition, profile)
     gpus_per_node = profile.resources.gpus_per_node
@@ -154,7 +154,7 @@ def derive_resource_plan(
         max(work_gpus, verifier_gpus) <= gpus_per_node
         and not definition.require_disjoint_phase_nodes
     ):
-        return LsfApptainerResourcePlan(
+        return BlueVelaResourcePlan(
             single_node=derive_resources(definition, profile)
         )
 
@@ -166,7 +166,7 @@ def derive_resource_plan(
     if invalid:
         detail = ", ".join(f"{label}={count}" for label, count in invalid)
         raise SetupError(
-            "LSF/Apptainer multi-node phases require whole "
+            "Blue Vela multi-node phases require whole "
             f"{gpus_per_node}-GPU nodes; got {detail}"
         )
     build_walltime, run_walltime = _walltimes(definition, profile)
@@ -178,7 +178,7 @@ def derive_resource_plan(
         gpu_count=verifier_gpus,
         node_count=verifier_gpus // gpus_per_node,
     )
-    return LsfApptainerResourcePlan(
+    return BlueVelaResourcePlan(
         multi_node=MultiNodeResources(
             work=work,
             verifier=verifier,
@@ -201,7 +201,7 @@ def derive_resource_plan(
 
 
 __all__ = [
-    "LsfApptainerResourcePlan",
+    "BlueVelaResourcePlan",
     "ClusterResources",
     "MultiNodeResources",
     "PhaseResources",

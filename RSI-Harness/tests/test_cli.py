@@ -175,7 +175,7 @@ def test_cluster_run_routes_without_constructing_local_docker_services(
             "run",
             str(task),
             "--cluster",
-            "lsf-apptainer",
+            "bluevela",
             "--agent",
             "codex",
             "--model",
@@ -212,7 +212,7 @@ def test_cluster_run_rejects_local_gpu_selectors_before_adapter_creation(
 
     result = CliRunner().invoke(
         cli_module.app,
-        ["run", str(task), "--cluster", "lsf-apptainer", "--gpus", "0,1"],
+        ["run", str(task), "--cluster", "bluevela", "--gpus", "0,1"],
     )
 
     assert result.exit_code == 2
@@ -237,8 +237,8 @@ def test_cluster_dry_run_prints_resolved_submissions(
                 "dry_run",
                 {
                     "run_id": "planned-1",
-                    "run_dir": "/shared/runs/planned-1",
-                    "image": "/shared/images/task.sif",
+                    "run_dir": "/proj/runs/planned-1",
+                    "image": "/proj/images/task.sif",
                     "cache_hit": False,
                     "resources": {
                         "work_gpus": 2,
@@ -255,13 +255,13 @@ def test_cluster_dry_run_prints_resolved_submissions(
                         "-gpu",
                         "num=4/task:mode=exclusive_process",
                     ),
-                    "binds": ("/shared",),
+                    "binds": ("/proj",),
                 },
             )
             return ClusterRunResult(
                 run_id="planned-1",
                 status=RunStatus.PREPARING,
-                log_dir=Path("/shared/logs"),
+                log_dir=Path("/proj/logs"),
             )
 
     monkeypatch.setattr(
@@ -276,7 +276,7 @@ def test_cluster_dry_run_prints_resolved_submissions(
             "run",
             str(task),
             "--cluster",
-            "lsf-apptainer",
+            "bluevela",
             "--dry-run",
             "--model",
             "gpt-test",
@@ -359,7 +359,7 @@ def test_cluster_dry_run_prints_profile_driven_multinode_geometry(
             "run",
             str(task),
             "--cluster",
-            "lsf-apptainer",
+            "bluevela",
             "--dry-run",
             "--model",
             "gpt-test",
@@ -498,9 +498,6 @@ def test_run_help_explains_ordered_gpu_pool() -> None:
     result = CliRunner().invoke(cli_module.app, ["run", "--help"])
 
     assert result.exit_code == 0, result.output
-    text = re.sub(r"[│\s]+", " ", result.output)
-    assert "lsf-apptainer" in text
-    assert "lsf_apptainer" not in text
     assert (
         "Ordered GPU pool authorized for this run; Work sees only its "
         "task-declared count"

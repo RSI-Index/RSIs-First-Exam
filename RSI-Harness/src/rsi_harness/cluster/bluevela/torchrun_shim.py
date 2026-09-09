@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-"""Transparent ``torchrun`` front end for LSF/Apptainer multi-node phases."""
+"""Transparent ``torchrun`` front end for Blue Vela multi-node phases."""
 
 from __future__ import annotations
 
@@ -289,7 +289,7 @@ def publish_request(
         ):
             raise ValueError("invalid authority values")
     except (KeyError, TypeError, ValueError) as error:
-        raise SetupError("LSF/Apptainer multi-node broker authority is invalid") from error
+        raise SetupError("Blue Vela multi-node broker authority is invalid") from error
     if invocation.local_world_size != authority.local_world_size:
         raise SetupError("torchrun local process count differs from the phase pool")
     if not invocation.distributed:
@@ -316,7 +316,7 @@ def publish_request(
     }
     request_path = Path(root) / "requests" / f"{request_id}.json"
     if not request_path.parent.is_dir():
-        raise SetupError("LSF/Apptainer multi-node broker request endpoint is missing")
+        raise SetupError("Blue Vela multi-node broker request endpoint is missing")
     _atomic_request(
         request_path,
         json.dumps(payload, sort_keys=True, separators=(",", ":")),
@@ -366,17 +366,17 @@ def wait_for_result(
             ValueError,
             json.JSONDecodeError,
         ) as error:
-            raise SetupError("LSF/Apptainer multi-node result is invalid") from error
+            raise SetupError("Blue Vela multi-node result is invalid") from error
         if result.get("request_id") != request_id:
-            raise SetupError("LSF/Apptainer multi-node result has the wrong identity")
+            raise SetupError("Blue Vela multi-node result has the wrong identity")
         expected_ranks = tuple(range(node_count))
         try:
             actual_ranks = tuple(int(item["node_rank"]) for item in ranks)
             returncodes = tuple(int(item["returncode"]) for item in ranks)
         except (KeyError, TypeError, ValueError) as error:
-            raise SetupError("LSF/Apptainer multi-node rank result is invalid") from error
+            raise SetupError("Blue Vela multi-node rank result is invalid") from error
         if actual_ranks != expected_ranks:
-            raise SetupError("LSF/Apptainer multi-node result has incomplete ranks")
+            raise SetupError("Blue Vela multi-node result has incomplete ranks")
         for node_rank in expected_ranks:
             rank_output = (
                 root
@@ -388,7 +388,7 @@ def wait_for_result(
                 output.flush()
             except OSError as error:
                 raise SetupError(
-                    f"LSF/Apptainer multi-node rank {node_rank} output is missing"
+                    f"Blue Vela multi-node rank {node_rank} output is missing"
                 ) from error
         if result.get("cancelled") is True:
             return 143
@@ -437,7 +437,7 @@ def run(
     try:
         ready = json.loads((root / "READY.json").read_text())
     except (OSError, json.JSONDecodeError) as error:
-        raise SetupError("LSF/Apptainer multi-node broker is not ready") from error
+        raise SetupError("Blue Vela multi-node broker is not ready") from error
     request = publish_request(
         root,
         invocation,
@@ -474,7 +474,7 @@ def main() -> int:
             output=sys.stdout.buffer,
         )
     except Exception as error:
-        sys.stderr.write(f"transparent LSF/Apptainer torchrun failed: {error}\n")
+        sys.stderr.write(f"transparent Blue Vela torchrun failed: {error}\n")
         return 125
 
 

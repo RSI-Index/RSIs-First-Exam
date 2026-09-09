@@ -45,7 +45,7 @@ import requests
 from rsi_loop.harness.agent import Agent
 from rsi_loop.harness.backend import ContainerBackend, ContainerHandle
 from rsi_loop.harness.config import RSILoopConfig
-from rsi_loop.harness.constants import get_admin_secret
+from rsi_loop.harness.constants import ADMIN_SECRET
 from rsi_loop.harness.docker_build import (
     close_logger,
     setup_logger,
@@ -204,7 +204,6 @@ def _auto_eval_loop(
     stop_event: threading.Event,
     logger,
     log_dir: Path,
-    admin_secret: str,
 ) -> None:
     """Host-side auto-eval: periodically extract code and submit to judge.
 
@@ -223,7 +222,7 @@ def _auto_eval_loop(
                 data={
                     "token": session_token,
                     "kind": "auto",
-                    "admin_secret": admin_secret,
+                    "admin_secret": ADMIN_SECRET,
                 },
                 files={"archive": ("archive.tar.gz", archive, "application/gzip")},
                 timeout=120,
@@ -277,7 +276,6 @@ def run_agent(
     4. Run agent (high max-turns for iterative work)
     5. Read final state, extract archive
     """
-    admin_secret = get_admin_secret()
     effective_timeout = timeout or config.agent_timeout or agent.timeout
 
     log_dir = config.log_dir / "runs" / run_id / task_spec.task_id
@@ -318,7 +316,7 @@ def run_agent(
         logger.info("Images ready")
 
         # 1b. Register session with judge server
-        reg_body: dict = {"task_id": task_spec.task_id, "run_id": run_id, "admin_secret": admin_secret}
+        reg_body: dict = {"task_id": task_spec.task_id, "run_id": run_id, "admin_secret": ADMIN_SECRET}
         if config.judge_cpu_limit is not None:
             reg_body["judge_cpu_limit"] = config.judge_cpu_limit
         if config.judge_mem_limit is not None:
@@ -479,7 +477,7 @@ def run_agent(
                     args=(
                         backend, handle, task_spec, host_judge_url,
                         session_token, effective_eval_interval,
-                        auto_eval_stop, logger, log_dir, admin_secret,
+                        auto_eval_stop, logger, log_dir,
                     ),
                     daemon=True,
                 )
@@ -700,8 +698,7 @@ def run_agent(
                 try:
                     h = requests.get(
                         f"{host_judge_url}/api/v1/history",
-                        params={"token": session_token},
-                        headers={"X-RSI-Admin-Secret": admin_secret},
+                        params={"token": session_token, "admin_secret": ADMIN_SECRET},
                         timeout=10,
                     ).json()
                     pending = [e for e in h.get("entries", []) if e.get("status") in ("running", "queued")]
@@ -718,8 +715,7 @@ def run_agent(
             try:
                 history_resp = requests.get(
                     f"{host_judge_url}/api/v1/history",
-                    params={"token": session_token},
-                    headers={"X-RSI-Admin-Secret": admin_secret},
+                    params={"token": session_token, "admin_secret": ADMIN_SECRET},
                     timeout=10,
                 )
                 history_resp.raise_for_status()
@@ -790,8 +786,7 @@ def run_agent(
         try:
             history_resp = requests.get(
                 f"{host_judge_url}/api/v1/history",
-                params={"token": session_token},
-                headers={"X-RSI-Admin-Secret": admin_secret},
+                params={"token": session_token, "admin_secret": ADMIN_SECRET},
                 timeout=10,
             )
             history_resp.raise_for_status()

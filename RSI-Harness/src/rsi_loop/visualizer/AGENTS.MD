@@ -126,10 +126,10 @@ rsi_loop/visualizer/
 
 ## Operator Runbook
 
-Run commands from the harness directory:
+Run commands from the repository root:
 
 ```bash
-cd "$(git rev-parse --show-toplevel)/RSI-Harness"
+cd /home/tiger/workspace/SE-bench-harness
 ```
 
 ### Start Visualizer
@@ -139,32 +139,31 @@ The `--runs-dir` flag chooses where to read run data from. The repo has three us
 | Path | Speed | Notes |
 |------|-------|-------|
 | `logs/runs/` | slow (sshfs) | Live data — each `<ip>/` subdir is an sshfs mount to that machine. Fine for one-off / write paths; painful for interactive browsing. |
-| `logs/runs.local/` | **fast (local disk)** | Local mirror of the run data. Refresh with rsync (see below). |
+| `logs/runs.local/` | **fast (local NVMe)** | Symlink to `/data00/sebench-runs/`. Use for all interactive viewing. Refresh with rsync (see below). |
 | `logs/runs/_local_before_sshfs_*/` | local | Historical snapshot, kept for reference. |
 
 Foreground (recommended setup — local mirror):
 
 ```bash
-uv run python -m rsi_loop.visualizer --runs-dir logs/runs.local --host 127.0.0.1 --port 8000
+uv run python -m sebench.visualizer --runs-dir logs/runs.local --tasks-dir tasks --host 0.0.0.0 --port 8000
 ```
 
 Background (via tmux so it survives the SSH session):
 
 ```bash
-mkdir -p logs
-tmux new-session -d -s rsi_visualizer \
-  'uv run python -m rsi_loop.visualizer --runs-dir logs/runs.local --host 127.0.0.1 --port 8000 \
-   >> logs/visualizer.log 2>&1'
+tmux new-session -d -s sebench_visualizer \
+  '.venv/bin/python -m sebench.visualizer --runs-dir logs/runs.local --host 0.0.0.0 --port 8000 \
+   >> /home/tiger/workspace/visualizer.log 2>&1'
 ```
 
 Check the process:
 
 ```bash
-ps -eo pid,etime,cmd | grep 'rsi_loop.visualizer' | grep -v grep
+ps -eo pid,etime,cmd | grep 'sebench.visualizer' | grep -v grep
 ss -ltnp | grep ':8000'
 ```
 
-Open the local address:
+Open (note: when curl/Playwright run on this host, requests via `127.0.0.1` skip the corporate proxy that otherwise returns 403 for the LAN address):
 
 ```text
 http://localhost:8000/
@@ -178,7 +177,7 @@ http://localhost:8000/
 for ip in <host1> <host2> <host3>; do
   rsync -aP -e 'ssh -o BatchMode=yes' \
     user@$ip:/path/to/logs/runs/ \
-    logs/runs.local/$ip/
+    /data/sebench-runs/$ip/
 done
 ```
 

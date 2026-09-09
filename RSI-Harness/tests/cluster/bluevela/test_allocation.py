@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from rsi_harness.cluster.lsf_apptainer.resources import (
+from rsi_harness.cluster.bluevela.resources import (
     MultiNodeResources,
     PhaseResources,
 )
@@ -17,10 +17,10 @@ from rsi_harness.errors import InfrastructureError
 def _module():
     source = (
         Path(__file__).resolve().parents[3]
-        / "src/rsi_harness/cluster/lsf_apptainer/allocation.py"
+        / "src/rsi_harness/cluster/bluevela/allocation.py"
     )
-    assert source.is_file(), "LSF/Apptainer allocation authority is missing"
-    return importlib.import_module("rsi_harness.cluster.lsf_apptainer.allocation")
+    assert source.is_file(), "Blue Vela allocation authority is missing"
+    return importlib.import_module("rsi_harness.cluster.bluevela.allocation")
 
 
 def _resources() -> MultiNodeResources:
@@ -240,7 +240,7 @@ def test_probe_and_partition_runs_one_fixed_blaunch_probe_per_host(
         ("/site/bin/remote-launch", "--host", "judge-a"),
     )
     assert all(
-        "rsi_harness.cluster.lsf_apptainer.allocation" in call for call in calls
+        "rsi_harness.cluster.bluevela.allocation" in call for call in calls
     )
 
 

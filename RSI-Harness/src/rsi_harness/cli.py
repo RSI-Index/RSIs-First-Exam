@@ -12,7 +12,7 @@ from typing import Annotated, Literal, Protocol
 import typer
 
 from rsi_harness.cluster.base import ClusterRunRequest
-from rsi_harness.cluster.lsf_apptainer.adapter import build_cluster_adapter
+from rsi_harness.cluster.bluevela.adapter import build_cluster_adapter
 from rsi_harness.errors import HarnessError, SetupError
 from rsi_harness.models import (
     AgentAuthSource,
@@ -156,7 +156,7 @@ class _ClusterConsole:
             multi_node = (
                 multi_node if isinstance(multi_node, Mapping) else {}
             )
-            typer.echo("LSF/Apptainer dry-run:")
+            typer.echo("Blue Vela dry-run:")
             typer.echo(_field("Run ID:", details.get("run_id")))
             typer.echo(_field("Run dir:", details.get("run_dir")))
             typer.echo(_field("Image:", details.get("image")))
@@ -295,7 +295,7 @@ def run_command(
         str | None,
         typer.Option(
             "--cluster",
-            help="Cluster name (for example lsf-apptainer) or a cluster profile TOML",
+            help="Cluster name (for example bluevela) or a cluster profile TOML",
         ),
     ] = None,
     dry_run: Annotated[

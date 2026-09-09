@@ -1,4 +1,4 @@
-"""Fail-closed LSF/Apptainer allocation inventory and pool authority."""
+"""Fail-closed Blue Vela allocation inventory and pool authority."""
 
 from __future__ import annotations
 
@@ -18,7 +18,7 @@ from pathlib import Path
 
 from pydantic import Field
 
-from rsi_harness.cluster.lsf_apptainer.resources import MultiNodeResources
+from rsi_harness.cluster.bluevela.resources import MultiNodeResources
 from rsi_harness.errors import InfrastructureError
 from rsi_harness.models import PersistedModel
 
@@ -240,7 +240,7 @@ def probe_and_partition(
             item.host,
             sys.executable,
             "-m",
-            "rsi_harness.cluster.lsf_apptainer.allocation",
+            "rsi_harness.cluster.bluevela.allocation",
             "probe",
             "--host",
             item.host,
@@ -262,14 +262,14 @@ def probe_and_partition(
         if completed.returncode != 0:
             detail = completed.stderr.strip() or completed.stdout.strip()
             raise InfrastructureError(
-                f"LSF/Apptainer node probe failed on {item.host} after "
+                f"Blue Vela node probe failed on {item.host} after "
                 f"{probe_attempts} attempts: {detail}"
             )
         try:
             probes[item.host] = NodeProbe.model_validate_json(completed.stdout)
         except ValueError as error:
             raise InfrastructureError(
-                f"LSF/Apptainer node probe returned invalid JSON on {item.host}"
+                f"Blue Vela node probe returned invalid JSON on {item.host}"
             ) from error
     return freeze_pools(
         run_id=run_id,

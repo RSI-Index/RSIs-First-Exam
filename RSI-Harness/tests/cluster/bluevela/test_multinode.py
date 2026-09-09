@@ -11,35 +11,35 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from rsi_harness.cluster.lsf_apptainer.allocation import AllocatedNode
+from rsi_harness.cluster.bluevela.allocation import AllocatedNode
 from rsi_harness.errors import InfrastructureError
 
 
 def _module():
     source = (
         Path(__file__).resolve().parents[3]
-        / "src/rsi_harness/cluster/lsf_apptainer/multinode.py"
+        / "src/rsi_harness/cluster/bluevela/multinode.py"
     )
-    assert source.is_file(), "LSF/Apptainer phase broker is missing"
-    return importlib.import_module("rsi_harness.cluster.lsf_apptainer.multinode")
+    assert source.is_file(), "Blue Vela phase broker is missing"
+    return importlib.import_module("rsi_harness.cluster.bluevela.multinode")
 
 
 def _remote_module():
     source = (
         Path(__file__).resolve().parents[3]
-        / "src/rsi_harness/cluster/lsf_apptainer/remote_worker.py"
+        / "src/rsi_harness/cluster/bluevela/remote_worker.py"
     )
-    assert source.is_file(), "fixed-shape LSF/Apptainer remote worker is missing"
-    return importlib.import_module("rsi_harness.cluster.lsf_apptainer.remote_worker")
+    assert source.is_file(), "fixed-shape Blue Vela remote worker is missing"
+    return importlib.import_module("rsi_harness.cluster.bluevela.remote_worker")
 
 
 def _judge_module():
     source = (
         Path(__file__).resolve().parents[3]
-        / "src/rsi_harness/cluster/lsf_apptainer/judge_controller.py"
+        / "src/rsi_harness/cluster/bluevela/judge_controller.py"
     )
-    assert source.is_file(), "GPU-free LSF/Apptainer Judge controller is missing"
-    return importlib.import_module("rsi_harness.cluster.lsf_apptainer.judge_controller")
+    assert source.is_file(), "GPU-free Blue Vela Judge controller is missing"
+    return importlib.import_module("rsi_harness.cluster.bluevela.judge_controller")
 
 
 def _nodes(prefix: str, count: int) -> tuple[AllocatedNode, ...]:
@@ -228,7 +228,7 @@ def test_broker_freezes_authority_and_builds_only_fixed_remote_commands(
         assert command[3:6] == (
             sys.executable,
             "-m",
-            "rsi_harness.cluster.lsf_apptainer.remote_worker",
+            "rsi_harness.cluster.bluevela.remote_worker",
         )
         assert command[6] == "run"
         assert command[-6:] == (
@@ -400,7 +400,7 @@ def test_remote_worker_allows_a_frozen_image_working_directory(
 def test_no_network_policy_remote_rank_still_inherits_host_network_for_rendezvous(
     tmp_path: Path,
 ) -> None:
-    """LSF/Apptainer cannot isolate a rank from the network it needs for torchrun."""
+    """Blue Vela cannot isolate a rank from the network it needs for torchrun."""
     multinode = _module()
     remote = _remote_module()
     broker = multinode.MultiNodeBroker(
@@ -677,7 +677,7 @@ def test_private_file_protocol_runs_without_any_additional_user_cli(
 ) -> None:
     multinode = _module()
     shim = importlib.import_module(
-        "rsi_harness.cluster.lsf_apptainer.torchrun_shim"
+        "rsi_harness.cluster.bluevela.torchrun_shim"
     )
     broker = multinode.MultiNodeBroker(
         phase="verifier",

@@ -1,4 +1,4 @@
-"""Rootless network-policy helpers for LSF/Apptainer Apptainer runs."""
+"""Rootless network-policy helpers for Blue Vela Apptainer runs."""
 
 from __future__ import annotations
 
@@ -60,7 +60,7 @@ class UnixConnectProxy:
         self._listener = listener
         self._accept_thread = threading.Thread(
             target=self._accept,
-            name="rsi-lsf_apptainer-provider-proxy",
+            name="rsi-bluevela-provider-proxy",
             daemon=True,
         )
         self._accept_thread.start()
@@ -95,7 +95,7 @@ class UnixConnectProxy:
             thread = threading.Thread(
                 target=self._serve,
                 args=(client,),
-                name="rsi-lsf_apptainer-provider-connection",
+                name="rsi-bluevela-provider-connection",
                 daemon=True,
             )
             with self._lock:
@@ -219,7 +219,7 @@ class UnixTcpRelay:
         self._listener = listener
         self._accept_thread = threading.Thread(
             target=self._accept,
-            name="rsi-lsf_apptainer-submit-relay",
+            name="rsi-bluevela-submit-relay",
             daemon=True,
         )
         self._accept_thread.start()
@@ -254,7 +254,7 @@ class UnixTcpRelay:
             thread = threading.Thread(
                 target=self._serve,
                 args=(client,),
-                name="rsi-lsf_apptainer-submit-connection",
+                name="rsi-bluevela-submit-connection",
                 daemon=True,
             )
             with self._lock:

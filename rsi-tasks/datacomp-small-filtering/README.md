@@ -58,6 +58,7 @@ read-only and are declared independently by phase in `task.toml`.
 Inspect the resolved allocation without submitting:
 
 ```bash
+export RSI_CLUSTER=/absolute/path/to/cluster-profile.toml
 uv run rsi-harness run /absolute/path/to/datacomp-small-filtering \
   --cluster "${RSI_CLUSTER:?set the cluster profile}" --dry-run \
   --agent codex --agent-auth local \

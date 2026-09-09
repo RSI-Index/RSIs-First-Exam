@@ -51,6 +51,8 @@ It uses public seeds and writes no Harbor reward.
 
 For a no-network Agent, provide an operator-authorized model, reasoning effort, two scheduler-authorized H100-equivalent GPU indexes/UUIDs, and an Agent API base or HTTP(S) proxy outside task files:
 
+Run the following commands from the repository root.
+
 ```bash
 export RSI_MODEL="${RSI_MODEL:?set an authorized Agent model}"
 export RSI_REASONING_EFFORT="${RSI_REASONING_EFFORT:?set the desired effort}"

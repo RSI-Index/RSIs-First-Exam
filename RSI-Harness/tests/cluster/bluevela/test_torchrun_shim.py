@@ -16,10 +16,10 @@ from rsi_harness.errors import SetupError
 def _module():
     source = (
         Path(__file__).resolve().parents[3]
-        / "src/rsi_harness/cluster/lsf_apptainer/torchrun_shim.py"
+        / "src/rsi_harness/cluster/bluevela/torchrun_shim.py"
     )
-    assert source.is_file(), "transparent LSF/Apptainer torchrun shim is missing"
-    return importlib.import_module("rsi_harness.cluster.lsf_apptainer.torchrun_shim")
+    assert source.is_file(), "transparent Blue Vela torchrun shim is missing"
+    return importlib.import_module("rsi_harness.cluster.bluevela.torchrun_shim")
 
 
 @pytest.mark.parametrize(
@@ -207,7 +207,7 @@ def test_client_emits_rank_output_in_deterministic_order_and_returns_status(
 ) -> None:
     shim = _module()
     multinode = importlib.import_module(
-        "rsi_harness.cluster.lsf_apptainer.multinode"
+        "rsi_harness.cluster.bluevela.multinode"
     )
     results = tmp_path / "results"
     heartbeats = tmp_path / "heartbeats"
@@ -310,7 +310,7 @@ def test_one_node_cli_publishes_to_the_phase_broker(
 def test_installed_torchrun_shim_has_an_executable_script_entrypoint() -> None:
     source = (
         Path(__file__).resolve().parents[3]
-        / "src/rsi_harness/cluster/lsf_apptainer/torchrun_shim.py"
+        / "src/rsi_harness/cluster/bluevela/torchrun_shim.py"
     )
     text = source.read_text()
 

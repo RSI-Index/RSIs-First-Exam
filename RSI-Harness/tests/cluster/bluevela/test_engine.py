@@ -2,32 +2,26 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from rsi_harness.cluster.config import load_cluster_profile
-from rsi_harness.cluster.lsf_apptainer.adapter import ClusterResources
-from rsi_harness.cluster.lsf_apptainer.allocation import AllocatedNode, AllocatedPools
-from rsi_harness.cluster.lsf_apptainer.engine import (
+from rsi_harness.cluster.bluevela.adapter import ClusterResources
+from rsi_harness.cluster.bluevela.allocation import AllocatedNode, AllocatedPools
+from rsi_harness.cluster.bluevela.engine import (
     EnginePayload,
     bind_lsf_devices,
     bind_multinode_devices,
     render_engine_driver,
     run_engine_payload,
 )
-from rsi_harness.cluster.lsf_apptainer.resources import (
+from rsi_harness.cluster.bluevela.resources import (
     MultiNodeResources,
     PhaseResources,
 )
+from rsi_harness.cluster.config import load_cluster_profile
 from rsi_harness.models import AgentAuthSource, CompileOptions
 from tests.factories import make_run_plan
 
-PROFILE_ENV = {
-    "USER": "alice",
-    "RSI_CLUSTER_ROOT": "/shared/rsi",
-    "RSI_LSF_GROUP": "test-group",
-}
-
 
 def _payload(tmp_path: Path) -> EnginePayload:
-    profile = load_cluster_profile("lsf-apptainer", PROFILE_ENV)
+    profile = load_cluster_profile("bluevela", {"USER": "alice"})
     plan = make_run_plan(tmp_path)
     devices = plan.gpu_plan.authorized_pool.devices
     plan = plan.model_copy(
@@ -126,13 +120,13 @@ def test_lsf_devices_preserve_release_all_overlap(tmp_path: Path) -> None:
 
 def test_gpu_driver_invokes_native_engine_without_harbor_run(tmp_path: Path) -> None:
     payload = _payload(tmp_path)
-    profile = load_cluster_profile("lsf-apptainer", PROFILE_ENV)
+    profile = load_cluster_profile("bluevela", {"USER": "alice"})
     output = (tmp_path / "run.sh").resolve()
 
     payload_path = render_engine_driver(payload, profile, output)
 
     script = output.read_text()
-    assert "rsi_harness.cluster.lsf_apptainer.engine" in script
+    assert "rsi_harness.cluster.bluevela.engine" in script
     assert "harbor run" not in script
     assert "harbor-jobs" not in script
     assert "RSI_HARNESS_NODE_TMP" in script
@@ -252,7 +246,7 @@ def test_multinode_driver_uses_allocation_probe_without_controller_cuda_list(
     assert "LSB_MCPU_HOSTS" in script
     assert "CUDA_VISIBLE_DEVICES:-" not in script
     assert "required_tmp_kb=$((71680 * 1024))" in script
-    assert "rsi_harness.cluster.lsf_apptainer.engine" in script
+    assert "rsi_harness.cluster.bluevela.engine" in script
     assert "harbor run" not in script
 
 
@@ -271,15 +265,15 @@ def test_multinode_engine_freezes_pools_before_entering_native_runtime(
         "work-a 8 work-b 8 judge-a 8",
     )
     monkeypatch.setattr(
-        "rsi_harness.cluster.lsf_apptainer.engine.probe_and_partition",
+        "rsi_harness.cluster.bluevela.engine.probe_and_partition",
         lambda **_kwargs: pools,
     )
     monkeypatch.setattr(
-        "rsi_harness.cluster.lsf_apptainer.engine.socket.gethostname",
+        "rsi_harness.cluster.bluevela.engine.socket.gethostname",
         lambda: "work-a.example",
     )
     monkeypatch.setattr(
-        "rsi_harness.cluster.lsf_apptainer.runtime.run_native_engine",
+        "rsi_harness.cluster.bluevela.runtime.run_native_engine",
         lambda _payload, plan, *, allocated_pools: captured.append(
             (plan, allocated_pools)
         ),

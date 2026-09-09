@@ -13,10 +13,10 @@ from pathlib import Path
 
 from pydantic import Field, field_validator
 
-from rsi_harness.cluster.lsf_apptainer.apptainer_environment import (
+from rsi_harness.cluster.bluevela.apptainer_environment import (
     isolated_apptainer_environment,
 )
-from rsi_harness.cluster.lsf_apptainer.multinode import RemoteWorkerTemplate
+from rsi_harness.cluster.bluevela.multinode import RemoteWorkerTemplate
 from rsi_harness.errors import InfrastructureError
 from rsi_harness.models import PersistedModel
 

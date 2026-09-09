@@ -12,7 +12,7 @@ from rsi_harness.cluster.config import ClusterProfile
 from rsi_harness.models import PersistedModel
 from rsi_harness.task.digest import hash_tree
 
-_CACHE_SCHEMA = b"rsi-harness-lsf_apptainer-sif-v3\0"
+_CACHE_SCHEMA = b"rsi-harness-bluevela-sif-v3\0"
 
 
 class ImagePlan(PersistedModel):

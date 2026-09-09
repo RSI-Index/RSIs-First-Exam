@@ -68,6 +68,8 @@ liger-tied-ce/
 
 For offline Agent access, export `RSI_AGENT_API_KEY` plus an operator-approved `RSI_AGENT_API_BASE_URL`, or start the documented RSI-Harness proxy. Do not store credentials in this directory.
 
+Run the following commands from the repository root.
+
 ```bash
 sudo -E "$(command -v rsi-harness)" run "$PWD/rsi-tasks/liger-tied-ce" \
   --agent codex \

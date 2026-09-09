@@ -203,7 +203,7 @@ class ResourceProfile(_ProfileModel):
 
 class ClusterProfile(_ProfileModel):
     name: str
-    adapter: Literal["lsf-apptainer"]
+    adapter: Literal["bluevela"]
     owner: str
     scheduler: SchedulerProfile
     storage: StorageProfile
@@ -216,9 +216,9 @@ def _expand(value: Any, environ: Mapping[str, str]) -> Any:
     if isinstance(value, str):
         def replace(match: re.Match[str]) -> str:
             name = match.group(1)
-            if name not in environ or not environ[name]:
+            if name not in environ:
                 raise SetupError(
-                    f"cluster profile references missing or empty environment variable {name}"
+                    f"cluster profile references missing environment variable {name}"
                 )
             return environ[name]
 
@@ -234,9 +234,9 @@ def _profile_bytes(name_or_path: str | Path) -> bytes:
     candidate = Path(name_or_path).expanduser()
     if candidate.is_file():
         return candidate.read_bytes()
-    if str(name_or_path) == "lsf-apptainer":
+    if str(name_or_path) == "bluevela":
         return (
-            resources.files("rsi_harness.cluster.lsf_apptainer")
+            resources.files("rsi_harness.cluster.bluevela")
             .joinpath("profile.toml")
             .read_bytes()
         )

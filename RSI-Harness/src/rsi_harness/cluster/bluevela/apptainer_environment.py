@@ -1,4 +1,4 @@
-"""Isolated, argv-safe environment injection for LSF/Apptainer Apptainer."""
+"""Isolated, argv-safe environment injection for Blue Vela Apptainer."""
 
 from __future__ import annotations
 

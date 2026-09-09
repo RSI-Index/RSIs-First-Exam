@@ -1,4 +1,4 @@
-"""Fixed-shape per-host Apptainer worker for LSF/Apptainer torchrun requests."""
+"""Fixed-shape per-host Apptainer worker for Blue Vela torchrun requests."""
 
 from __future__ import annotations
 
@@ -12,10 +12,10 @@ import subprocess
 import time
 from pathlib import Path
 
-from rsi_harness.cluster.lsf_apptainer.apptainer_environment import (
+from rsi_harness.cluster.bluevela.apptainer_environment import (
     isolated_apptainer_environment,
 )
-from rsi_harness.cluster.lsf_apptainer.multinode import RemoteRequestControl
+from rsi_harness.cluster.bluevela.multinode import RemoteRequestControl
 from rsi_harness.errors import InfrastructureError
 
 _SIZE_FLAGS = {"--nnodes", "--nproc-per-node", "--nproc_per_node"}
@@ -167,7 +167,7 @@ def build_apptainer_command(
     # A remote torchrun rank must inherit the allocated host's routable
     # inter-node interface.  Apptainer's `--network none` removes that same
     # interface, so even the frozen RSI_MASTER_ADDR becomes unreachable.  The
-    # requested policy remains in RemoteWorkerTemplate for audit; LSF/Apptainer's
+    # requested policy remains in RemoteWorkerTemplate for audit; Blue Vela's
     # host-network limitation is contained to this multi-node-only worker.
     command.extend(
         (

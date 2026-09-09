@@ -5,18 +5,12 @@ import os
 import subprocess
 from pathlib import Path
 
-from rsi_harness.cluster.config import load_cluster_profile
-from rsi_harness.cluster.lsf_apptainer.image import (
+from rsi_harness.cluster.bluevela.image import (
     plan_image,
     render_build_driver,
     validate_cached_image,
 )
-
-PROFILE_ENV = {
-    "USER": "alice",
-    "RSI_CLUSTER_ROOT": "/shared/rsi",
-    "RSI_LSF_GROUP": "test-group",
-}
+from rsi_harness.cluster.config import load_cluster_profile
 
 
 def _context(root: Path, content: str = "FROM scratch\n") -> Path:
@@ -95,7 +89,7 @@ def test_build_driver_executes_archive_conversion_and_publishes_atomically(
     )
     fakeroot_library = tmp_path / "libfakeroot-sysv.so"
     fakeroot_library.write_bytes(b"fake library")
-    base = load_cluster_profile("lsf-apptainer", PROFILE_ENV)
+    base = load_cluster_profile("bluevela", {"USER": "alice"})
     profile = base.model_copy(
         update={
             "builder": base.builder.model_copy(

@@ -1,4 +1,4 @@
-"""Native RSI-Harness Engine execution inside one LSF/Apptainer allocation."""
+"""Native RSI-Harness Engine execution inside one Blue Vela allocation."""
 
 from __future__ import annotations
 
@@ -14,14 +14,14 @@ from typing import Self
 
 from pydantic import Field, field_validator, model_validator
 
-from rsi_harness.cluster.config import ClusterProfile
-from rsi_harness.cluster.lsf_apptainer.adapter import ClusterResources
-from rsi_harness.cluster.lsf_apptainer.allocation import (
+from rsi_harness.cluster.bluevela.adapter import ClusterResources
+from rsi_harness.cluster.bluevela.allocation import (
     AllocatedPools,
     parse_lsb_mcpu_hosts,
     probe_and_partition,
 )
-from rsi_harness.cluster.lsf_apptainer.resources import MultiNodeResources
+from rsi_harness.cluster.bluevela.resources import MultiNodeResources
+from rsi_harness.cluster.config import ClusterProfile
 from rsi_harness.errors import SetupError
 from rsi_harness.models import (
     AgentAuthSource,
@@ -58,7 +58,7 @@ class EnginePayload(PersistedModel):
     def _exactly_one_resource_branch(self) -> Self:
         if (self.resources is None) == (self.multi_node is None):
             raise ValueError(
-                "Engine payload requires exactly one LSF/Apptainer resource branch"
+                "Engine payload requires exactly one Blue Vela resource branch"
             )
         return self
 
@@ -148,13 +148,13 @@ def bind_multinode_devices(
         judge_values
     ) != len(plan.gpu_plan.judge.devices):
         raise SetupError(
-            "frozen LSF/Apptainer pools do not match planned Work/Judge devices"
+            "frozen Blue Vela pools do not match planned Work/Judge devices"
         )
     qualified = tuple(f"{host}:{device}" for host, device in work_values + judge_values)
     if len(set(qualified)) != len(qualified):
-        raise SetupError("frozen LSF/Apptainer pools contain duplicate devices")
+        raise SetupError("frozen Blue Vela pools contain duplicate devices")
     devices = tuple(
-        GPUDevice(index=index, uuid=value, name="allocated LSF/Apptainer GPU")
+        GPUDevice(index=index, uuid=value, name="allocated Blue Vela GPU")
         for index, value in enumerate(qualified)
     )
     work_count = len(work_values)
@@ -249,7 +249,7 @@ trap cleanup EXIT
   --env "CUDA_VISIBLE_DEVICES=$CUDA_VISIBLE_DEVICES" {bind_args} \
   {_quote(payload.sif_path)} nvidia-smi
 
-{_quote(sys.executable)} -m rsi_harness.cluster.lsf_apptainer.engine \
+{_quote(sys.executable)} -m rsi_harness.cluster.bluevela.engine \
   --payload {_quote(payload_path)}
 test -s {_quote(leaf / 'final_result.json')}
 """
@@ -283,7 +283,7 @@ trap cleanup EXIT
 
 (cd {_quote(payload.sif_path.parent)} && \
   sha256sum -c {_quote(payload.sif_sha256_path.name)})
-{_quote(sys.executable)} -m rsi_harness.cluster.lsf_apptainer.engine \
+{_quote(sys.executable)} -m rsi_harness.cluster.bluevela.engine \
   --payload {_quote(payload_path)}
 test -s {_quote(leaf / 'final_result.json')}
 """
@@ -334,7 +334,7 @@ def run_engine_payload(payload: EnginePayload) -> None:
         control_path = payload.run_plan.paths.root / "control/ALLOCATED_POOLS.json"
         _atomic_model(control_path, allocated_pools)
         plan = bind_multinode_devices(payload.run_plan, allocated_pools)
-    from rsi_harness.cluster.lsf_apptainer.runtime import run_native_engine
+    from rsi_harness.cluster.bluevela.runtime import run_native_engine
 
     run_native_engine(payload, plan, allocated_pools=allocated_pools)
 

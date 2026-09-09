@@ -1,4 +1,4 @@
-"""In-allocation node-pool authority for LSF/Apptainer multi-node phases."""
+"""In-allocation node-pool authority for Blue Vela multi-node phases."""
 
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from typing import Literal
 
 from pydantic import Field, field_validator
 
-from rsi_harness.cluster.lsf_apptainer.allocation import AllocatedNode
+from rsi_harness.cluster.bluevela.allocation import AllocatedNode
 from rsi_harness.errors import InfrastructureError
 from rsi_harness.models import PersistedModel
 
@@ -338,7 +338,7 @@ class MultiNodeBroker:
             raise InfrastructureError(
                 "multi-node request local world size differs from its phase pool"
             )
-        from rsi_harness.cluster.lsf_apptainer.torchrun_shim import (
+        from rsi_harness.cluster.bluevela.torchrun_shim import (
             forwarded_environment,
             parse_torchrun_invocation,
         )
@@ -400,7 +400,7 @@ class MultiNodeBroker:
                         node.host,
                         sys.executable,
                         "-m",
-                        "rsi_harness.cluster.lsf_apptainer.remote_worker",
+                        "rsi_harness.cluster.bluevela.remote_worker",
                         "run",
                         "--control",
                         str(control_path),
@@ -458,7 +458,7 @@ class MultiNodeBroker:
             self._stop_event.clear()
             thread = threading.Thread(
                 target=self._serve,
-                name=f"lsf_apptainer-{self.phase}-broker",
+                name=f"bluevela-{self.phase}-broker",
                 daemon=True,
             )
             self._server_thread = thread
@@ -667,7 +667,7 @@ def stop_command(
     if (
         len(command) < 7
         or command[:2] != (remote_binary, remote_host_flag)
-        or command[5] != "rsi_harness.cluster.lsf_apptainer.remote_worker"
+        or command[5] != "rsi_harness.cluster.bluevela.remote_worker"
         or command[6] != "run"
     ):
         raise InfrastructureError("cannot derive cleanup from an unsafe rank command")

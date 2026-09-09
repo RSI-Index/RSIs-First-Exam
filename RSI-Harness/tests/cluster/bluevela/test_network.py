@@ -24,7 +24,7 @@ def _read_headers(connection: socket.socket) -> bytes:
 def test_connect_proxy_relays_only_to_the_pinned_provider_address(
     tmp_path: Path,
 ) -> None:
-    from rsi_harness.cluster.lsf_apptainer.network import UnixConnectProxy
+    from rsi_harness.cluster.bluevela.network import UnixConnectProxy
 
     upstream = socket.socket()
     upstream.bind(("127.0.0.1", 0))
@@ -65,7 +65,7 @@ def test_connect_proxy_relays_only_to_the_pinned_provider_address(
 
 
 def test_connect_proxy_rejects_an_unpinned_destination(tmp_path: Path) -> None:
-    from rsi_harness.cluster.lsf_apptainer.network import UnixConnectProxy
+    from rsi_harness.cluster.bluevela.network import UnixConnectProxy
 
     proxy = UnixConnectProxy(
         tmp_path / "provider.sock",
@@ -88,7 +88,7 @@ def test_connect_proxy_rejects_an_unpinned_destination(tmp_path: Path) -> None:
 
 
 def test_unix_tcp_relay_reaches_only_its_fixed_tcp_target(tmp_path: Path) -> None:
-    from rsi_harness.cluster.lsf_apptainer.network import UnixTcpRelay
+    from rsi_harness.cluster.bluevela.network import UnixTcpRelay
 
     upstream = socket.socket()
     upstream.bind(("127.0.0.1", 0))
@@ -124,7 +124,7 @@ def test_netns_relay_exposes_only_provider_proxy_and_submit_loopback(
 ) -> None:
     relay_script = (
         Path(__file__).resolve().parents[3]
-        / "src/rsi_harness/cluster/lsf_apptainer/netns_relay.py"
+        / "src/rsi_harness/cluster/bluevela/netns_relay.py"
     )
     provider_socket = tmp_path / "provider.sock"
     submit_socket = tmp_path / "submit.sock"
@@ -219,7 +219,7 @@ print('netns-relay: OK')
 def test_agent_network_broker_wraps_one_isolated_agent_lifecycle(
     tmp_path: Path,
 ) -> None:
-    from rsi_harness.cluster.lsf_apptainer.network import AgentNetworkBroker
+    from rsi_harness.cluster.bluevela.network import AgentNetworkBroker
 
     broker = AgentNetworkBroker(
         tmp_path / "broker",

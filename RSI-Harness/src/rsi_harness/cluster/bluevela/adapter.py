@@ -1,4 +1,4 @@
-"""LSF/Apptainer resource planning and run orchestration."""
+"""Blue Vela resource planning and run orchestration."""
 
 from __future__ import annotations
 
@@ -20,23 +20,21 @@ from rsi_harness.cluster.base import (
     ClusterRunRequest,
     ClusterRunResult,
 )
-from rsi_harness.cluster.config import (
-    ClusterProfile,
-    load_cluster_profile,
-)
-from rsi_harness.cluster.lsf_apptainer.image import ImagePlan as SIFImagePlan
-from rsi_harness.cluster.lsf_apptainer.image import (
+from rsi_harness.cluster.bluevela.image import ImagePlan as SIFImagePlan
+from rsi_harness.cluster.bluevela.image import (
     plan_image,
     render_build_driver,
     validate_cached_image,
 )
-from rsi_harness.cluster.lsf_apptainer.resources import (
+from rsi_harness.cluster.bluevela.resources import (
     ClusterResources,
     MultiNodeResources,
     derive_resource_plan,
 )
-from rsi_harness.cluster.lsf_apptainer.resources import (
-    derive_resources as derive_resources,
+from rsi_harness.cluster.bluevela.resources import derive_resources as derive_resources
+from rsi_harness.cluster.config import (
+    ClusterProfile,
+    load_cluster_profile,
 )
 from rsi_harness.cluster.schedulers.lsf import (
     LSFJobResult,
@@ -126,7 +124,7 @@ def _resolve_agent_version(agent_name: str) -> str | None:
     return match.group(1)
 
 
-class LsfApptainerClusterAdapter(ClusterAdapter):
+class BlueVelaClusterAdapter(ClusterAdapter):
     """Synchronous LSF/Apptainer transport for the native Harness Engine."""
 
     def __init__(
@@ -163,7 +161,7 @@ class LsfApptainerClusterAdapter(ClusterAdapter):
         assert resources is not None
         build_context = definition.service.build_context
         if build_context is None:
-            raise SetupError("LSF/Apptainer cluster runs require a Docker build context")
+            raise SetupError("Blue Vela cluster runs require a Docker build context")
         self._validate_runtime_inputs(request)
         agent_version = self.agent_version_resolver(definition.agent.name)
         agent_launcher = _agent_launcher(definition.agent.name)
@@ -311,13 +309,11 @@ class LsfApptainerClusterAdapter(ClusterAdapter):
             _atomic_json(manifest_path, manifest)
 
             run_plan = self._run_plan(definition, image, resources, run_dir)
-            from rsi_harness.cluster.lsf_apptainer.engine import (
+            from rsi_harness.cluster.bluevela.engine import (
                 EnginePayload,
                 render_engine_driver,
             )
-            from rsi_harness.cluster.lsf_apptainer.runtime import (
-                validate_native_artifacts,
-            )
+            from rsi_harness.cluster.bluevela.runtime import validate_native_artifacts
 
             payload = EnginePayload(
                 run_id=run_id,
@@ -644,7 +640,7 @@ class LsfApptainerClusterAdapter(ClusterAdapter):
                 GPUDevice(
                     index=node_rank * resources.gpus_per_node + local_rank,
                     uuid=f"WORK-{node_rank:03d}:GPU-{local_rank}",
-                    name="planned LSF/Apptainer Work GPU",
+                    name="planned Blue Vela Work GPU",
                 )
                 for node_rank in range(resources.work.node_count)
                 for local_rank in range(resources.gpus_per_node)
@@ -658,7 +654,7 @@ class LsfApptainerClusterAdapter(ClusterAdapter):
                         + local_rank
                     ),
                     uuid=f"JUDGE-{node_rank:03d}:GPU-{local_rank}",
-                    name="planned LSF/Apptainer Judge GPU",
+                    name="planned Blue Vela Judge GPU",
                 )
                 for node_rank in range(resources.verifier.node_count)
                 for local_rank in range(resources.gpus_per_node)
@@ -726,7 +722,7 @@ class LsfApptainerClusterAdapter(ClusterAdapter):
                 workspace=(run_dir / "workspace").resolve(),
                 logs=self.profile.storage.logs_root.resolve(),
             ),
-            "lsf_apptainer-apptainer-engine",
+            "bluevela-apptainer-engine",
         )
 
     def _manifest(
@@ -806,6 +802,6 @@ def build_cluster_adapter(
     event_callback: Callable[[str, object], None] | None = None,
 ) -> ClusterAdapter:
     profile = load_cluster_profile(name_or_path)
-    if profile.adapter != "lsf-apptainer":
+    if profile.adapter != "bluevela":
         raise SetupError(f"unsupported cluster adapter: {profile.adapter}")
-    return LsfApptainerClusterAdapter(profile, event_callback=event_callback)
+    return BlueVelaClusterAdapter(profile, event_callback=event_callback)

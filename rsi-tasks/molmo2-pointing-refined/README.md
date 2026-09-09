@@ -47,6 +47,8 @@ For each case, the evaluator normalizes time and coordinates to `[0,100]`, conve
 
 Run with operator-supplied model and GPU-pool selectors:
 
+Run the following commands from the repository root.
+
 ```bash
 sudo -E rsi-harness run "$PWD/rsi-tasks/molmo2-pointing-refined" \
   --agent codex \

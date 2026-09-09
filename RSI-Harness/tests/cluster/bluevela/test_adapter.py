@@ -10,18 +10,18 @@ from types import SimpleNamespace
 import pytest
 
 from rsi_harness.cluster.base import ClusterRunRequest
+from rsi_harness.cluster.bluevela.adapter import (
+    BlueVelaClusterAdapter,
+    derive_resources,
+)
+from rsi_harness.cluster.bluevela.engine import load_engine_payload
+from rsi_harness.cluster.bluevela.image import ImagePlan as SIFImagePlan
+from rsi_harness.cluster.bluevela.resources import derive_resource_plan
 from rsi_harness.cluster.config import (
     ApptainerBindProfile,
     ClusterProfile,
     load_cluster_profile,
 )
-from rsi_harness.cluster.lsf_apptainer.adapter import (
-    LsfApptainerClusterAdapter,
-    derive_resources,
-)
-from rsi_harness.cluster.lsf_apptainer.engine import load_engine_payload
-from rsi_harness.cluster.lsf_apptainer.image import ImagePlan as SIFImagePlan
-from rsi_harness.cluster.lsf_apptainer.resources import derive_resource_plan
 from rsi_harness.cluster.schedulers.lsf import (
     LSFJobResult,
     LSFJobSpec,
@@ -40,12 +40,6 @@ from rsi_harness.models import (
 )
 from rsi_harness.runtime.artifacts import RunArtifactWriter
 
-PROFILE_ENV = {
-    "USER": "alice",
-    "RSI_CLUSTER_ROOT": "/shared/rsi",
-    "RSI_LSF_GROUP": "test-group",
-}
-
 TARGET = (
     "linkedin__liger-kernel.c856fbab."
     "test_fused_neighborhood_attention.78217be4.lv2"
@@ -53,7 +47,7 @@ TARGET = (
 
 
 def _profile(tmp_path: Path) -> ClusterProfile:
-    base = load_cluster_profile("lsf-apptainer", PROFILE_ENV)
+    base = load_cluster_profile("bluevela", {"USER": "alice"})
     root = (tmp_path / "cluster").resolve()
     apptainer = tmp_path / "apptainer"
     apptainer.write_text("#!/bin/sh\nexit 0\n")
@@ -71,7 +65,7 @@ def _profile(tmp_path: Path) -> ClusterProfile:
             ),
             "builder": base.builder.model_copy(update={"temp_root": tmp_path}),
             "apptainer": base.apptainer.model_copy(
-                update={"binary": apptainer, "extra_binds": (Path("/shared"),)}
+                update={"binary": apptainer}
             ),
         }
     )
@@ -164,7 +158,7 @@ def test_dry_run_resolves_four_gpus_without_mutation(tmp_path: Path) -> None:
     profile = _profile(tmp_path)
     scheduler = RecordingScheduler()
     events: list[tuple[str, object]] = []
-    adapter = LsfApptainerClusterAdapter(
+    adapter = BlueVelaClusterAdapter(
         profile,
         scheduler=scheduler,
         clock=lambda: datetime(2026, 8, 23, 12, 0, tzinfo=UTC),
@@ -190,7 +184,7 @@ def test_dry_run_resolves_four_gpus_without_mutation(tmp_path: Path) -> None:
     }
     assert "num=4:mode=exclusive_process" in dry_run["run_argv"]
     assert "select[tmp>=15360] span[hosts=1]" in dry_run["run_argv"]
-    assert dry_run["binds"] == ("legacy-public:/shared",)
+    assert dry_run["binds"] == ("legacy-public:/proj",)
     assert dry_run["agent_version"] == "0.149.0"
 
 
@@ -201,7 +195,7 @@ def test_dry_run_automatically_dispatches_task_gpu_fields_to_multinode(
     profile = _profile(tmp_path)
     scheduler = RecordingScheduler()
     events: list[tuple[str, object]] = []
-    adapter = LsfApptainerClusterAdapter(
+    adapter = BlueVelaClusterAdapter(
         profile,
         scheduler=scheduler,
         clock=lambda: datetime(2026, 8, 23, 12, 0, tzinfo=UTC),
@@ -245,7 +239,7 @@ def test_dry_run_automatically_dispatches_task_gpu_fields_to_multinode(
     assert "span[hosts=1]" not in resource
     assert "num=8:mode=exclusive_process" in dry_run["run_argv"]
     assert "rsi-multinode" not in repr(dry_run)
-    assert "legacy-public:/shared" not in dry_run["binds"]
+    assert "legacy-public:/proj" not in dry_run["binds"]
     assert any("/rsi-data" in item for item in dry_run["binds"])
 
 
@@ -258,7 +252,7 @@ def test_multinode_exclusive_policy_comes_from_cluster_profile(
         update={"scheduler": base.scheduler.model_copy(update={"exclusive": False})}
     )
     events: list[tuple[str, object]] = []
-    adapter = LsfApptainerClusterAdapter(
+    adapter = BlueVelaClusterAdapter(
         profile,
         scheduler=RecordingScheduler(),
         event_callback=lambda name, value: events.append((name, value)),
@@ -291,7 +285,7 @@ def test_unhealthy_host_exclusions_come_from_cluster_profile(
         }
     )
     events: list[tuple[str, object]] = []
-    adapter = LsfApptainerClusterAdapter(
+    adapter = BlueVelaClusterAdapter(
         profile,
         scheduler=RecordingScheduler(),
         event_callback=lambda name, value: events.append((name, value)),
@@ -310,7 +304,7 @@ def test_run_plan_overlaps_work_and_judge_when_single_node_requires_reuse(
     tmp_path: Path,
 ) -> None:
     profile = _profile(tmp_path)
-    adapter = LsfApptainerClusterAdapter(
+    adapter = BlueVelaClusterAdapter(
         profile,
         scheduler=RecordingScheduler(),
         agent_version_resolver=lambda _name: "0.149.0",
@@ -344,7 +338,7 @@ def test_multinode_run_plan_uses_disjoint_host_local_placeholders(
     tmp_path: Path,
 ) -> None:
     profile = _profile(tmp_path)
-    adapter = LsfApptainerClusterAdapter(
+    adapter = BlueVelaClusterAdapter(
         profile,
         scheduler=RecordingScheduler(),
         agent_version_resolver=lambda _name: "0.149.0",
@@ -390,7 +384,7 @@ def test_multinode_shared_workspace_capacity_is_checked_separately_from_tmp(
     monkeypatch,
 ) -> None:
     profile = _profile(tmp_path)
-    adapter = LsfApptainerClusterAdapter(
+    adapter = BlueVelaClusterAdapter(
         profile,
         scheduler=RecordingScheduler(),
         agent_version_resolver=lambda _name: "0.149.0",
@@ -406,7 +400,7 @@ def test_multinode_shared_workspace_capacity_is_checked_separately_from_tmp(
     assert resources is not None
     resources = resources.model_copy(update={"shared_workspace_mb": 2048})
     monkeypatch.setattr(
-        "rsi_harness.cluster.lsf_apptainer.adapter.shutil.disk_usage",
+        "rsi_harness.cluster.bluevela.adapter.shutil.disk_usage",
         lambda _path: SimpleNamespace(free=1024 * 1024 * 1024),
     )
 
@@ -418,14 +412,14 @@ def test_standard_multinode_fixture_needs_no_task_owned_cluster_directory(
     tmp_path: Path,
 ) -> None:
     profile = _profile(tmp_path)
-    adapter = LsfApptainerClusterAdapter(
+    adapter = BlueVelaClusterAdapter(
         profile,
         scheduler=RecordingScheduler(),
         agent_version_resolver=lambda _name: "0.149.0",
     )
     fixture = (
         Path(__file__).resolve().parents[2]
-        / "fixtures/tasks/minimal-lsf-apptainer-multinode"
+        / "fixtures/tasks/minimal-bluevela-multinode"
     )
     request = ClusterRunRequest(
         task_dir=fixture,
@@ -474,7 +468,7 @@ def test_cache_miss_waits_for_build_then_run_and_records_manifest(
 ) -> None:
     profile = _profile(tmp_path)
     scheduler = RecordingScheduler()
-    adapter = LsfApptainerClusterAdapter(
+    adapter = BlueVelaClusterAdapter(
         profile,
         scheduler=scheduler,
         clock=lambda: datetime(2026, 8, 23, 12, 0, tzinfo=UTC),
@@ -532,7 +526,7 @@ def test_missing_declared_asset_stops_after_cpu_build_before_gpu_submission(
         }
     )
     scheduler = RecordingScheduler()
-    adapter = LsfApptainerClusterAdapter(
+    adapter = BlueVelaClusterAdapter(
         profile,
         scheduler=scheduler,
         agent_version_resolver=lambda _name: "0.149.0",
@@ -583,7 +577,7 @@ def test_valid_declared_assets_allow_gpu_submission(tmp_path: Path, monkeypatch)
         }
     )
     scheduler = RecordingScheduler()
-    adapter = LsfApptainerClusterAdapter(
+    adapter = BlueVelaClusterAdapter(
         profile,
         scheduler=scheduler,
         agent_version_resolver=lambda _name: "0.149.0",
@@ -627,11 +621,11 @@ def test_claude_run_resolves_registered_launcher_into_engine_payload(
         return "/bin/true" if name == "claude" else None
 
     monkeypatch.setattr(
-        "rsi_harness.cluster.lsf_apptainer.adapter.shutil.which", which
+        "rsi_harness.cluster.bluevela.adapter.shutil.which", which
     )
     profile = _profile(tmp_path)
     scheduler = RecordingScheduler()
-    adapter = LsfApptainerClusterAdapter(
+    adapter = BlueVelaClusterAdapter(
         profile,
         scheduler=scheduler,
         agent_version_resolver=lambda _name: "2.1.246",
@@ -648,7 +642,7 @@ def test_claude_run_resolves_registered_launcher_into_engine_payload(
 
 
 def test_job_names_distinguish_agents_for_concurrent_task_runs(tmp_path: Path) -> None:
-    adapter = LsfApptainerClusterAdapter(
+    adapter = BlueVelaClusterAdapter(
         _profile(tmp_path),
         scheduler=RecordingScheduler(),
         agent_version_resolver=lambda _name: "test",

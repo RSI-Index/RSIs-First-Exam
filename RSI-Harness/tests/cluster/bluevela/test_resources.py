@@ -4,18 +4,12 @@ from pathlib import Path
 
 import pytest
 
-import rsi_harness.cluster.lsf_apptainer.adapter as lsf_apptainer_adapter
+import rsi_harness.cluster.bluevela.adapter as bluevela_adapter
+from rsi_harness.cluster.bluevela.adapter import derive_resources
 from rsi_harness.cluster.config import load_cluster_profile
-from rsi_harness.cluster.lsf_apptainer.adapter import derive_resources
 from rsi_harness.errors import SetupError
 from rsi_harness.models import CompileOptions, GPURequirement
 from rsi_harness.task.compiler import HarborTaskCompiler
-
-PROFILE_ENV = {
-    "USER": "alice",
-    "RSI_CLUSTER_ROOT": "/shared/rsi",
-    "RSI_LSF_GROUP": "test-group",
-}
 
 TARGET = (
     "linkedin__liger-kernel.c856fbab."
@@ -34,7 +28,7 @@ def _target_definition():
 def test_target_resources_are_derived_from_current_task_configuration() -> None:
     resources = derive_resources(
         _target_definition(),
-        load_cluster_profile("lsf-apptainer", PROFILE_ENV),
+        load_cluster_profile("bluevela", {"USER": "alice"}),
     )
 
     assert resources.work_gpus == 2
@@ -59,7 +53,7 @@ def test_task_build_timeout_expands_cluster_build_walltime() -> None:
 
     resources = derive_resources(
         definition,
-        load_cluster_profile("lsf-apptainer", PROFILE_ENV),
+        load_cluster_profile("bluevela", {"USER": "alice"}),
     )
 
     assert resources.build_walltime == "06:15"
@@ -77,7 +71,7 @@ def test_task_storage_is_used_as_node_local_tmp_requirement() -> None:
 
     resources = derive_resources(
         definition,
-        load_cluster_profile("lsf-apptainer", PROFILE_ENV),
+        load_cluster_profile("bluevela", {"USER": "alice"}),
     )
 
     assert resources.local_tmp_mb == 512000
@@ -91,7 +85,7 @@ def test_all_gpu_declaration_requires_numeric_profile_override() -> None:
     with pytest.raises(SetupError, match="numeric override"):
         derive_resources(
             definition,
-            load_cluster_profile("lsf-apptainer", PROFILE_ENV),
+            load_cluster_profile("bluevela", {"USER": "alice"}),
         )
 
 
@@ -111,7 +105,7 @@ def test_single_node_reuses_work_gpus_when_phase_sum_exceeds_capacity(
 
     resources = derive_resources(
         definition,
-        load_cluster_profile("lsf-apptainer", PROFILE_ENV),
+        load_cluster_profile("bluevela", {"USER": "alice"}),
     )
 
     assert resources.work_gpus == 8
@@ -127,13 +121,13 @@ def test_phase_gpu_limit_is_enforced() -> None:
     with pytest.raises(SetupError, match="single-node capacity"):
         derive_resources(
             definition,
-            load_cluster_profile("lsf-apptainer", PROFILE_ENV),
+            load_cluster_profile("bluevela", {"USER": "alice"}),
         )
 
 
 def test_legacy_eight_plus_eight_stays_on_single_node_branch() -> None:
-    assert hasattr(lsf_apptainer_adapter, "derive_resource_plan"), (
-        "LSF/Apptainer needs an explicit compatible single/multi dispatch"
+    assert hasattr(bluevela_adapter, "derive_resource_plan"), (
+        "Blue Vela needs an explicit compatible single/multi dispatch"
     )
     definition = _target_definition()
     definition = definition.model_copy(
@@ -143,9 +137,9 @@ def test_legacy_eight_plus_eight_stays_on_single_node_branch() -> None:
         }
     )
 
-    plan = lsf_apptainer_adapter.derive_resource_plan(
+    plan = bluevela_adapter.derive_resource_plan(
         definition,
-        load_cluster_profile("lsf-apptainer", PROFILE_ENV),
+        load_cluster_profile("bluevela", {"USER": "alice"}),
     )
 
     assert plan.single_node is not None
@@ -162,7 +156,7 @@ def test_explicit_disjoint_phases_stay_multinode_when_each_phase_fits() -> None:
             "require_disjoint_phase_nodes": True,
         }
     )
-    profile = load_cluster_profile("lsf-apptainer", PROFILE_ENV)
+    profile = load_cluster_profile("bluevela", {"USER": "alice"})
     profile = profile.model_copy(
         update={
             "resources": profile.resources.model_copy(
@@ -171,7 +165,7 @@ def test_explicit_disjoint_phases_stay_multinode_when_each_phase_fits() -> None:
         }
     )
 
-    plan = lsf_apptainer_adapter.derive_resource_plan(definition, profile)
+    plan = bluevela_adapter.derive_resource_plan(definition, profile)
 
     assert plan.single_node is None
     assert plan.multi_node is not None
@@ -181,8 +175,8 @@ def test_explicit_disjoint_phases_stay_multinode_when_each_phase_fits() -> None:
 
 
 def test_thirty_two_plus_sixteen_becomes_four_plus_two_nodes() -> None:
-    assert hasattr(lsf_apptainer_adapter, "derive_resource_plan"), (
-        "LSF/Apptainer needs an explicit compatible single/multi dispatch"
+    assert hasattr(bluevela_adapter, "derive_resource_plan"), (
+        "Blue Vela needs an explicit compatible single/multi dispatch"
     )
     definition = _target_definition()
     definition = definition.model_copy(
@@ -192,9 +186,9 @@ def test_thirty_two_plus_sixteen_becomes_four_plus_two_nodes() -> None:
         }
     )
 
-    plan = lsf_apptainer_adapter.derive_resource_plan(
+    plan = bluevela_adapter.derive_resource_plan(
         definition,
-        load_cluster_profile("lsf-apptainer", PROFILE_ENV),
+        load_cluster_profile("bluevela", {"USER": "alice"}),
     )
 
     assert plan.single_node is None
@@ -214,7 +208,7 @@ def test_multinode_geometry_comes_from_profile_not_an_eight_gpu_constant() -> No
             "verifier": definition.verifier.model_copy(update={"gpu_count": 4}),
         }
     )
-    profile = load_cluster_profile("lsf-apptainer", PROFILE_ENV)
+    profile = load_cluster_profile("bluevela", {"USER": "alice"})
     profile = profile.model_copy(
         update={
             "resources": profile.resources.model_copy(
@@ -223,7 +217,7 @@ def test_multinode_geometry_comes_from_profile_not_an_eight_gpu_constant() -> No
         }
     )
 
-    plan = lsf_apptainer_adapter.derive_resource_plan(definition, profile)
+    plan = bluevela_adapter.derive_resource_plan(definition, profile)
 
     assert plan.multi_node is not None
     assert plan.multi_node.gpus_per_node == 4
@@ -237,8 +231,8 @@ def test_multinode_rejects_partial_gpu_nodes(
     work_gpus: int,
     verifier_gpus: int,
 ) -> None:
-    assert hasattr(lsf_apptainer_adapter, "derive_resource_plan"), (
-        "LSF/Apptainer needs an explicit compatible single/multi dispatch"
+    assert hasattr(bluevela_adapter, "derive_resource_plan"), (
+        "Blue Vela needs an explicit compatible single/multi dispatch"
     )
     definition = _target_definition()
     definition = definition.model_copy(
@@ -251,7 +245,7 @@ def test_multinode_rejects_partial_gpu_nodes(
     )
 
     with pytest.raises(SetupError, match="whole 8-GPU nodes"):
-        lsf_apptainer_adapter.derive_resource_plan(
+        bluevela_adapter.derive_resource_plan(
             definition,
-            load_cluster_profile("lsf-apptainer", PROFILE_ENV),
+            load_cluster_profile("bluevela", {"USER": "alice"}),
         )

@@ -22,14 +22,14 @@ from datetime import UTC, datetime
 from pathlib import Path, PurePosixPath
 from typing import Any, Literal
 
-from rsi_harness.cluster.lsf_apptainer.allocation import AllocatedPools
-from rsi_harness.cluster.lsf_apptainer.judge_controller import JudgeControllerControl
-from rsi_harness.cluster.lsf_apptainer.multinode import (
+from rsi_harness.cluster.bluevela.allocation import AllocatedPools
+from rsi_harness.cluster.bluevela.judge_controller import JudgeControllerControl
+from rsi_harness.cluster.bluevela.multinode import (
     MultiNodeBroker,
     RemoteWorkerTemplate,
     WorkerBind,
 )
-from rsi_harness.cluster.lsf_apptainer.network import AgentNetworkBroker
+from rsi_harness.cluster.bluevela.network import AgentNetworkBroker
 from rsi_harness.errors import (
     InfrastructureError,
     RetryableSubmissionError,
@@ -93,7 +93,7 @@ def _agent_provider_urls(
 ) -> tuple[str, ...]:
     if config.http_proxy or config.https_proxy:
         raise SetupError(
-            "LSF/Apptainer no-network Agent does not support an upstream proxy"
+            "Blue Vela no-network Agent does not support an upstream proxy"
         )
     agent = create_agent(plan.task.agent.name, config)
     auth = auth_resolver(
@@ -169,7 +169,7 @@ class ApptainerAgentRuntime:
     @property
     def work_ref(self) -> ContainerRef:
         return ContainerRef(
-            container_id=f"lsf_apptainer-{self.payload.run_id}-work", role="work"
+            container_id=f"bluevela-{self.payload.run_id}-work", role="work"
         )
 
     def _materialize_multinode_torchrun(self) -> Path:
@@ -323,7 +323,7 @@ class ApptainerAgentRuntime:
         network_mode = self.plan.task.agent.network.mode
         if network_mode not in {"public", "no-network"}:
             raise SetupError(
-                "LSF/Apptainer multi-node workers do not support allowlist networking"
+                "Blue Vela multi-node workers do not support allowlist networking"
             )
         binds = [
             WorkerBind(source=self.workspace, target=self.plan.workdir),
@@ -629,7 +629,7 @@ class ApptainerAgentRuntime:
         network_mode = request.run_plan.task.verifier.network.mode
         if network_mode not in {"public", "no-network"}:
             raise SetupError(
-                "LSF/Apptainer multi-node Judge does not support allowlist networking"
+                "Blue Vela multi-node Judge does not support allowlist networking"
             )
         round_digest = hashlib.sha256(request.round_id.encode()).hexdigest()[:16]
         round_root = self.control / "multinode/judge" / round_digest
@@ -718,7 +718,7 @@ class ApptainerAgentRuntime:
             pools.verifier[0].host,
             sys.executable,
             "-m",
-            "rsi_harness.cluster.lsf_apptainer.judge_controller",
+            "rsi_harness.cluster.bluevela.judge_controller",
             "run",
             "--control",
             str(control_path),
@@ -865,7 +865,7 @@ class ApptainerAgentRuntime:
             )
         elif network_mode == "allowlist":
             raise SetupError(
-                "LSF/Apptainer Apptainer does not support allowlist network policy"
+                "Blue Vela Apptainer does not support allowlist network policy"
             )
         command.append("--nv")
         if containall:
@@ -1150,7 +1150,7 @@ class NativeJudgeEvaluator:
                 snapshot_merged_path=str(snapshot),
             )
             observer.resource_event("judge_planned", round_id=request.round_id)
-            judge_id = f"lsf_apptainer-{self.runtime.payload.run_id}-{request.round_id}"
+            judge_id = f"bluevela-{self.runtime.payload.run_id}-{request.round_id}"
             observer.resource_event("judge_created", judge_container_id=judge_id)
             environment = resolve_runtime_environment(
                 request.run_plan.task.verifier.environment, os.environ
@@ -1255,7 +1255,7 @@ class NativeEngineComposition:
                     bind_host="127.0.0.1", port=0, bridge_gateway="127.0.0.1"
                 )(evaluator, artifacts, clock)
             ),
-            network_planner=lambda _plan, _run: f"lsf_apptainer-{self.payload.run_id}",
+            network_planner=lambda _plan, _run: f"bluevela-{self.payload.run_id}",
             network_creator=self.create_network,
             network_remover=lambda _network: None,
             workdir_volume_planner=self.plan_volume,

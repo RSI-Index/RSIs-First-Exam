@@ -1,0 +1,83 @@
+name = "bluevela"
+adapter = "bluevela"
+owner = "${USER}"
+
+[scheduler]
+kind = "lsf"
+submit_binary = "bsub"
+status_binary = "bjobs"
+cancel_binary = "bkill"
+remote_binary = "blaunch"
+remote_host_flag = "-z"
+queue = "normal"
+group = "grp_models"
+exclusive = true
+poll_seconds = 10.0
+
+[storage]
+run_root = "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/runs"
+image_cache = "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/images"
+logs_root = "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/logs"
+hf_home = "/proj/datasets/interns/yuetai/hf-home"
+hf_datasets_cache = "/proj/datasets/interns/yuetai/hf-datasets-cache"
+
+[builder]
+binary = "/usr/bin/podman"
+cpu_slots = 64
+memory_mb = 524288
+walltime = "02:00"
+temp_root = "/tmp"
+min_tmp_mb = 71680
+rootless_apt_sandbox = true
+faked_binary = "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/tools/apptainer-unprivileged-1.5.2/x86_64/utils/bin/faked-sysv"
+fakeroot_library = "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/tools/apptainer-unprivileged-1.5.2/x86_64/utils/lib/libfakeroot/libfakeroot-sysv.so"
+
+[apptainer]
+binary = "/proj/datasets/interns/yuetai/rsi-nemotron/apptainer-env/bin/apptainer"
+dns_bind = "/etc/resolv.conf"
+extra_binds = ["/proj"]
+work_binds = [
+  { source = "/proj/datasets/interns/yuetai/agent_envs/scale_autoresearch_tasks/data/datacomp/small/READY.json", target = "/rsi-data/datacomp-small/READY.json", read_only = true },
+  { source = "/proj/datasets/interns/yuetai/agent_envs/scale_autoresearch_tasks/data/datacomp/small/available_uids.npy", target = "/rsi-data/datacomp-small/available_uids.npy", read_only = true },
+  { source = "/proj/datasets/interns/yuetai/agent_envs/scale_autoresearch_tasks/data/datacomp/small/manifests/pool.manifest.json", target = "/rsi-data/datacomp-small/manifests/pool.manifest.json", read_only = true },
+  { source = "/proj/datasets/interns/yuetai/agent_envs/scale_autoresearch_tasks/data/datacomp/small/commonpool/metadata", target = "/rsi-data/datacomp-small/commonpool/metadata", read_only = true },
+  { source = "/proj/datasets/interns/yuetai/agent_envs/scale_autoresearch_tasks/data/datacomp/small/commonpool/features", target = "/rsi-data/datacomp-small/commonpool/features", read_only = true },
+  { source = "/proj/datasets/interns/yuetai/agent_envs/scale_autoresearch_tasks/data/datacomp/small/commonpool/shards", target = "/rsi-data/datacomp-small/commonpool/shards", read_only = true },
+  { source = "/proj/datasets/interns/yuetai/agent_envs/scale_autoresearch_tasks/data/datacomp/small/reference/l14-top30", target = "/rsi-data/datacomp-small/reference/l14-top30", read_only = true },
+  { source = "/proj/datasets/interns/yuetai/agent_envs/more_task/data/adamh-v6-pretokenized-12b", target = "/rsi-data/data/adamh-v6-pretokenized-12b", read_only = true },
+  { source = "/proj/datasets/interns/yuetai/agent_envs/more_task/data/adamh-v6-training-views", target = "/rsi-data/data/adamh-v6-training-views", read_only = true },
+  { source = "/proj/datasets/interns/yuetai/agent_envs/more_task/cache/marin-adamh-baseline", target = "/rsi-data/cache/marin-adamh-baseline", read_only = true },
+]
+judge_binds = [
+  { source = "/proj/datasets/interns/yuetai/agent_envs/scale_autoresearch_tasks/data/datacomp/small", target = "/rsi-data/datacomp-small", read_only = true },
+  { source = "/proj/datasets/interns/yuetai/agent_envs/more_task/data/adamh-v6-pretokenized-12b", target = "/rsi-data/data/adamh-v6-pretokenized-12b", read_only = true },
+  { source = "/proj/datasets/interns/yuetai/agent_envs/more_task/data/adamh-v6-training-views", target = "/rsi-data/data/adamh-v6-training-views", read_only = true },
+  { source = "/proj/datasets/interns/yuetai/agent_envs/more_task/data/paloma-rev-65cd6fc", target = "/rsi-data/data/paloma-rev-65cd6fc", read_only = true },
+  { source = "/proj/datasets/interns/yuetai/agent_envs/more_task/cache/marin-adamh-baseline", target = "/rsi-data/cache/marin-adamh-baseline", read_only = true },
+]
+judge_authority_root = "/proj/datasets/interns/yuetai/agent_envs/more_task/rsi-harness/authority"
+build_args = ["--fakeroot"]
+# Harbor tasks conventionally expose their mutable checkout at /testbed.  A
+# portable profile may override this without changing the adapter code.
+workspace_target = "/testbed"
+temp_root = "/tmp"
+container_python = "/opt/venv/bin/python"
+rdma_binds = ["/dev/infiniband", "/sys/class/infiniband"]
+
+# Portable task code consumes this logical shared-data namespace.  A profile
+# for another site supplies its own root without changing tasks or launchers.
+[apptainer.environment]
+RSI_SHARED_DATA_ROOT = "/proj/datasets/interns/yuetai/agent_envs/more_task"
+
+[apptainer.work_environment]
+RSI_SHARED_DATA_ROOT = "/rsi-data"
+
+[apptainer.judge_environment]
+RSI_SHARED_DATA_ROOT = "/rsi-data"
+
+[resources]
+min_cpu_slots = 8
+min_memory_mb = 65536
+min_runtime_tmp_mb = 71680
+gpus_per_node = 8
+walltime_margin_seconds = 900
